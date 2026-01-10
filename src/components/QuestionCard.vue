@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { Question } from '../types';
+import MarkdownIt from 'markdown-it';
+import hljs from 'highlight.js';
+import 'highlight.js/styles/atom-one-dark.css';
 
-defineProps<{
+const props = defineProps<{
   question: Question;
 }>();
 
@@ -11,6 +14,41 @@ const isOpen = ref(false);
 const toggle = () => {
   isOpen.value = !isOpen.value;
 };
+
+const copySlug = async () => {
+  if (props.question.slug) {
+    try {
+      await navigator.clipboard.writeText(props.question.slug);
+      // Optional: Show toast or feedback
+      console.log('Slug copied:', props.question.slug);
+    } catch (err) {
+      console.error('Failed to copy slug', err);
+    }
+  }
+};
+
+const md = new MarkdownIt({
+  html: true,
+  linkify: true,
+  typographer: true,
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return hljs.highlight(str, { language: lang }).value;
+      } catch (__) {}
+    }
+
+    return ''; // use external default escaping
+  }
+});
+
+const renderedAnswer = computed(() => {
+  let content = props.question.answer;
+  if (props.question.code) {
+    content += `\n\n\`\`\`typescript\n${props.question.code}\n\`\`\``;
+  }
+  return md.render(content);
+});
 </script>
 
 <template>
@@ -22,6 +60,9 @@ const toggle = () => {
     <div class="card-header">
       <h3 class="question-title">{{ question.title }}</h3>
       <div class="card-meta">
+        <span class="slug-id" @click.stop="copySlug" title="Copy ID">
+          #{{ question.id }}
+        </span>
         <span class="badge" :class="question.difficulty.toLowerCase()">
           {{ question.difficulty }}
         </span>
@@ -31,16 +72,8 @@ const toggle = () => {
       </div>
     </div>
     
-    <div class="card-body" :style="{ maxHeight: isOpen ? '1000px' : '0px' }">
-      <div class="answer-content">
-        <p>{{ question.answer }}</p>
-        
-        <div v-if="question.code" class="code-block">
-          <pre><code>{{ question.code }}</code></pre>
-        </div>
-
-        <div class="category-tag">#{{ question.category }}</div>
-      </div>
+    <div class="card-body" :style="{ maxHeight: isOpen ? '2000px' : '0px' }">
+      <div class="answer-content markdown-body" v-html="renderedAnswer"></div>
     </div>
   </div>
 </template>
@@ -76,6 +109,7 @@ const toggle = () => {
   font-weight: 600;
   color: var(--text-primary);
   padding-right: var(--spacing-sm);
+  flex: 1;
 }
 
 .card-meta {
@@ -83,6 +117,23 @@ const toggle = () => {
   align-items: center;
   gap: var(--spacing-sm);
   flex-shrink: 0;
+}
+
+.slug-id {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  opacity: 0.6;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.slug-id:hover {
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 1;
+  color: var(--accent-primary);
 }
 
 .badge {
@@ -120,36 +171,94 @@ const toggle = () => {
   padding-top: 0;
   color: var(--text-secondary);
   border-top: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: var(--spacing-sm); /* visual separation usually handled by padding, but let's tweak */
-  padding-top: var(--spacing-md); /* restore padding */
+  padding-top: var(--spacing-md);
+  font-size: 1rem;
+  line-height: 1.6;
 }
 
-.category-tag {
-  display: inline-block;
-  margin-top: var(--spacing-sm);
-  font-size: 0.85rem;
-  color: var(--accent-secondary);
-  opacity: 0.8;
+/* Markdown Styles */
+:deep(.markdown-body h1),
+:deep(.markdown-body h2),
+:deep(.markdown-body h3) {
+  color: var(--text-primary);
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 700;
 }
 
-.code-block {
-  margin-top: var(--spacing-sm);
+:deep(.markdown-body h3) {
+  font-size: 1.1rem;
+}
+
+:deep(.markdown-body p) {
+  margin-bottom: 1em;
+}
+
+:deep(.markdown-body ul),
+:deep(.markdown-body ol) {
+  margin-bottom: 1em;
+  padding-left: 1.5em;
+}
+
+:deep(.markdown-body li) {
+  margin-bottom: 0.5em;
+}
+
+:deep(.markdown-body strong) {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+:deep(.markdown-body table) {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1em;
+  font-size: 0.9em;
+}
+
+:deep(.markdown-body th),
+:deep(.markdown-body td) {
+  border: 1px solid var(--border-color);
+  padding: 8px 12px;
+  text-align: left;
+}
+
+:deep(.markdown-body th) {
+  background: rgba(255, 255, 255, 0.05);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+:deep(.markdown-body blockquote) {
+  border-left: 4px solid var(--accent-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  margin: 1em 0;
+  padding: 0.5em 1em;
+  color: var(--text-secondary);
+}
+
+:deep(.markdown-body code) {
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.9em;
+  color: var(--accent-primary);
+}
+
+:deep(.markdown-body pre) {
   background: #0d1117;
-  border-radius: var(--radius-sm);
-  padding: var(--spacing-sm);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 1em;
+  border-radius: 8px;
   overflow-x: auto;
+  margin-bottom: 1em;
+  border: 1px solid var(--border-color);
 }
 
-.code-block pre {
-  margin: 0;
-  font-family: 'Fira Code', 'Consolas', monospace;
-  font-size: 0.9rem;
-  color: #e6edf3;
-  line-height: 1.5;
-}
-
-.code-block code {
-  font-family: inherit;
+:deep(.markdown-body pre code) {
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font-size: 0.9em;
 }
 </style>

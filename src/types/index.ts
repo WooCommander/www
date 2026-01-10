@@ -6,5 +6,6 @@ export interface Question {
     answer: string;
     category: string;
     difficulty: Difficulty;
+    slug: string;
     code?: string;
 }
