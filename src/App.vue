@@ -35,7 +35,7 @@ const groupedQuestions = computed(() => {
   <main class="container main-content">
     <div class="intro">
       <h2>Вопросы для собеседования</h2>
-      <p>Практикуйся и изучай TypeScript с помощью интерактивных карточек.</p>
+      <p>Практикуйся и изучай Js и TypeScript помощью интерактивных карточек.</p>
     </div>
 
     <div class="categories-nav">
