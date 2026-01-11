@@ -1,4 +1,11 @@
 <script setup lang="ts">
+defineProps<{
+  isDark: boolean
+}>();
+
+defineEmits<{
+  (e: 'toggleTheme'): void
+}>();
 </script>
 
 <template>
@@ -8,7 +15,11 @@
         <span class="logo-icon">TS</span>
         <span class="text-gradient">Interview</span>
       </h1>
-      <nav>
+      <nav class="nav-items">
+        <button class="theme-toggle" @click="$emit('toggleTheme')" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+          <span v-if="isDark">☀️</span>
+          <span v-else>🌙</span>
+        </button>
         <a href="#" class="nav-link active">Home</a>
       </nav>
     </div>
@@ -22,8 +33,14 @@
   z-index: 100;
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
   padding: var(--spacing-sm) 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.light-theme .app-header {
+  background: rgba(255, 255, 255, 0.8);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .header-content {
@@ -40,14 +57,21 @@
   font-weight: 800;
   margin: 0;
   letter-spacing: -0.5px;
+  color: var(--text-primary);
 }
 
 .logo-icon {
   background: var(--accent-primary);
-  color: var(--bg-primary);
+  color: #fff;
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 1rem;
+}
+
+.nav-items {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
 }
 
 .nav-link {
@@ -58,5 +82,26 @@
 
 .nav-link:hover, .nav-link.active {
   color: var(--text-primary);
+}
+
+.theme-toggle {
+  background: transparent;
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 1.2rem;
+  padding: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  transition: all 0.2s ease;
+}
+
+.theme-toggle:hover {
+  background: var(--bg-card);
+  border-color: var(--accent-primary);
+  transform: scale(1.05);
 }
 </style>

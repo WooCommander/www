@@ -1,15 +1,49 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
 import QuestionCard from './components/QuestionCard.vue';
 import { questions } from './data/questions';
 
 const selectedCategory = ref('Все');
 const searchQuery = ref('');
+const isDark = ref(true);
+
+onMounted(() => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme) {
+    isDark.value = savedTheme === 'dark';
+  } else {
+    isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  updateThemeClass();
+});
+
+const toggleTheme = () => {
+  isDark.value = !isDark.value;
+  localStorage.setItem('theme', isDark.value ? 'dark' : 'light');
+  updateThemeClass();
+};
+
+const updateThemeClass = () => {
+  if (isDark.value) {
+    document.body.classList.remove('light-theme');
+  } else {
+    document.body.classList.add('light-theme');
+  }
+};
 
 const categories = computed(() => {
-  const cats = new Set(questions.map(q => q.category));
-  return ['Все', ...Array.from(cats)].sort();
+  const counts: Record<string, number> = { 'Все': questions.length };
+  questions.forEach(q => {
+    counts[q.category] = (counts[q.category] || 0) + 1;
+  });
+
+  const uniqueCats = Object.keys(counts).filter(c => c !== 'Все').sort();
+  
+  return [
+    { name: 'Все', count: counts['Все'] },
+    ...uniqueCats.map(c => ({ name: c, count: counts[c] }))
+  ];
 });
 
 const groupedQuestions = computed(() => {
@@ -38,7 +72,7 @@ const groupedQuestions = computed(() => {
 </script>
 
 <template>
-  <Header />
+  <Header :is-dark="isDark" @toggle-theme="toggleTheme" />
   
   <main class="container main-content">
     <div class="intro">
@@ -58,12 +92,13 @@ const groupedQuestions = computed(() => {
     <div class="categories-nav">
       <button 
         v-for="cat in categories" 
-        :key="cat"
+        :key="cat.name"
         class="category-chip"
-        :class="{ active: selectedCategory === cat }"
-        @click="selectedCategory = cat"
+        :class="{ active: selectedCategory === cat.name }"
+        @click="selectedCategory = cat.name"
       >
-        {{ cat }}
+        {{ cat.name }} 
+        <span class="category-count">{{ cat.count }}</span>
       </button>
     </div>
 
@@ -206,5 +241,11 @@ const groupedQuestions = computed(() => {
   background: var(--accent-primary);
   color: #fff;
   border-color: var(--accent-primary);
+}
+
+.category-count {
+  font-size: 0.8em;
+  opacity: 0.7;
+  margin-left: 4px;
 }
 </style>
