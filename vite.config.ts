@@ -1,15 +1,54 @@
 import { defineConfig } from 'vite'
-
-
 import vue from '@vitejs/plugin-vue'
 import { VitePWA } from 'vite-plugin-pwa'
 import basicSsl from '@vitejs/plugin-basic-ssl'
+import fs from 'node:fs'
+import path from 'node:path'
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     basicSsl(),
     vue(),
+    {
+      name: 'api-middleware',
+      configureServer(server) {
+        server.middlewares.use('/api/save-questions', (req, res, next) => {
+          if (req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => {
+              body += chunk.toString();
+            });
+            req.on('end', () => {
+              try {
+                const { questions } = JSON.parse(body);
+
+                // 1. Update dump file
+                const dumpPath = path.resolve(process.cwd(), 'questions_dump.json');
+                fs.writeFileSync(dumpPath, JSON.stringify(questions, null, 2));
+
+                // 2. Update Source file
+                const tsPath = path.resolve(process.cwd(), 'src/data/questions.ts');
+                const fileContent = `import type { Question } from '../types';
+
+export const questions: Question[] = ${JSON.stringify(questions, null, 4)};
+`;
+                fs.writeFileSync(tsPath, fileContent);
+
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true }));
+              } catch (e) {
+                console.error(e);
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: 'Failed to save' }));
+              }
+            });
+          } else {
+            next();
+          }
+        });
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],

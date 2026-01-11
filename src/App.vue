@@ -2,11 +2,80 @@
 import { computed, ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
 import QuestionCard from './components/QuestionCard.vue';
+import EditModal from './components/EditModal.vue';
 import { questions } from './data/questions';
+import type { Question } from './types';
 
 const selectedCategory = ref('Все');
 const searchQuery = ref('');
 const isDark = ref(true);
+
+const isEditModalOpen = ref(false);
+const editingQuestion = ref<Question | null>(null);
+
+const uniqueCategories = computed(() => {
+  const cats = new Set(questions.map(q => q.category));
+  return Array.from(cats).sort();
+});
+
+const openEditModal = (q: Question | null) => {
+  editingQuestion.value = q;
+  isEditModalOpen.value = true;
+};
+
+const saveQuestion = async (updatedQ: Question) => {
+  let newQuestions = [...questions];
+  
+  if (editingQuestion.value) {
+    // Update existing
+    const index = newQuestions.findIndex(q => q.id === updatedQ.id);
+    if (index !== -1) {
+      newQuestions[index] = updatedQ;
+    }
+  } else {
+    // Add new (ID should be unique in real app, here we trust logic)
+    updatedQ.id = (Math.max(...newQuestions.map(q => Number(q.id))) + 1).toString();
+    newQuestions.push(updatedQ);
+  }
+
+  try {
+    const res = await fetch('/api/save-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questions: newQuestions })
+    });
+    if (res.ok) {
+      isEditModalOpen.value = false;
+      // In a real HMR setup, file change triggers reload. 
+      // Ideally we should update local state too if HMR is slow, but file write -> HMR is cleaner.
+    } else {
+      alert('Failed to save');
+    }
+  } catch (e) {
+    console.error(e);
+    alert('Error saving');
+  }
+};
+
+const deleteQuestion = async (id: number | string) => {
+  if (!confirm('Are you sure?')) return;
+  
+  const newQuestions = questions.filter(q => q.id !== id);
+  
+  try {
+    const res = await fetch('/api/save-questions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ questions: newQuestions })
+    });
+    if (res.ok) {
+      isEditModalOpen.value = false;
+    }
+  } catch (e) {
+    alert('Error deleting');
+  }
+};
+
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
@@ -110,14 +179,50 @@ const groupedQuestions = computed(() => {
             v-for="q in categoryQuestions" 
             :key="q.id" 
             :question="q" 
+            @edit="openEditModal"
           />
         </div>
       </div>
     </div>
   </main>
+
+  <button class="fab-add" @click="openEditModal(null)" title="Add Question">+</button>
+
+  <EditModal 
+    :is-open="isEditModalOpen" 
+    :question="editingQuestion" 
+    :categories="uniqueCategories"
+    @close="isEditModalOpen = false"
+    @save="saveQuestion"
+    @delete="deleteQuestion"
+  />
 </template>
 
 <style scoped>
+.fab-add {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  font-size: 2rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s;
+  z-index: 90;
+}
+
+.fab-add:hover {
+  transform: scale(1.1);
+}
+
 .main-content {
   padding-top: var(--spacing-xl);
   padding-bottom: var(--spacing-xl);

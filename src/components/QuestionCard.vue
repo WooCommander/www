@@ -63,6 +63,9 @@ const renderedAnswer = computed(() => {
         <span class="slug-id" @click.stop="copySlug" title="Copy ID">
           #{{ question.id }}
         </span>
+        <button class="edit-btn" @click.stop="$emit('edit', question)" title="Edit">
+          ✏️
+        </button>
         <span class="badge" :class="question.difficulty.toLowerCase()">
           {{ question.difficulty }}
         </span>
@@ -128,6 +131,21 @@ const renderedAnswer = computed(() => {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+.edit-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  opacity: 0.5;
+  transition: opacity 0.2s;
+  padding: 0 4px;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  transform: scale(1.1);
 }
 
 .slug-id:hover {
