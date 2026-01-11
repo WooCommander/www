@@ -5,6 +5,7 @@ import QuestionCard from './components/QuestionCard.vue';
 import { questions } from './data/questions';
 
 const selectedCategory = ref('Все');
+const searchQuery = ref('');
 
 const categories = computed(() => {
   const cats = new Set(questions.map(q => q.category));
@@ -15,6 +16,13 @@ const groupedQuestions = computed(() => {
   const groups: Record<string, typeof questions> = {};
   
   questions.forEach(q => {
+    const query = searchQuery.value.toLowerCase().trim();
+    if (query) {
+      const matchesId = q.id.toString().includes(query);
+      const matchesTitle = q.title.toLowerCase().includes(query);
+      if (!matchesId && !matchesTitle) return;
+    }
+
     if (selectedCategory.value !== 'Все' && q.category !== selectedCategory.value) {
       return;
     }
@@ -36,6 +44,15 @@ const groupedQuestions = computed(() => {
     <div class="intro">
       <h2>Вопросы для собеседования</h2>
       <p>Практикуйся и изучай Js и TypeScript помощью интерактивных карточек.</p>
+    </div>
+
+    <div class="search-container">
+      <input 
+        v-model="searchQuery"
+        type="text"
+        placeholder="Поиск по номеру (100) или названию..."
+        class="search-input"
+      >
     </div>
 
     <div class="categories-nav">
@@ -88,6 +105,41 @@ const groupedQuestions = computed(() => {
   font-size: 1.1rem;
 }
 
+.search-container {
+  max-width: 600px;
+  margin: 0 auto var(--spacing-lg);
+  padding: 0 var(--spacing-md);
+}
+
+.search-input {
+  width: 100%;
+  padding: 12px 20px;
+  font-size: 1rem;
+  color: var(--text-primary);
+  background: var(--bg-secondary);
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+}
+
+.search-input::placeholder {
+  color: var(--text-secondary);
+  opacity: 0.7;
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--spacing-xl);
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+}
+
 .questions-list {
   display: flex;
   flex-direction: column;
@@ -120,6 +172,7 @@ const groupedQuestions = computed(() => {
 
 .categories-nav {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--spacing-sm);
   overflow-x: auto;
   padding: 4px;

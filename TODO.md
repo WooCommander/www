@@ -1,0 +1,34 @@
+# Task List for Vue 3 Learning App
+
+- [x] Initialize Vue 3 + TypeScript project <!-- id: 0 -->
+- [ ] Create Implementation Plan <!-- id: 1 -->
+- [x] Set up project structure and CSS variables (Theming) <!-- id: 2 -->
+- [x] Create data mock/store for Questions & Answers <!-- id: 3 -->
+- [x] Implement Layout (Header, Main Container) <!-- id: 4 -->
+- [x] Implement QuestionList and QuestionItem components <!-- id: 5 -->
+- [x] Add animations and responsiveness <!-- id: 6 -->
+- [x] Verify functionality and design <!-- id: 7 -->
+- [x] Add code examples support to Question type and component <!-- id: 8 -->
+- [x] Add Middle-level questions with examples and categories <!-- id: 9 -->
+- [x] Group questions by category in the UI <!-- id: 10 -->
+- [x] Install and configure vite-plugin-pwa <!-- id: 11 -->
+- [x] Add manifest and icon assets <!-- id: 12 -->
+- [x] Register service worker in main.ts <!-- id: 13 -->
+- [x] Verify functionality and design <!-- id: 7 -->
+- [x] Install @vitejs/plugin-basic-ssl for HTTPS <!-- id: 14 -->
+- [x] Configure HTTPS in vite.config.ts <!-- id: 15 -->
+- [x] Verify PWA offline mode with production build <!-- id: 16 -->
+- [x] Install Capacitor (Core, CLI, Android) <!-- id: 17 -->
+- [x] Initialize Capacitor and add Android platform <!-- id: 18 -->
+- [x] Document APK build process <!-- id: 19 -->
+- [x] Import questions from js.docx <!-- id: 20 -->
+- [x] Rebuild and update PWA cache <!-- id: 21 -->
+- [x] Parse and import ALL questions from js.md <!-- id: 22 -->
+- [x] Implement category filter UI (Topic selection) <!-- id: 23 -->
+- [x] Verify large list performance and UX <!-- id: 24 -->
+- [x] Install markdown-it and highlight.js <!-- id: 25 -->
+- [x] Implement Markdown rendering in QuestionCard <!-- id: 26 -->
+- [x] Style Markdown content (tables, code blocks) <!-- id: 27 -->
+- [x] Add 'slug' field to Question interface <!-- id: 28 -->
+- [x] Generate slugs for existing questions <!-- id: 29 -->
+- [x] Display slug in QuestionCard <!-- id: 30 -->
