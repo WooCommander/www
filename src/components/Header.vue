@@ -1,12 +1,12 @@
 <script setup lang="ts">
 defineProps<{
   isDark: boolean;
-  currentView: 'study' | 'quiz';
+  currentView: 'study' | 'quiz' | 'leaderboard';
 }>();
 
 defineEmits<{
   (e: 'toggleTheme'): void;
-  (e: 'changeView', view: 'study' | 'quiz'): void;
+  (e: 'changeView', view: 'study' | 'quiz' | 'leaderboard'): void;
 }>();
 </script>
 
@@ -31,6 +31,13 @@ defineEmits<{
           @click="$emit('changeView', 'quiz')"
         >
           Test
+        </button>
+        <button 
+          class="nav-link" 
+          :class="{ active: currentView === 'leaderboard' }"
+          @click="$emit('changeView', 'leaderboard')"
+        >
+          Records
         </button>
 
         <div class="divider"></div>

@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import Header from './components/Header.vue';
 import StudyView from './components/StudyView.vue';
 import QuizView from './components/QuizView.vue';
+import LeaderboardView from './components/LeaderboardView.vue';
 
 const isDark = ref(true);
-const currentView = ref<'study' | 'quiz'>('study');
+const currentView = ref<'study' | 'quiz' | 'leaderboard'>('study');
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
@@ -30,6 +31,15 @@ const updateThemeClass = () => {
     document.body.classList.add('light-theme');
   }
 };
+
+const activeComponent = computed(() => {
+    switch (currentView.value) {
+        case 'study': return StudyView;
+        case 'quiz': return QuizView;
+        case 'leaderboard': return LeaderboardView;
+        default: return StudyView;
+    }
+});
 </script>
 
 <template>
@@ -40,7 +50,7 @@ const updateThemeClass = () => {
     @change-view="(view) => currentView = view"
   />
   
-  <component :is="currentView === 'study' ? StudyView : QuizView" />
+  <component :is="activeComponent" />
 </template>
 
 <style>

@@ -28,7 +28,7 @@ const quizzesByCategory = computed(() => {
 const allCategories = computed(() => Object.keys(quizzesByCategory.value));
 
 const activeQuestion = computed(() => {
-  if (!currentQuiz.value) return null;
+  if (!currentQuiz.value || !currentQuiz.value.questions) return null;
   return currentQuiz.value.questions[currentQuestionIndex.value];
 });
 
@@ -49,8 +49,8 @@ const shuffle = <T>(array: T[]): T[] => {
     const arr = [...array];
     for (let i = arr.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        const temp = arr[i];
-        arr[i] = arr[j];
+        const temp = arr[i]!;
+        arr[i] = arr[j]!;
         arr[j] = temp;
     }
     return arr;
@@ -121,6 +121,26 @@ const stopTimer = () => {
 const finishQuiz = () => {
     stopTimer();
     showResults.value = true;
+
+    // Save Result to History
+    if (currentQuiz.value) {
+        const result = calculateScore.value;
+        const record = {
+            id: crypto.randomUUID(),
+            date: new Date().toISOString(),
+            score: result.score,
+            correct: result.correct,
+            total: result.total,
+            timeTaken: currentQuiz.value.id === 'exam-full' ? (45 * 60 - timeRemaining.value) : 0, // Approx time logic
+            mode: viewMode.value,
+            title: currentQuiz.value.title
+        };
+
+        const existing = localStorage.getItem('quiz_records');
+        const history = existing ? JSON.parse(existing) : [];
+        history.push(record);
+        localStorage.setItem('quiz_records', JSON.stringify(history));
+    }
 };
 
 const selectOption = (optionId: string) => {
