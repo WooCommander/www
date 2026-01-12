@@ -1,26 +1,44 @@
 <script setup lang="ts">
 defineProps<{
-  isDark: boolean
+  isDark: boolean;
+  currentView: 'study' | 'quiz';
 }>();
 
 defineEmits<{
-  (e: 'toggleTheme'): void
+  (e: 'toggleTheme'): void;
+  (e: 'changeView', view: 'study' | 'quiz'): void;
 }>();
 </script>
 
 <template>
   <header class="app-header">
     <div class="container header-content">
-      <h1 class="logo">
+      <h1 class="logo" @click="$emit('changeView', 'study')" style="cursor: pointer;">
         <span class="logo-icon">TS</span>
         <span class="text-gradient">Interview</span>
       </h1>
       <nav class="nav-items">
+        <button 
+          class="nav-link" 
+          :class="{ active: currentView === 'study' }"
+          @click="$emit('changeView', 'study')"
+        >
+          Study
+        </button>
+        <button 
+          class="nav-link" 
+          :class="{ active: currentView === 'quiz' }"
+          @click="$emit('changeView', 'quiz')"
+        >
+          Test
+        </button>
+
+        <div class="divider"></div>
+
         <button class="theme-toggle" @click="$emit('toggleTheme')" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
           <span v-if="isDark">☀️</span>
           <span v-else>🌙</span>
         </button>
-        <a href="#" class="nav-link active">Home</a>
       </nav>
     </div>
   </header>
@@ -58,6 +76,7 @@ defineEmits<{
   margin: 0;
   letter-spacing: -0.5px;
   color: var(--text-primary);
+  user-select: none;
 }
 
 .logo-icon {
@@ -75,13 +94,32 @@ defineEmits<{
 }
 
 .nav-link {
+  background: none;
+  border: none;
+  cursor: pointer;
   color: var(--text-secondary);
   font-weight: 500;
   font-size: 0.95rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: all 0.2s;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-link:hover {
   color: var(--text-primary);
+  background: rgba(100, 100, 100, 0.1);
+}
+
+.nav-link.active {
+  color: var(--accent-primary);
+  background: rgba(56, 189, 248, 0.1);
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-color);
+  margin: 0 4px;
 }
 
 .theme-toggle {
