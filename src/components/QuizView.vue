@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { quizzes, type QuizTopic, type QuizQuestion } from '../data/quiz_data';
 
 const currentQuiz = ref<QuizTopic | null>(null);
@@ -7,6 +7,25 @@ const currentQuestionIndex = ref(0);
 const userAnswers = ref<Record<string, any>>({}); // questionId -> answer
 const showResults = ref(false);
 const currentInputAnswer = ref('');
+
+// Modes: 'topic' (default list), 'category' (list of categories), 'exam' (start button)
+const viewMode = ref<'topic' | 'category' | 'exam'>('topic');
+const timeRemaining = ref(0); // seconds
+let timerInterval: any = null;
+
+// Group quizzes by category
+const quizzesByCategory = computed(() => {
+  const groups: Record<string, QuizTopic[]> = {};
+  quizzes.forEach(q => {
+    if (!groups[q.category]) {
+      groups[q.category] = [];
+    }
+    groups[q.category].push(q);
+  });
+  return groups;
+});
+
+const allCategories = computed(() => Object.keys(quizzesByCategory.value));
 
 const activeQuestion = computed(() => {
   if (!currentQuiz.value) return null;
@@ -18,16 +37,94 @@ const progress = computed(() => {
   return ((currentQuestionIndex.value) / currentQuiz.value.questions.length) * 100;
 });
 
+const formattedTime = computed(() => {
+    if (timeRemaining.value <= 0) return '00:00';
+    const m = Math.floor(timeRemaining.value / 60).toString().padStart(2, '0');
+    const s = (timeRemaining.value % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+});
+
+// Helper: Shuffle Array
+const shuffle = <T>(array: T[]): T[] => {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = arr[i];
+        arr[i] = arr[j];
+        arr[j] = temp;
+    }
+    return arr;
+};
+
+// Start Standard Topic Quiz
 const startQuiz = (quiz: QuizTopic) => {
   currentQuiz.value = quiz;
-  currentQuestionIndex.value = 0;
-  userAnswers.value = {};
-  showResults.value = false;
-  currentInputAnswer.value = '';
+  resetState();
+};
+
+// Start Category Mode (Random 20)
+const startCategoryMode = (category: string) => {
+    const topics = quizzesByCategory.value[category] || [];
+    const allQuestions = topics.flatMap(t => t.questions);
+    const selectedQuestions = shuffle(allQuestions).slice(0, 20);
+    
+    currentQuiz.value = {
+        id: `cat-${category}`,
+        title: `Тест по теме: ${category}`,
+        category: category,
+        questions: selectedQuestions
+    };
+    resetState();
+};
+
+// Start Exam Mode (Random 50, 45 mins)
+const startExamMode = () => {
+    const allQuestions = quizzes.flatMap(q => q.questions);
+    const selectedQuestions = shuffle(allQuestions).slice(0, 50);
+
+    currentQuiz.value = {
+        id: 'exam-full',
+        title: 'Экзамен (50 вопросов)',
+        category: 'Exam',
+        questions: selectedQuestions
+    };
+    resetState();
+    
+    // Timer 45 mins
+    timeRemaining.value = 45 * 60;
+    startTimer();
+};
+
+const resetState = () => {
+    currentQuestionIndex.value = 0;
+    userAnswers.value = {};
+    showResults.value = false;
+    currentInputAnswer.value = '';
+    stopTimer();
+};
+
+const startTimer = () => {
+    stopTimer();
+    timerInterval = setInterval(() => {
+        timeRemaining.value--;
+        if (timeRemaining.value <= 0) {
+            finishQuiz();
+        }
+    }, 1000);
+};
+
+const stopTimer = () => {
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = null;
+};
+
+const finishQuiz = () => {
+    stopTimer();
+    showResults.value = true;
 };
 
 const selectOption = (optionId: string) => {
-  if (!activeQuestion.value) return;
+  if (!activeQuestion.value || showResults.value) return;
   
   if (activeQuestion.value.type === 'single') {
     userAnswers.value[activeQuestion.value.id] = optionId;
@@ -62,7 +159,7 @@ const nextQuestion = () => {
   if (currentQuestionIndex.value < currentQuiz.value.questions.length - 1) {
     currentQuestionIndex.value++;
   } else {
-    showResults.value = true;
+    finishQuiz();
   }
 };
 
@@ -125,40 +222,134 @@ const getCorrectAnswerText = (q: QuizQuestion) => {
 
 const resetQuiz = () => {
     if (currentQuiz.value) {
-        startQuiz(currentQuiz.value);
+        // If it's a generated quiz (Exam/Category), we might want to re-generate or restart same?
+        // For simplicity, restart the EXACT same questions for retry.
+        // If user wants new questions, they go back and start again.
+        
+        // Use logic from start functions but keep current quiz object
+        resetState();
+        if (currentQuiz.value.id === 'exam-full') {
+             timeRemaining.value = 45 * 60;
+             startTimer();
+        }
     }
 };
 
 const goBack = () => {
+    stopTimer();
     currentQuiz.value = null;
     showResults.value = false;
 };
+
+onUnmounted(() => {
+    stopTimer();
+});
 </script>
 
 <template>
   <main class="container quiz-container">
     
-    <!-- Quiz Selection -->
-    <div v-if="!currentQuiz" class="quiz-selection">
-      <h2>Выберите тему для проверки</h2>
-      <div class="quiz-grid">
-        <div 
-          v-for="quiz in quizzes" 
-          :key="quiz.id" 
-          class="quiz-card"
-          @click="startQuiz(quiz)"
-        >
-          <h3>{{ quiz.title }}</h3>
-          <p>{{ quiz.questions.length }} вопросов</p>
-          <button class="start-btn">Начать тест</button>
+    <!-- Mode Selection -->
+    <div v-if="!currentQuiz" class="mode-selection">
+        <div class="mode-tabs">
+            <button 
+                class="mode-tab" 
+                :class="{ active: viewMode === 'topic' }" 
+                @click="viewMode = 'topic'"
+            >
+                📚 По темам
+            </button>
+            <button 
+                class="mode-tab" 
+                :class="{ active: viewMode === 'category' }" 
+                @click="viewMode = 'category'"
+            >
+                🔀 По категориям
+            </button>
+            <button 
+                class="mode-tab" 
+                :class="{ active: viewMode === 'exam' }" 
+                @click="viewMode = 'exam'"
+            >
+                ⏱️ Экзамен
+            </button>
         </div>
-      </div>
+
+        <!-- Topic Mode (Classic) -->
+        <div v-if="viewMode === 'topic'" class="quiz-selection">
+            <div v-for="(topics, category) in quizzesByCategory" :key="category" class="category-block">
+                <h3 class="category-title">{{ category }}</h3>
+                <div class="quiz-grid">
+                    <div 
+                        v-for="quiz in topics" 
+                        :key="quiz.id" 
+                        class="quiz-card"
+                        @click="startQuiz(quiz)"
+                    >
+                        <h3>{{ quiz.title }}</h3>
+                        <p>{{ quiz.questions.length }} вопросов</p>
+                        <button class="start-btn">Начать</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Category Mode (Random 20) -->
+        <div v-if="viewMode === 'category'" class="category-list-view">
+             <h2>Выберите категорию</h2>
+             <p class="mode-desc">Вам будет предложено 20 случайных вопросов из выбранной категории.</p>
+             
+             <div class="quiz-grid">
+                <div 
+                    v-for="cat in allCategories" 
+                    :key="cat" 
+                    class="quiz-card category-card"
+                    @click="startCategoryMode(cat)"
+                >
+                    <h3>{{ cat }}</h3>
+                    <p>Случайные 20 вопросов</p>
+                    <button class="start-btn">Начать тест</button>
+                </div>
+             </div>
+        </div>
+
+        <!-- Exam Mode -->
+        <div v-if="viewMode === 'exam'" class="exam-view">
+            <div class="exam-intro">
+                <h2>Финальный Экзамен</h2>
+                <div class="exam-info">
+                    <div class="info-item">
+                        <span class="emoji">❓</span>
+                        <span>50 вопросов</span>
+                    </div>
+                     <div class="info-item">
+                        <span class="emoji">⏱️</span>
+                        <span>45 минут</span>
+                    </div>
+                     <div class="info-item">
+                        <span class="emoji">🎲</span>
+                        <span>Все темы</span>
+                    </div>
+                </div>
+                <p>
+                    Вопросы выбираются случайно из всей базы знаний. 
+                    Таймер запустится автоматически. Результат будет сохранен только после завершения.
+                </p>
+                <button class="start-exam-btn" @click="startExamMode">Начать экзамен</button>
+            </div>
+        </div>
     </div>
 
     <!-- Active Quiz -->
     <div v-else-if="!showResults && activeQuestion" class="active-quiz">
       <div class="quiz-header">
-        <button class="back-link" @click="goBack">← Назад</button>
+        <div class="header-top">
+             <button class="back-link" @click="goBack">← Выход</button>
+             <div v-if="currentQuiz.id === 'exam-full'" class="exam-timer" :class="{ critical: timeRemaining < 300 }">
+                ⏱️ {{ formattedTime }}
+             </div>
+        </div>
+        
         <div class="progress-bar">
           <div class="progress-fill" :style="{ width: progress + '%' }"></div>
         </div>
@@ -167,6 +358,11 @@ const goBack = () => {
 
       <div class="question-card-lg">
         <div class="question-text">{{ activeQuestion.text }}</div>
+        
+        <!-- Code Snippet -->
+        <div v-if="activeQuestion.codeSnippet" class="code-snippet">
+          <pre><code>{{ activeQuestion.codeSnippet }}</code></pre>
+        </div>
 
         <div class="options-list">
             <!-- Single Choice -->
@@ -266,11 +462,22 @@ const goBack = () => {
     max-width: 800px;
 }
 
+.category-block {
+  margin-bottom: var(--spacing-xl);
+}
+
+.category-title {
+  color: var(--accent-primary);
+  font-size: 1.2rem;
+  margin-bottom: var(--spacing-md);
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
 .quiz-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: var(--spacing-lg);
-    margin-top: var(--spacing-lg);
 }
 
 .quiz-card {
@@ -337,8 +544,24 @@ const goBack = () => {
     font-size: 1.4rem;
     font-weight: 600;
     color: var(--text-primary);
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-md);
     white-space: pre-wrap;
+}
+
+.code-snippet {
+    background: #1e293b;
+    padding: var(--spacing-md);
+    border-radius: 8px;
+    margin-bottom: var(--spacing-lg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+}
+
+.code-snippet pre {
+    margin: 0;
+    font-family: 'Fira Code', monospace;
+    color: #e2e8f0;
+    font-size: 0.95rem;
 }
 
 .options-list {
@@ -511,5 +734,121 @@ const goBack = () => {
     margin-top: 4px;
     font-style: italic;
     color: var(--accent-primary);
+}
+
+/* Mode Selection Styles */
+.mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+}
+
+.mode-tab {
+    padding: 12px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.2s;
+}
+
+.mode-tab:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+}
+
+.mode-tab.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+}
+
+.mode-desc {
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+}
+
+.exam-view {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-xl) 0;
+}
+
+.exam-intro {
+    background: var(--bg-card);
+    padding: var(--spacing-xl);
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+    text-align: center;
+    max-width: 500px;
+}
+
+.exam-info {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-lg);
+    margin: var(--spacing-lg) 0;
+}
+
+.info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.info-item .emoji {
+    font-size: 2rem;
+}
+
+.start-exam-btn {
+    margin-top: var(--spacing-xl);
+    padding: 16px 48px;
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    border: none;
+    border-radius: 30px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
+.start-exam-btn:hover {
+    transform: scale(1.05);
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.exam-timer {
+    font-family: 'Fira Code', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    padding: 6px 12px;
+    background: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.exam-timer.critical {
+    color: #ef4444;
+    border-color: #ef4444;
+    animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 </style>
