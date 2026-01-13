@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
 import { useWindowVirtualizer } from '@tanstack/vue-virtual';
-import QuestionCard from './QuestionCard.vue';
+
 import EditModal from '../features/editor/components/EditModal.vue';
 import { QuestionStore } from '../services/QuestionStore';
 import type { Question } from '../types';
+import QuestionCard from '../components/QuestionCard.vue';
 
 const selectedCategory = ref('Все');
 const searchQuery = ref('');

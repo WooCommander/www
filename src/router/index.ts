@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import StudyView from '../components/StudyView.vue';
-import QuizView from '../components/QuizView.vue';
-import LeaderboardView from '../components/LeaderboardView.vue';
+import StudyView from '../views/StudyView.vue';
+import QuizView from '../views/QuizView.vue';
+import LeaderboardView from '../views/LeaderboardView.vue';
 
 const router = createRouter({
   history: createWebHistory(),

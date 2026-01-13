@@ -138,131 +138,182 @@ const clearHistory = () => {
     </main>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .leaderboard-container {
-    padding-top: var(--spacing-xl);
-    max-width: 900px;
+  padding-top: var(--spacing-xl);
+  max-width: 900px;
 }
 
 h2 {
-    text-align: center;
-    margin-bottom: var(--spacing-xl);
-    font-size: 2rem;
+  text-align: center;
+  margin-bottom: var(--spacing-xl);
+  font-size: 2rem;
 }
 
 .controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-    flex-wrap: wrap;
-    gap: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .filters {
-    display: flex;
-    gap: 8px;
-    background: var(--bg-card);
-    padding: 4px;
-    border-radius: 12px;
-    border: 1px solid var(--border-color);
+  display: flex;
+  gap: 8px;
+  background: var(--bg-card);
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
 }
 
 .filter-btn {
-    padding: 8px 16px;
-    border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    cursor: pointer;
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
+  padding: 8px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
 
-.filter-btn.active {
+  &.active {
     background: var(--accent-primary);
     color: white;
+  }
 }
 
 .clear-btn {
-    padding: 8px 16px;
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: all 0.2s;
-}
+  padding: 8px 16px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
 
-.clear-btn:hover {
+  &:hover {
     background: rgba(239, 68, 68, 0.2);
+  }
 }
 
 .empty-state {
-    text-align: center;
-    padding: 40px;
-    background: var(--bg-card);
-    border-radius: 16px;
-    color: var(--text-secondary);
-    border: 1px dashed var(--border-color);
+  text-align: center;
+  padding: 40px;
+  background: var(--bg-card);
+  border-radius: 16px;
+  color: var(--text-secondary);
+  border: 1px dashed var(--border-color);
 }
 
 .table-wrapper {
-    background: var(--bg-card);
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid var(--border-color);
-    box-shadow: var(--shadow-sm);
+  background: var(--bg-card);
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
 }
 
 .leaderboard-table {
-    width: 100%;
-    border-collapse: collapse;
-}
+  width: 100%;
+  border-collapse: collapse;
 
-.leaderboard-table th, .leaderboard-table td {
+  th,
+  td {
     padding: 16px;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-}
+  }
 
-.leaderboard-table th {
+  th {
     background: rgba(255, 255, 255, 0.05);
     font-weight: 600;
     color: var(--text-secondary);
     font-size: 0.9rem;
     text-transform: uppercase;
-}
+  }
 
-.leaderboard-table tr:last-child td {
+  tr:last-child td {
     border-bottom: none;
+  }
 }
 
-.rank { font-weight: bold; font-size: 1.1rem; width: 60px; text-align: center; }
-.date { color: var(--text-secondary); font-size: 0.9rem; }
-.mode { width: 120px; }
-.title { font-weight: 500; color: var(--text-primary); }
-.score { font-family: 'Fira Code', monospace; font-weight: 700; }
-.time { font-family: 'Fira Code', monospace; color: var(--text-secondary); }
+.rank {
+  font-weight: bold;
+  font-size: 1.1rem;
+  width: 60px;
+  text-align: center;
+}
+
+.date {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.mode {
+  width: 120px;
+}
+
+.title {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.score {
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+
+  .good {
+    color: #22c55e;
+  }
+
+  .avg {
+    color: #f59e0b;
+  }
+
+  .bad {
+    color: #ef4444;
+  }
+
+  .details {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-left: 4px;
+    font-weight: normal;
+  }
+}
+
+.time {
+  font-family: 'Fira Code', monospace;
+  color: var(--text-secondary);
+}
 
 .badge {
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-.badge.exam { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-.badge.category { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-.badge.topic { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 
-.score .good { color: #22c55e; }
-.score .avg { color: #f59e0b; }
-.score .bad { color: #ef4444; }
-.score .details { font-size: 0.8rem; color: var(--text-secondary); margin-left: 4px; font-weight: normal; }
+  &.exam {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+  }
+
+  &.category {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+  }
+
+  &.topic {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+  }
+}
 
 .top-record {
-    background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.02);
 }
 </style>
