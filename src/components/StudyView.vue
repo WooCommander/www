@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted } from 'vue';
+import { useWindowVirtualizer } from '@tanstack/vue-virtual';
 import QuestionCard from './QuestionCard.vue';
 import EditModal from './EditModal.vue';
 import { QuestionStore } from '../services/QuestionStore';
@@ -86,6 +87,39 @@ const groupedQuestions = computed(() => {
   
   return groups;
 });
+
+// Virtual Scroll Logic
+type FlatItem = 
+  | { type: 'header'; id: string; text: string } 
+  | { type: 'question'; id: string; data: Question };
+
+const flatList = computed(() => {
+  const list: FlatItem[] = [];
+  const groups = groupedQuestions.value;
+  
+  Object.keys(groups).sort().forEach(category => {
+    list.push({ type: 'header', id: `cat-${category}`, text: category });
+    groups[category]!.forEach(q => {
+      list.push({ type: 'question', id: q.id, data: q });
+    });
+  });
+  
+  return list;
+});
+
+const rowVirtualizer = useWindowVirtualizer({
+  count: flatList.value.length,
+  estimateSize: () => 200, // Estimate height in px
+  overscan: 5,
+});
+
+const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems());
+const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
+
+const measureElement = (el: any) => {
+  if (!el) return;
+  rowVirtualizer.value.measureElement(el);
+};
 </script>
 
 <template>
@@ -117,18 +151,34 @@ const groupedQuestions = computed(() => {
       </button>
     </div>
 
-    <div class="questions-wrapper">
-      <div v-for="(categoryQuestions, category) in groupedQuestions" :key="category" class="category-section">
-        <h3 class="category-title">{{ category }}</h3>
-        <div class="questions-list">
-          <QuestionCard 
-            v-for="q in categoryQuestions" 
-            :key="q.id" 
-            :question="q" 
-            @edit="openEditModal"
-          />
+    <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+        <div
+          v-for="virtualRow in virtualRows"
+          :key="flatList[virtualRow.index]?.id || virtualRow.index"
+          :data-index="virtualRow.index"
+          :ref="measureElement"
+          :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${virtualRow.start}px)`,
+          }"
+        >
+          <template v-if="flatList[virtualRow.index]?.type === 'header'">
+             <div class="category-section">
+                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+             </div>
+          </template>
+          <template v-else-if="flatList[virtualRow.index]?.type === 'question'">
+             <div class="questions-list">
+                <QuestionCard 
+                  :question="(flatList[virtualRow.index] as any).data" 
+                  @edit="openEditModal"
+                />
+             </div>
+          </template>
         </div>
-      </div>
     </div>
   </main>
 

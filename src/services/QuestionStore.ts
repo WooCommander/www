@@ -1,25 +1,28 @@
 import { Preferences } from '@capacitor/preferences';
 import { reactive, computed } from 'vue';
-import type { Question } from '../types';
+import type { Question, CustomQuiz } from '../types';
 import { questions as staticQuestions } from '../data/questions';
 
 const STORAGE_KEYS = {
   USER_QUESTIONS: 'user_questions',
   OVERRIDES: 'question_overrides',
-  DELETED_IDS: 'deleted_question_ids'
+  DELETED_IDS: 'deleted_question_ids',
+  CUSTOM_QUIZZES: 'custom_quizzes'
 };
 
-interface QuestionStoreState {
+interface State {
   userQuestions: Question[];
   overrides: Record<string, Question>;
   deletedIds: Set<string>;
+  customQuizzes: CustomQuiz[];
   isLoaded: boolean;
 }
 
-const state = reactive<QuestionStoreState>({
+const state = reactive<State>({
   userQuestions: [],
   overrides: {},
   deletedIds: new Set(),
+  customQuizzes: [],
   isLoaded: false
 });
 
@@ -32,15 +35,17 @@ export const QuestionStore = {
     if (state.isLoaded) return;
 
     try {
-      const [uQ, ov, del] = await Promise.all([
+      const [uQ, ov, del, cq] = await Promise.all([
         Preferences.get({ key: STORAGE_KEYS.USER_QUESTIONS }),
         Preferences.get({ key: STORAGE_KEYS.OVERRIDES }),
-        Preferences.get({ key: STORAGE_KEYS.DELETED_IDS })
+        Preferences.get({ key: STORAGE_KEYS.DELETED_IDS }),
+        Preferences.get({ key: STORAGE_KEYS.CUSTOM_QUIZZES })
       ]);
 
       if (uQ.value) state.userQuestions = JSON.parse(uQ.value);
       if (ov.value) state.overrides = JSON.parse(ov.value);
       if (del.value) state.deletedIds = new Set(JSON.parse(del.value));
+      if (cq.value) state.customQuizzes = JSON.parse(cq.value);
 
       state.isLoaded = true;
     } catch (e) {
@@ -121,6 +126,27 @@ export const QuestionStore = {
         value: JSON.stringify(state.userQuestions)
       });
     }
+  },
+
+  async saveCustomQuiz(quiz: CustomQuiz) {
+    const index = state.customQuizzes.findIndex(q => q.id === quiz.id);
+    if (index !== -1) {
+      state.customQuizzes[index] = quiz;
+    } else {
+      state.customQuizzes.push(quiz);
+    }
+    await Preferences.set({
+      key: STORAGE_KEYS.CUSTOM_QUIZZES,
+      value: JSON.stringify(state.customQuizzes)
+    });
+  },
+
+  async deleteCustomQuiz(id: string) {
+    state.customQuizzes = state.customQuizzes.filter(q => q.id !== id);
+    await Preferences.set({
+      key: STORAGE_KEYS.CUSTOM_QUIZZES,
+      value: JSON.stringify(state.customQuizzes)
+    });
   },
 
   async resetData() {

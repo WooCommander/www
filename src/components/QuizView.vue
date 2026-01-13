@@ -2,12 +2,15 @@
 import { ref, computed, onUnmounted, onMounted } from 'vue';
 import { quizzes, type QuizTopic, type QuizQuestion } from '../data/quiz_data';
 import { QuestionStore } from '../services/QuestionStore';
+import type { CustomQuiz } from '../types';
+import QuizEditor from './QuizEditor.vue';
 
 const currentQuiz = ref<QuizTopic | null>(null);
 const currentQuestionIndex = ref(0);
 const userAnswers = ref<Record<string, any>>({}); // questionId -> answer
 const showResults = ref(false);
 const currentInputAnswer = ref('');
+const isQuizEditorOpen = ref(false);
 
 // Modes: 'topic' (default list), 'category' (list of categories), 'exam' (start button)
 const viewMode = ref<'topic' | 'category' | 'exam'>('topic');
@@ -18,12 +21,17 @@ onMounted(async () => {
     await QuestionStore.initialize();
 });
 
-// Merge static quizzes with user questions
+const saveCustomQuiz = async (quiz: CustomQuiz) => {
+    await QuestionStore.saveCustomQuiz(quiz);
+    isQuizEditorOpen.value = false;
+};
+
+// Merge static quizzes with user questions AND custom quizzes
 const allQuizzes = computed(() => {
-    const userQs = QuestionStore.getQuizQuestions.value;
-    
     const merged = [...quizzes];
     
+    // 1. Add "All User Questions" topic
+    const userQs = QuestionStore.getQuizQuestions.value;
     if (userQs.length > 0) {
         merged.push({
             id: 'user-custom',
@@ -32,9 +40,38 @@ const allQuizzes = computed(() => {
             questions: userQs
         });
     }
+
+    // 2. Add Custom Named Quizzes
+    const customQuizzes = QuestionStore.state.customQuizzes;
+    const allQsMap = new Map(QuestionStore.getAllQuestions.value.map(q => [q.id.toString(), q]));
+    
+    customQuizzes.forEach(cq => {
+        const quizQuestions: QuizQuestion[] = cq.questionIds
+            .map(id => allQsMap.get(id.toString()))
+            .filter(q => !!q)
+            .map(q => ({
+                id: q!.id.toString(),
+                text: q!.title,
+                type: 'input' as const,
+                correctAnswer: q!.answer,
+                codeSnippet: q!.code,
+                explanation: 'Custom question'
+            }));
+
+        if (quizQuestions.length > 0) {
+            merged.push({
+                id: `custom-${cq.id}`,
+                title: cq.title,
+                category: 'Custom Tests',
+                questions: quizQuestions
+            });
+        }
+    });
     
     return merged;
 });
+
+// Group quizzes by category
 
 // Group quizzes by category
 const quizzesByCategory = computed(() => {
@@ -292,46 +329,36 @@ onUnmounted(() => {
 <template>
   <main class="container quiz-container">
     
-    <!-- Mode Selection -->
-    <div v-if="!currentQuiz" class="mode-selection">
-        <div class="mode-tabs">
-            <button 
-                class="mode-tab" 
-                :class="{ active: viewMode === 'topic' }" 
-                @click="viewMode = 'topic'"
-            >
-                📚 По темам
-            </button>
-            <button 
-                class="mode-tab" 
-                :class="{ active: viewMode === 'category' }" 
-                @click="viewMode = 'category'"
-            >
-                🔀 По категориям
-            </button>
-            <button 
-                class="mode-tab" 
-                :class="{ active: viewMode === 'exam' }" 
-                @click="viewMode = 'exam'"
-            >
-                ⏱️ Экзамен
-            </button>
+
+    <div v-if="!currentQuiz" class="quiz-menu">
+        <div class="menu-intro">
+            <h2>Выберите режим или тему</h2>
+            <div class="mode-tabs">
+                <button class="mode-tab" :class="{ active: viewMode === 'topic' }" @click="viewMode = 'topic'">Темы</button>
+                <button class="mode-tab" :class="{ active: viewMode === 'category' }" @click="viewMode = 'category'">Категории</button>
+                <button class="mode-tab" :class="{ active: viewMode === 'exam' }" @click="viewMode = 'exam'">Экзамен</button>
+            </div>
         </div>
 
-        <!-- Topic Mode (Classic) -->
-        <div v-if="viewMode === 'topic'" class="quiz-selection">
-            <div v-for="(topics, category) in quizzesByCategory" :key="category" class="category-block">
-                <h3 class="category-title">{{ category }}</h3>
+        <div v-if="viewMode === 'topic'">
+            <div class="topics-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                 <h3>Доступные темы</h3>
+                 <button class="btn-create" @click="isQuizEditorOpen = true">+ Создать Тест</button>
+            </div>
+            
+            <div v-for="category in allCategories" :key="category" class="topic-group">
+                <h4 class="category-title">{{ category }}</h4>
                 <div class="quiz-grid">
                     <div 
-                        v-for="quiz in topics" 
+                        v-for="quiz in quizzesByCategory[category]" 
                         :key="quiz.id" 
                         class="quiz-card"
                         @click="startQuiz(quiz)"
                     >
-                        <h3>{{ quiz.title }}</h3>
-                        <p>{{ quiz.questions.length }} вопросов</p>
-                        <button class="start-btn">Начать</button>
+                        <h5>{{ quiz.title }}</h5>
+                        <div class="topic-meta">
+                            <span>{{ quiz.questions.length }} вопросов</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -496,6 +523,12 @@ onUnmounted(() => {
     </div>
 
   </main>
+
+  <QuizEditor 
+      :is-open="isQuizEditorOpen" 
+      @close="isQuizEditorOpen = false"
+      @save="saveCustomQuiz"
+    />
 </template>
 
 <style scoped>
@@ -687,6 +720,33 @@ onUnmounted(() => {
     font-weight: 600;
     cursor: pointer;
     float: right;
+}
+
+.btn-primary {
+    background: var(--accent-primary);
+    color: white;
+    border: none;
+    padding: 12px 32px;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.btn-create {
+    background: transparent;
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-create:hover {
+    background: rgba(56, 189, 248, 0.1);
 }
 
 .next-btn:disabled {
