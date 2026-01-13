@@ -60,6 +60,7 @@ export const questions: Question[] = ${JSON.stringify(questions, null, 4)};
         background_color: '#0f172a',
         display: 'standalone',
         orientation: 'portrait',
+        start_url: '/',  // <== Important for offline launch
         icons: [
           {
             src: 'pwa-192x192.svg',
@@ -77,6 +78,9 @@ export const questions: Question[] = ${JSON.stringify(questions, null, 4)};
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json}'],
+        clientsClaim: true,
+        skipWaiting: true,
+        navigateFallback: 'index.html', // <== Ensures SPA routes work offline
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

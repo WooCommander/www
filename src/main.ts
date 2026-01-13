@@ -8,6 +8,14 @@ const updateSW = registerSW({
         if (confirm('New content available. Reload?')) {
             updateSW(true)
         }
+    },
+    onRegisterError(error) {
+        console.error('SW Error:', error);
+        // alert('SW Error: ' + error); // Uncomment for debugging on mobile
+    },
+    onRegistered(r) {
+        console.log('SW Registered:', r);
+        // alert('SW Registered! Ready for offline.'); // Uncomment for debugging on mobile
     }
 })
 
