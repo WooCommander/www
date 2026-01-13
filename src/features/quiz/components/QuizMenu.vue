@@ -212,6 +212,9 @@ const emit = defineEmits<{
     font-size: 1.1rem;
     margin-bottom: 8px;
     color: var(--text-primary);
+    word-break: break-word;
+    /* Ensure long words don't overflow */
+    line-height: 1.3;
   }
 }
 
@@ -286,5 +289,46 @@ const emit = defineEmits<{
   border-radius: 8px;
   cursor: pointer;
   font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .quiz-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-md);
+  }
+
+  .exam-intro {
+    padding: 24px;
+  }
+
+  .exam-info {
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .info-item {
+    min-width: 80px;
+  }
+
+  .mode-tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding-bottom: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .mode-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mode-tab {
+    padding: 8px 16px;
+    white-space: nowrap;
+    flex: 0 0 auto;
+    font-size: 0.9rem;
+    text-align: center;
+  }
 }
 </style>

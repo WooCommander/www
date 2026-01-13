@@ -18,31 +18,21 @@ defineEmits<{
         <span class="text-gradient">Interview</span>
       </h1>
       <nav class="nav-items">
-        <button 
-          class="nav-link" 
-          :class="{ active: currentView === 'study' }"
-          @click="$emit('changeView', 'study')"
-        >
-          Study
+        <button class="nav-link" :class="{ active: currentView === 'study' }" @click="$emit('changeView', 'study')">
+          Учить
         </button>
-        <button 
-          class="nav-link" 
-          :class="{ active: currentView === 'quiz' }"
-          @click="$emit('changeView', 'quiz')"
-        >
-          Test
+        <button class="nav-link" :class="{ active: currentView === 'quiz' }" @click="$emit('changeView', 'quiz')">
+          Тест
         </button>
-        <button 
-          class="nav-link" 
-          :class="{ active: currentView === 'leaderboard' }"
-          @click="$emit('changeView', 'leaderboard')"
-        >
-          Records
+        <button class="nav-link" :class="{ active: currentView === 'leaderboard' }"
+          @click="$emit('changeView', 'leaderboard')">
+          Топ
         </button>
 
         <div class="divider"></div>
 
-        <button class="theme-toggle" @click="$emit('toggleTheme')" :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
+        <button class="theme-toggle" @click="$emit('toggleTheme')"
+          :title="isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode'">
           <span v-if="isDark">☀️</span>
           <span v-else>🌙</span>
         </button>
@@ -148,5 +138,33 @@ defineEmits<{
   background: var(--bg-card);
   border-color: var(--accent-primary);
   transform: scale(1.05);
+}
+
+@media (max-width: 640px) {
+  .text-gradient {
+    display: none;
+    /* Hide "Interview" text on mobile to save space */
+  }
+
+  .header-content {
+    gap: 8px;
+  }
+
+  .nav-items {
+    gap: 4px;
+  }
+
+  .nav-link {
+    font-size: 0.8rem;
+    padding: 4px 6px;
+  }
+
+  .logo {
+    font-size: 1.2rem;
+  }
+
+  .divider {
+    margin: 0 2px;
+  }
 }
 </style>
