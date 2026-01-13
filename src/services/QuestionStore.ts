@@ -1,28 +1,29 @@
-import { Preferences } from '@capacitor/preferences';
 import { reactive, computed } from 'vue';
-import type { Question, CustomQuiz } from '../types';
+import { Preferences } from '@capacitor/preferences';
+import { quizzes as staticQuizzes, type QuizTopic, type QuizQuestion } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
+import type { Question, CustomQuiz } from '../types';
 
 const STORAGE_KEYS = {
   USER_QUESTIONS: 'user_questions',
+  CUSTOM_QUIZZES: 'custom_quizzes',
   OVERRIDES: 'question_overrides',
-  DELETED_IDS: 'deleted_question_ids',
-  CUSTOM_QUIZZES: 'custom_quizzes'
+  DELETED_IDS: 'deleted_questions'
 };
 
-interface State {
+interface QuestionState {
   userQuestions: Question[];
+  customQuizzes: CustomQuiz[];
   overrides: Record<string, Question>;
   deletedIds: Set<string>;
-  customQuizzes: CustomQuiz[];
   isLoaded: boolean;
 }
 
-const state = reactive<State>({
+const state = reactive<QuestionState>({
   userQuestions: [],
+  customQuizzes: [],
   overrides: {},
   deletedIds: new Set(),
-  customQuizzes: [],
   isLoaded: false
 });
 
@@ -31,9 +32,78 @@ export const QuestionStore = {
     return state;
   },
 
+  getQuizzes: computed(() => {
+    // 1. Clone static topics structure and apply overrides
+    const mergedTopics: QuizTopic[] = staticQuizzes.map(topic => ({
+      ...topic,
+      questions: topic.questions
+        .filter(q => !state.deletedIds.has(q.id))
+        .map(q => {
+          const override = state.overrides[q.id];
+          if (override) {
+            return {
+              id: override.id.toString(),
+              text: override.title,
+              type: (override.type || 'input') as any,
+              options: override.options,
+              correctAnswer: override.answer,
+              explanation: override.answer
+            };
+          }
+          return q;
+        })
+    }));
+
+    // 2. Add user questions to their respective categories
+    state.userQuestions.forEach(uq => {
+      const topic = mergedTopics.find(t => t.category === uq.category);
+      if (topic) {
+        topic.questions.push({
+          id: uq.id.toString(),
+          text: uq.title,
+          type: (uq.type || 'input') as any,
+          options: uq.options,
+          correctAnswer: uq.answer,
+          explanation: uq.answer
+        });
+      }
+    });
+
+    return mergedTopics;
+  }),
+
+  getAllQuestions: computed(() => {
+    // 1. Start with static questions that aren't deleted
+    // Note: staticQuestions (from data/questions.ts) are a flat list of Question objects.
+    // We filter them and apply overrides.
+    const merged = staticQuestions
+      .filter(q => !state.deletedIds.has(q.id))
+      .map(q => {
+        return state.overrides[q.id] || q;
+      });
+
+    // 2. Append user-created questions
+    return [...merged, ...state.userQuestions];
+  }),
+
+  // Helper for Flashcard/Study modes using flat questions
+  getQuizQuestions: computed(() => {
+    // This matches the format needed for some legacy views if they use QuizQuestion interface
+    // But primarily StudyView uses getAllQuestions (Question interface).
+    // Keeping this for potential mapping utility.
+    const allQs = QuestionStore.getAllQuestions.value;
+    return allQs.map(q => ({
+      id: q.id.toString(),
+      text: q.title,
+      type: (q.type || 'input') as any,
+      options: q.options,
+      correctAnswer: q.answer,
+      explanation: q.answer
+    }));
+  }),
+
   async initialize() {
     if (state.isLoaded) return;
-
     try {
       const [uQ, ov, del, cq] = await Promise.all([
         Preferences.get({ key: STORAGE_KEYS.USER_QUESTIONS }),
@@ -53,39 +123,10 @@ export const QuestionStore = {
     }
   },
 
-  getAllQuestions: computed(() => {
-    // 1. Start with static questions that aren't deleted
-    const merged = staticQuestions
-      .filter(q => !state.deletedIds.has(q.id))
-      .map(q => {
-        // 2. Apply overrides if they exist
-        return state.overrides[q.id] || q;
-      });
-
-    // 3. Append user-created questions
-    return [...merged, ...state.userQuestions];
-  }),
-
-  getQuizQuestions: computed(() => {
-    // 1. Re-calculate merged list logic locally to avoid circular dependency
-    const merged = staticQuestions
-      .filter(q => !state.deletedIds.has(q.id))
-      .map(q => state.overrides[q.id] || q);
-
-    const all = [...merged, ...state.userQuestions];
-
-    return all.map(q => ({
-      id: q.id,
-      text: q.title,
-      type: 'input' as const,
-      correctAnswer: q.answer,
-      codeSnippet: q.code,
-      explanation: 'Custom study question'
-    }));
-  }),
-
   async saveQuestion(question: Question) {
     // Check if it's a static question (ID exists in static data)
+    // We check against getAllQuestions excluding user questions to see if it's an override target
+    // Or simpler: check if id exists in staticQuestions array
     const isStatic = staticQuestions.some(q => q.id === question.id);
 
     if (isStatic) {
@@ -154,6 +195,7 @@ export const QuestionStore = {
     state.userQuestions = [];
     state.overrides = {};
     state.deletedIds = new Set();
+    state.customQuizzes = [];
     window.location.reload();
   }
 };

@@ -2,7 +2,7 @@
 import { computed, ref, onMounted } from 'vue';
 import { useWindowVirtualizer } from '@tanstack/vue-virtual';
 import QuestionCard from './QuestionCard.vue';
-import EditModal from './EditModal.vue';
+import EditModal from '../features/editor/components/EditModal.vue';
 import { QuestionStore } from '../services/QuestionStore';
 import type { Question } from '../types';
 
@@ -19,7 +19,7 @@ onMounted(async () => {
 const questions = computed(() => QuestionStore.getAllQuestions.value);
 
 const uniqueCategories = computed(() => {
-  const cats = new Set(questions.value.map(q => q.category));
+  const cats = new Set(questions.value.map((q: Question) => q.category));
   return Array.from(cats).sort();
 });
 
@@ -40,7 +40,7 @@ const saveQuestion = async (updatedQ: Question) => {
 
 const deleteQuestion = async (id: number | string) => {
   if (!confirm('Are you sure?')) return;
-  
+
   try {
     await QuestionStore.deleteQuestion(id.toString());
     isEditModalOpen.value = false;
@@ -52,12 +52,12 @@ const deleteQuestion = async (id: number | string) => {
 
 const categories = computed(() => {
   const counts: Record<string, number> = { 'Все': questions.value.length };
-  questions.value.forEach(q => {
+  questions.value.forEach((q: Question) => {
     counts[q.category] = (counts[q.category] || 0) + 1;
   });
 
   const uniqueCats = Object.keys(counts).filter(c => c !== 'Все').sort();
-  
+
   return [
     { name: 'Все', count: counts['Все'] },
     ...uniqueCats.map(c => ({ name: c, count: counts[c] }))
@@ -66,8 +66,8 @@ const categories = computed(() => {
 
 const groupedQuestions = computed(() => {
   const groups: Record<string, typeof questions.value> = {};
-  
-  questions.value.forEach(q => {
+
+  questions.value.forEach((q: Question) => {
     const query = searchQuery.value.toLowerCase().trim();
     if (query) {
       const matchesId = q.id.toString().includes(query);
@@ -84,26 +84,26 @@ const groupedQuestions = computed(() => {
     }
     groups[q.category]!.push(q);
   });
-  
+
   return groups;
 });
 
 // Virtual Scroll Logic
-type FlatItem = 
-  | { type: 'header'; id: string; text: string } 
+type FlatItem =
+  | { type: 'header'; id: string; text: string }
   | { type: 'question'; id: string; data: Question };
 
 const flatList = computed(() => {
   const list: FlatItem[] = [];
   const groups = groupedQuestions.value;
-  
+
   Object.keys(groups).sort().forEach(category => {
     list.push({ type: 'header', id: `cat-${category}`, text: category });
-    groups[category]!.forEach(q => {
+    groups[category]!.forEach((q: Question) => {
       list.push({ type: 'question', id: q.id, data: q });
     });
   });
-  
+
   return list;
 });
 
@@ -130,71 +130,47 @@ const measureElement = (el: any) => {
     </div>
 
     <div class="search-container">
-      <input 
-        v-model="searchQuery"
-        type="text"
-        placeholder="Поиск по номеру (100) или названию..."
-        class="search-input"
-      >
+      <input v-model="searchQuery" type="text" placeholder="Поиск по номеру (100) или названию..." class="search-input">
     </div>
 
     <div class="categories-nav">
-      <button 
-        v-for="cat in categories" 
-        :key="cat.name"
-        class="category-chip"
-        :class="{ active: selectedCategory === cat.name }"
-        @click="selectedCategory = cat.name"
-      >
-        {{ cat.name }} 
+      <button v-for="cat in categories" :key="cat.name" class="category-chip"
+        :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+        {{ cat.name }}
         <span class="category-count">{{ cat.count }}</span>
       </button>
     </div>
 
     <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
-        <div
-          v-for="virtualRow in virtualRows"
-          :key="flatList[virtualRow.index]?.id || virtualRow.index"
-          :data-index="virtualRow.index"
-          :ref="measureElement"
-          :style="{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            transform: `translateY(${virtualRow.start}px)`,
-          }"
-        >
-          <template v-if="flatList[virtualRow.index]?.type === 'header'">
-             <div class="category-section">
-                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
-             </div>
-          </template>
-          <template v-else-if="flatList[virtualRow.index]?.type === 'question'">
-             <div class="questions-list">
-                <QuestionCard 
-                  :question="(flatList[virtualRow.index] as any).data" 
-                  @edit="openEditModal"
-                />
-             </div>
-          </template>
-        </div>
+      <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
+        :data-index="virtualRow.index" :ref="measureElement" :style="{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          transform: `translateY(${virtualRow.start}px)`,
+        }">
+        <template v-if="flatList[virtualRow.index]?.type === 'header'">
+          <div class="category-section">
+            <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+          </div>
+        </template>
+        <template v-else-if="flatList[virtualRow.index]?.type === 'question'">
+          <div class="questions-list">
+            <QuestionCard :question="(flatList[virtualRow.index] as any).data" @edit="openEditModal" />
+          </div>
+        </template>
+      </div>
     </div>
   </main>
 
   <button class="fab-add" @click="openEditModal(null)" title="Add Question">+</button>
 
-  <EditModal 
-    :is-open="isEditModalOpen" 
-    :question="editingQuestion" 
-    :categories="uniqueCategories"
-    @close="isEditModalOpen = false"
-    @save="saveQuestion"
-    @delete="deleteQuestion"
-  />
+  <EditModal :is-open="isEditModalOpen" :question="editingQuestion" :categories="uniqueCategories"
+    @close="isEditModalOpen = false" @save="saveQuestion" @delete="deleteQuestion" />
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .fab-add {
   position: fixed;
   bottom: 2rem;
@@ -213,10 +189,10 @@ const measureElement = (el: any) => {
   justify-content: center;
   transition: transform 0.2s;
   z-index: 90;
-}
 
-.fab-add:hover {
-  transform: scale(1.1);
+  &:hover {
+    transform: scale(1.1);
+  }
 }
 
 .main-content {
@@ -227,18 +203,18 @@ const measureElement = (el: any) => {
 .intro {
   text-align: center;
   margin-bottom: var(--spacing-xl);
-}
 
-.intro h2 {
-  font-size: 2.5rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-bottom: var(--spacing-xs);
-}
+  h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
 
-.intro p {
-  color: var(--text-secondary);
-  font-size: 1.1rem;
+  p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
 }
 
 .search-container {
@@ -256,17 +232,17 @@ const measureElement = (el: any) => {
   border: 2px solid var(--border-color);
   border-radius: 12px;
   transition: all 0.2s ease;
-}
 
-.search-input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
-}
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+  }
 
-.search-input::placeholder {
-  color: var(--text-secondary);
-  opacity: 0.7;
+  &::placeholder {
+    color: var(--text-secondary);
+    opacity: 0.7;
+  }
 }
 
 .questions-list {
@@ -277,8 +253,15 @@ const measureElement = (el: any) => {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .category-section {
@@ -304,10 +287,10 @@ const measureElement = (el: any) => {
   margin-bottom: var(--spacing-xl);
   scrollbar-width: none;
   -ms-overflow-style: none;
-}
 
-.categories-nav::-webkit-scrollbar {
-  display: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .category-chip {
@@ -320,17 +303,17 @@ const measureElement = (el: any) => {
   white-space: nowrap;
   font-size: 0.9rem;
   transition: all 0.2s ease;
-}
 
-.category-chip:hover {
-  border-color: var(--accent-primary);
-  color: var(--text-primary);
-}
+  &:hover {
+    border-color: var(--accent-primary);
+    color: var(--text-primary);
+  }
 
-.category-chip.active {
-  background: var(--accent-primary);
-  color: #fff;
-  border-color: var(--accent-primary);
+  &.active {
+    background: var(--accent-primary);
+    color: #fff;
+    border-color: var(--accent-primary);
+  }
 }
 
 .category-count {

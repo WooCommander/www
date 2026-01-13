@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { QuestionStore } from '../services/QuestionStore';
-import type { CustomQuiz, Question } from '../types';
+import { QuestionStore } from '../../../services/QuestionStore';
+import type { CustomQuiz, Question } from '../../../types';
 
 const props = defineProps<{
   isOpen: boolean;
@@ -22,8 +22,8 @@ const allQuestions = computed(() => QuestionStore.getAllQuestions.value);
 const filteredQuestions = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
   if (!query) return allQuestions.value;
-  return allQuestions.value.filter(q => 
-    q.title.toLowerCase().includes(query) || 
+  return allQuestions.value.filter(q =>
+    q.title.toLowerCase().includes(query) ||
     q.id.toString().includes(query) ||
     q.category.toLowerCase().includes(query)
   );
@@ -31,12 +31,12 @@ const filteredQuestions = computed(() => {
 
 // Watch isOpen to reset form when opening
 watch(() => props.isOpen, (val) => {
-    if (val) {
-        title.value = '';
-        description.value = '';
-        selectedIds.value = new Set();
-        searchQuery.value = '';
-    }
+  if (val) {
+    title.value = '';
+    description.value = '';
+    selectedIds.value = new Set();
+    searchQuery.value = '';
+  }
 });
 
 const toggleSelection = (id: string | number) => {
@@ -51,8 +51,8 @@ const toggleSelection = (id: string | number) => {
 const save = () => {
   if (!title.value.trim()) return;
   if (selectedIds.value.size === 0) {
-      alert('Выберите хотя бы один вопрос');
-      return;
+    alert('Выберите хотя бы один вопрос');
+    return;
   }
 
   const newQuiz: CustomQuiz = {
@@ -74,7 +74,7 @@ const save = () => {
         <h3>Новый Тест</h3>
         <button class="close-btn" @click="$emit('close')">×</button>
       </div>
-      
+
       <div class="editor-content">
         <label>
           Название
@@ -88,33 +88,20 @@ const save = () => {
 
         <div class="question-selector">
           <h4>Выберите вопросы ({{ selectedIds.size }})</h4>
-          <input 
-            v-model="searchQuery" 
-            placeholder="Поиск вопросов..." 
-            class="search-small"
-          />
-          
+          <input v-model="searchQuery" placeholder="Поиск вопросов..." class="search-small" />
+
           <div class="questions-list">
-            <div 
-              v-for="q in filteredQuestions" 
-              :key="q.id" 
-              class="question-item"
-              :class="{ selected: selectedIds.has(q.id.toString()) }"
-              @click="toggleSelection(q.id)"
-            >
-              <input 
-                type="checkbox" 
-                :checked="selectedIds.has(q.id.toString())"
-                readonly 
-              />
+            <div v-for="q in filteredQuestions" :key="q.id" class="question-item"
+              :class="{ selected: selectedIds.has(q.id.toString()) }" @click="toggleSelection(q.id)">
+              <input type="checkbox" :checked="selectedIds.has(q.id.toString())" readonly />
               <div class="q-info">
-                  <span class="q-title">{{ q.title }}</span>
-                  <span class="q-meta">{{ q.category }} • {{ q.difficulty }}</span>
+                <span class="q-title">{{ q.title }}</span>
+                <span class="q-meta">{{ q.category }} • {{ q.difficulty }}</span>
               </div>
             </div>
           </div>
         </div>
-        
+
         <div class="actions">
           <button class="btn-cancel" @click="$emit('close')">Отмена</button>
           <button class="btn-save" @click="save">Создать Тест</button>
@@ -124,11 +111,14 @@ const save = () => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .modal-overlay {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.7);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -177,6 +167,11 @@ input {
   border: 1px solid var(--border-color);
   border-radius: var(--radius-sm);
   color: var(--text-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+  }
 }
 
 .question-selector {
@@ -206,31 +201,31 @@ input {
   cursor: pointer;
   align-items: flex-start;
   transition: background 0.2s;
-}
 
-.question-item:hover {
-  background: rgba(255, 255, 255, 0.05);
-}
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
 
-.question-item.selected {
-  background: rgba(56, 189, 248, 0.1);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+  &.selected {
+    background: rgba(56, 189, 248, 0.1);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+  }
 }
 
 .q-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .q-title {
-    font-weight: 500;
-    font-size: 0.95rem;
+  font-weight: 500;
+  font-size: 0.95rem;
 }
 
 .q-meta {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
 }
 
 .actions {
@@ -246,11 +241,15 @@ input {
   padding: 10px 20px;
   border-radius: var(--radius-sm);
   font-weight: 600;
+  border: none;
+  cursor: pointer;
 }
 
 .btn-cancel {
   background: transparent;
   color: var(--text-secondary);
   padding: 10px 20px;
+  border: none;
+  cursor: pointer;
 }
 </style>
