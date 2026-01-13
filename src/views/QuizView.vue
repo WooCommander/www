@@ -56,8 +56,8 @@ onUnmounted(() => {
 // Merge static quizzes with user questions AND custom quizzes
 const allQuizzes = computed(() => QuestionStore.getQuizzes.value);
 const allCategories = computed(() => {
-    const cats = new Set(allQuizzes.value.map(q => q.category));
-    return Array.from(cats).sort();
+    const cats = new Set(allQuizzes.value.map((q: QuizTopic) => q.category));
+    return Array.from(cats).sort() as string[];
 });
 
 // Group quizzes by category

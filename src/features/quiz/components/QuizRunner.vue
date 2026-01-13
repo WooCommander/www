@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
 import type { QuizTopic, QuizQuestion } from '../../../data/quiz_data';
 
 defineProps<{
@@ -45,7 +44,7 @@ const isOptionSelected = (questionId: string, optionId: string, userAnswers: any
                 <div class="progress-fill" :style="{ width: progress + '%' }"></div>
             </div>
             <span class="progress-text">Вопрос {{ currentQuestionIndex + 1 }} из {{ currentQuiz.questions.length
-                }}</span>
+            }}</span>
         </div>
 
         <div class="question-card-lg" :class="{ shake: isShaking }">

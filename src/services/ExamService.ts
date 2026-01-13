@@ -85,8 +85,6 @@ export const ExamService = {
             id: 'exam-random-' + Date.now(),
             title: 'Финальный Экзамен',
             category: 'Exam',
-            icon: '🎓',
-            description: 'Случайная выборка из всех тем',
             questions: mappedQuestions
         };
     }

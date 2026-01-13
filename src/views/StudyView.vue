@@ -21,7 +21,7 @@ const questions = computed(() => QuestionStore.getAllQuestions.value);
 
 const uniqueCategories = computed(() => {
   const cats = new Set(questions.value.map((q: Question) => q.category));
-  return Array.from(cats).sort();
+  return Array.from(cats).sort() as string[];
 });
 
 const openEditModal = (q: Question | null) => {
@@ -101,7 +101,7 @@ const flatList = computed(() => {
   Object.keys(groups).sort().forEach(category => {
     list.push({ type: 'header', id: `cat-${category}`, text: category });
     groups[category]!.forEach((q: Question) => {
-      list.push({ type: 'question', id: q.id, data: q });
+      list.push({ type: 'question', id: q.id.toString(), data: q });
     });
   });
 

@@ -62,7 +62,7 @@ class SoundService {
     const timings = [0, 0.15, 0.3, 0.45, 0.6, 0.8, 0.95, 1.2];
 
     notes.forEach((n, i) => {
-      this.playToneAtTime(n, now + timings[i], 0.2, 'square');
+      this.playToneAtTime(n, now + (timings[i] ?? 0), 0.2, 'square');
     });
   }
 

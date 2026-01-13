@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
 import type { QuizTopic, QuizQuestion } from '../../../data/quiz_data';
 
 defineProps<{
@@ -26,7 +25,7 @@ const emit = defineEmits<{
             <div v-for="q in topic.questions" :key="q.id" class="editor-question-card">
                 <div class="q-content">
                     <span class="q-type-badge">{{ q.type === 'input' ? '📝' : (q.type === 'single' ? '🔘' : '☑️')
-                        }}</span>
+                    }}</span>
                     <span class="q-text">{{ q.text }}</span>
                 </div>
                 <div class="q-actions">

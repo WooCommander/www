@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { QuestionStore } from '../../../services/QuestionStore';
 import type { CustomQuiz, Question } from '../../../types';
 
@@ -22,7 +22,7 @@ const allQuestions = computed(() => QuestionStore.getAllQuestions.value);
 const filteredQuestions = computed(() => {
   const query = searchQuery.value.toLowerCase().trim();
   if (!query) return allQuestions.value;
-  return allQuestions.value.filter(q =>
+  return allQuestions.value.filter((q: Question) =>
     q.title.toLowerCase().includes(query) ||
     q.id.toString().includes(query) ||
     q.category.toLowerCase().includes(query)

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { defineProps, defineEmits, computed } from 'vue';
 import type { QuizTopic, QuizQuestion } from '../../../data/quiz_data';
 
 const props = defineProps<{

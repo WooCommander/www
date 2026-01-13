@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue';
 import { Preferences } from '@capacitor/preferences';
-import { quizzes as staticQuizzes, type QuizTopic, type QuizQuestion } from '../data/quiz_data';
+import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
 import type { Question, CustomQuiz } from '../types';
 
@@ -27,80 +27,79 @@ const state = reactive<QuestionState>({
   isLoaded: false
 });
 
+const getQuizzes = computed(() => {
+  // 1. Clone static topics structure and apply overrides
+  const mergedTopics: QuizTopic[] = staticQuizzes.map(topic => ({
+    ...topic,
+    questions: topic.questions
+      .filter(q => !state.deletedIds.has(q.id))
+      .map(q => {
+        const override = state.overrides[q.id];
+        if (override) {
+          return {
+            id: override.id.toString(),
+            text: override.title,
+            type: (override.type || 'input') as any,
+            options: override.options,
+            correctAnswer: override.answer,
+            explanation: override.answer
+          };
+        }
+        return q;
+      })
+  }));
+
+  // 2. Add user questions to their respective categories
+  state.userQuestions.forEach(uq => {
+    const topic = mergedTopics.find(t => t.category === uq.category);
+    if (topic) {
+      topic.questions.push({
+        id: uq.id.toString(),
+        text: uq.title,
+        type: (uq.type || 'input') as any,
+        options: uq.options,
+        correctAnswer: uq.answer,
+        explanation: uq.answer
+      });
+    }
+  });
+
+  return mergedTopics;
+});
+
+const getAllQuestions = computed(() => {
+  // 1. Start with static questions that aren't deleted
+  const merged = staticQuestions
+    .filter(q => !state.deletedIds.has(q.id.toString()))
+    .map(q => {
+      return state.overrides[q.id] || q;
+    });
+
+  // 2. Append user-created questions
+  return [...merged, ...state.userQuestions];
+});
+
+// Helper for Flashcard/Study modes using flat questions
+const getQuizQuestions = computed(() => {
+  const allQs = getAllQuestions.value;
+  return allQs.map((q: Question) => ({
+    id: q.id.toString(),
+    text: q.title,
+    type: (q.type || 'input') as any,
+    options: q.options,
+    correctAnswer: q.answer,
+    explanation: q.answer
+  }));
+});
+
 export const QuestionStore = {
   get state() {
     return state;
   },
 
-  getQuizzes: computed(() => {
-    // 1. Clone static topics structure and apply overrides
-    const mergedTopics: QuizTopic[] = staticQuizzes.map(topic => ({
-      ...topic,
-      questions: topic.questions
-        .filter(q => !state.deletedIds.has(q.id))
-        .map(q => {
-          const override = state.overrides[q.id];
-          if (override) {
-            return {
-              id: override.id.toString(),
-              text: override.title,
-              type: (override.type || 'input') as any,
-              options: override.options,
-              correctAnswer: override.answer,
-              explanation: override.answer
-            };
-          }
-          return q;
-        })
-    }));
-
-    // 2. Add user questions to their respective categories
-    state.userQuestions.forEach(uq => {
-      const topic = mergedTopics.find(t => t.category === uq.category);
-      if (topic) {
-        topic.questions.push({
-          id: uq.id.toString(),
-          text: uq.title,
-          type: (uq.type || 'input') as any,
-          options: uq.options,
-          correctAnswer: uq.answer,
-          explanation: uq.answer
-        });
-      }
-    });
-
-    return mergedTopics;
-  }),
-
-  getAllQuestions: computed(() => {
-    // 1. Start with static questions that aren't deleted
-    // Note: staticQuestions (from data/questions.ts) are a flat list of Question objects.
-    // We filter them and apply overrides.
-    const merged = staticQuestions
-      .filter(q => !state.deletedIds.has(q.id))
-      .map(q => {
-        return state.overrides[q.id] || q;
-      });
-
-    // 2. Append user-created questions
-    return [...merged, ...state.userQuestions];
-  }),
-
-  // Helper for Flashcard/Study modes using flat questions
-  getQuizQuestions: computed(() => {
-    // This matches the format needed for some legacy views if they use QuizQuestion interface
-    // But primarily StudyView uses getAllQuestions (Question interface).
-    // Keeping this for potential mapping utility.
-    const allQs = QuestionStore.getAllQuestions.value;
-    return allQs.map(q => ({
-      id: q.id.toString(),
-      text: q.title,
-      type: (q.type || 'input') as any,
-      options: q.options,
-      correctAnswer: q.answer,
-      explanation: q.answer
-    }));
-  }),
+  getQuizzes,
+  getAllQuestions,
+  getQuizQuestions,
 
   async initialize() {
     if (state.isLoaded) return;

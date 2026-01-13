@@ -1,5 +1,5 @@
-import { ref, computed, type Ref } from 'vue';
-import type { QuizTopic, QuizQuestion } from '../../../data/quiz_data';
+import { ref, computed } from 'vue';
+import type { QuizTopic } from '../../../data/quiz_data';
 import { soundService } from '../../../services/SoundService';
 import confetti from 'canvas-confetti';
 
@@ -113,19 +113,19 @@ export function useQuizSession() {
       }
       userAnswers.value[activeQuestion.value.id] = optionId;
     } else if (activeQuestion.value.type === 'multiple') {
-        // For multiple choice, we don't play sound immediately on selection? 
-        // Or maybe just click sound? Let's keep it silent or impartial click.
-        // User requested sound triggers in QuizView, so keeping logic here is fine.
-        // But logic for "correctness" on multiple choice is only known when submitting or finishing?
-        // Usually implementation is: click updates selection. Validation touches separate.
-        // Current implementation tries to be interactive.
-        // Let's stick to update selection.
-        const current = userAnswers.value[activeQuestion.value.id] || [];
-        if (current.includes(optionId)) {
-            userAnswers.value[activeQuestion.value.id] = current.filter((id: string) => id !== optionId);
-        } else {
-            userAnswers.value[activeQuestion.value.id] = [...current, optionId];
-        }
+      // For multiple choice, we don't play sound immediately on selection? 
+      // Or maybe just click sound? Let's keep it silent or impartial click.
+      // User requested sound triggers in QuizView, so keeping logic here is fine.
+      // But logic for "correctness" on multiple choice is only known when submitting or finishing?
+      // Usually implementation is: click updates selection. Validation touches separate.
+      // Current implementation tries to be interactive.
+      // Let's stick to update selection.
+      const current = userAnswers.value[activeQuestion.value.id] || [];
+      if (current.includes(optionId)) {
+        userAnswers.value[activeQuestion.value.id] = current.filter((id: string) => id !== optionId);
+      } else {
+        userAnswers.value[activeQuestion.value.id] = [...current, optionId];
+      }
     }
   };
 
@@ -151,7 +151,7 @@ export function useQuizSession() {
         correct: result.correct,
         total: result.total,
         timeTaken: currentQuiz.value.id === 'exam-full' ? (45 * 60 - timeRemaining.value) : 0,
-        mode: modeName, 
+        mode: modeName,
         title: currentQuiz.value.title
       };
 
@@ -188,13 +188,13 @@ export function useQuizSession() {
   };
 
   const resetQuiz = () => {
-      if (currentQuiz.value) {
-          resetState();
-          if (currentQuiz.value.id === 'exam-full') {
-              timeRemaining.value = 45 * 60;
-              startTimer();
-          }
+    if (currentQuiz.value) {
+      resetState();
+      if (currentQuiz.value.id === 'exam-full') {
+        timeRemaining.value = 45 * 60;
+        startTimer();
       }
+    }
   };
 
   return {
