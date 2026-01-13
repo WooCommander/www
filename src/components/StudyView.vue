@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, onMounted } from 'vue';
 import QuestionCard from './QuestionCard.vue';
 import EditModal from './EditModal.vue';
-import { questions } from '../data/questions';
+import { QuestionStore } from '../services/QuestionStore';
 import type { Question } from '../types';
 
 const selectedCategory = ref('Все');
@@ -11,8 +11,14 @@ const searchQuery = ref('');
 const isEditModalOpen = ref(false);
 const editingQuestion = ref<Question | null>(null);
 
+onMounted(async () => {
+  await QuestionStore.initialize();
+});
+
+const questions = computed(() => QuestionStore.getAllQuestions.value);
+
 const uniqueCategories = computed(() => {
-  const cats = new Set(questions.map(q => q.category));
+  const cats = new Set(questions.value.map(q => q.category));
   return Array.from(cats).sort();
 });
 
@@ -22,62 +28,30 @@ const openEditModal = (q: Question | null) => {
 };
 
 const saveQuestion = async (updatedQ: Question) => {
-  let newQuestions = [...questions];
-  
-  if (editingQuestion.value) {
-    // Update existing
-    const index = newQuestions.findIndex(q => q.id === updatedQ.id);
-    if (index !== -1) {
-      newQuestions[index] = updatedQ;
-    }
-  } else {
-    // Add new (ID should be unique in real app, here we trust logic)
-    updatedQ.id = (Math.max(...newQuestions.map(q => Number(q.id))) + 1).toString();
-    newQuestions.push(updatedQ);
-  }
-
   try {
-    const res = await fetch('/api/save-questions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questions: newQuestions })
-    });
-    if (res.ok) {
-      isEditModalOpen.value = false;
-      // Note: In real app we might need to emit 'update' or handle state sync if not relying on HMR reload
-      window.location.reload(); // Simple reload to reflect changes for now as data is static import
-    } else {
-      alert('Failed to save');
-    }
+    await QuestionStore.saveQuestion(updatedQ);
+    isEditModalOpen.value = false;
   } catch (e) {
     console.error(e);
-    alert('Error saving');
+    alert('Error saving question');
   }
 };
 
 const deleteQuestion = async (id: number | string) => {
   if (!confirm('Are you sure?')) return;
   
-  const newQuestions = questions.filter(q => q.id !== id);
-  
   try {
-    const res = await fetch('/api/save-questions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ questions: newQuestions })
-    });
-    if (res.ok) {
-      isEditModalOpen.value = false;
-      window.location.reload();
-    }
+    await QuestionStore.deleteQuestion(id.toString());
+    isEditModalOpen.value = false;
   } catch (e) {
-    alert('Error deleting');
+    console.error(e);
+    alert('Error deleting question');
   }
 };
 
 const categories = computed(() => {
-  const counts: Record<string, number> = { 'Все': questions.length };
-  questions.forEach(q => {
+  const counts: Record<string, number> = { 'Все': questions.value.length };
+  questions.value.forEach(q => {
     counts[q.category] = (counts[q.category] || 0) + 1;
   });
 
@@ -90,9 +64,9 @@ const categories = computed(() => {
 });
 
 const groupedQuestions = computed(() => {
-  const groups: Record<string, typeof questions> = {};
+  const groups: Record<string, typeof questions.value> = {};
   
-  questions.forEach(q => {
+  questions.value.forEach(q => {
     const query = searchQuery.value.toLowerCase().trim();
     if (query) {
       const matchesId = q.id.toString().includes(query);

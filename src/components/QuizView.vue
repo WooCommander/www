@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onUnmounted, onMounted } from 'vue';
 import { quizzes, type QuizTopic, type QuizQuestion } from '../data/quiz_data';
+import { QuestionStore } from '../services/QuestionStore';
 
 const currentQuiz = ref<QuizTopic | null>(null);
 const currentQuestionIndex = ref(0);
@@ -13,10 +14,32 @@ const viewMode = ref<'topic' | 'category' | 'exam'>('topic');
 const timeRemaining = ref(0); // seconds
 let timerInterval: any = null;
 
+onMounted(async () => {
+    await QuestionStore.initialize();
+});
+
+// Merge static quizzes with user questions
+const allQuizzes = computed(() => {
+    const userQs = QuestionStore.getQuizQuestions.value;
+    
+    const merged = [...quizzes];
+    
+    if (userQs.length > 0) {
+        merged.push({
+            id: 'user-custom',
+            title: 'Мои вопросы (Flashcards)',
+            category: 'User Questions',
+            questions: userQs
+        });
+    }
+    
+    return merged;
+});
+
 // Group quizzes by category
 const quizzesByCategory = computed(() => {
   const groups: Record<string, QuizTopic[]> = {};
-  quizzes.forEach(q => {
+  allQuizzes.value.forEach(q => {
     if (!groups[q.category]) {
       groups[q.category] = [];
     }
@@ -79,7 +102,7 @@ const startCategoryMode = (category: string) => {
 
 // Start Exam Mode (Random 50, 45 mins)
 const startExamMode = () => {
-    const allQuestions = quizzes.flatMap(q => q.questions);
+    const allQuestions = allQuizzes.value.flatMap(q => q.questions);
     const selectedQuestions = shuffle(allQuestions).slice(0, 50);
 
     currentQuiz.value = {

@@ -1,12 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import Header from './components/Header.vue';
-import StudyView from './components/StudyView.vue';
-import QuizView from './components/QuizView.vue';
-import LeaderboardView from './components/LeaderboardView.vue';
 
 const isDark = ref(true);
-const currentView = ref<'study' | 'quiz' | 'leaderboard'>('study');
+const route = useRoute();
+const router = useRouter();
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
@@ -32,14 +31,18 @@ const updateThemeClass = () => {
   }
 };
 
-const activeComponent = computed(() => {
-    switch (currentView.value) {
-        case 'study': return StudyView;
-        case 'quiz': return QuizView;
-        case 'leaderboard': return LeaderboardView;
-        default: return StudyView;
-    }
+// Map route name to view name for Header compatibility or refactor Header
+const currentView = computed(() => {
+    const name = route.name as string;
+    return (['study', 'quiz', 'leaderboard'].includes(name) ? name : 'study') as 'study' | 'quiz' | 'leaderboard';
 });
+
+const handleViewChange = (view: string) => {
+    // Adapter for Header event -> Router
+    if (view === 'study') router.push('/');
+    else if (view === 'quiz') router.push('/quiz');
+    else if (view === 'leaderboard') router.push('/leaderboard');
+};
 </script>
 
 <template>
@@ -47,10 +50,10 @@ const activeComponent = computed(() => {
     :is-dark="isDark" 
     :current-view="currentView"
     @toggle-theme="toggleTheme" 
-    @change-view="(view) => currentView = view"
+    @change-view="handleViewChange"
   />
   
-  <component :is="activeComponent" />
+  <router-view />
 </template>
 
 <style>

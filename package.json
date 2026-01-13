@@ -13,10 +13,12 @@
     "@capacitor/cli": "^7.4.4",
     "@capacitor/core": "^8.0.0",
     "@capacitor/preferences": "^8.0.0",
+    "@tanstack/vue-virtual": "^3.13.18",
     "@types/markdown-it": "^14.1.2",
     "highlight.js": "^11.11.1",
     "markdown-it": "^14.1.0",
-    "vue": "^3.5.24"
+    "vue": "^3.5.24",
+    "vue-router": "^4.6.4"
   },
   "devDependencies": {
     "@types/node": "^24.10.1",

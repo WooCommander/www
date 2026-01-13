@@ -11,4 +11,8 @@ const updateSW = registerSW({
     }
 })
 
-createApp(App).mount('#app')
+import router from './router'
+
+createApp(App)
+    .use(router)
+    .mount('#app')
