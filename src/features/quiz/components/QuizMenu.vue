@@ -19,9 +19,35 @@ const emit = defineEmits<{
 
 <template>
   <div class="quiz-menu">
-    <div class="menu-intro">
+    <div class="intro-header">
       <h2>Выберите режим или тему</h2>
-      <div class="mode-tabs">
+      <p>Проверь свои знания в различных режимах тестирования.</p>
+    </div>
+
+    <div class="quiz-layout">
+      <!-- Sidebar Navigation (Desktop) -->
+      <aside class="sidebar-nav">
+        <h3 class="nav-title">Режимы</h3>
+        <nav class="nav-list">
+          <button class="nav-item" :class="{ active: viewMode === 'topic' }" @click="emit('update:viewMode', 'topic')">
+            <span class="icon">📚</span> Темы
+          </button>
+          <button class="nav-item" :class="{ active: viewMode === 'category' }"
+            @click="emit('update:viewMode', 'category')">
+            <span class="icon">🏷️</span> Категории
+          </button>
+          <button class="nav-item" :class="{ active: viewMode === 'exam' }" @click="emit('update:viewMode', 'exam')">
+            <span class="icon">⏱️</span> Экзамен
+          </button>
+          <button class="nav-item" :class="{ active: viewMode === 'editor' }"
+            @click="emit('update:viewMode', 'editor')">
+            <span class="icon">✏️</span> Редактор
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Mobile Navigation (Tabs) -->
+      <div class="mobile-tabs">
         <button class="mode-tab" :class="{ active: viewMode === 'topic' }"
           @click="emit('update:viewMode', 'topic')">Темы</button>
         <button class="mode-tab" :class="{ active: viewMode === 'category' }"
@@ -31,85 +57,88 @@ const emit = defineEmits<{
         <button class="mode-tab" :class="{ active: viewMode === 'editor' }"
           @click="emit('update:viewMode', 'editor')">Редактор</button>
       </div>
-    </div>
 
-    <!-- Topic Mode -->
-    <div v-if="viewMode === 'topic'">
-      <div class="topics-header">
-        <h3>Доступные темы</h3>
-        <button class="btn-create" @click="emit('create-quiz')">+ Создать Тест</button>
-      </div>
+      <!-- Main Content -->
+      <div class="content-area">
+        <!-- Topic Mode -->
+        <div v-if="viewMode === 'topic'">
+          <div class="topics-header">
+            <h3>Доступные темы</h3>
+            <button class="btn-create" @click="emit('create-quiz')">+ Создать Тест</button>
+          </div>
 
-      <div v-for="category in allCategories" :key="category" class="topic-group">
-        <h4 class="category-title">{{ category }}</h4>
-        <div class="quiz-grid">
-          <div v-for="quiz in quizzesByCategory[category]" :key="quiz.id" class="quiz-card"
-            @click="emit('start-quiz', quiz)">
-            <h5>{{ quiz.title }}</h5>
-            <div class="topic-meta">
-              <span>{{ quiz.questions.length }} вопросов</span>
+          <div v-for="category in allCategories" :key="category" class="topic-group">
+            <h4 class="category-title">{{ category }}</h4>
+            <div class="quiz-grid">
+              <div v-for="quiz in quizzesByCategory[category]" :key="quiz.id" class="quiz-card"
+                @click="emit('start-quiz', quiz)">
+                <h5>{{ quiz.title }}</h5>
+                <div class="topic-meta">
+                  <span>{{ quiz.questions.length }} вопросов</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Category Mode -->
-    <div v-if="viewMode === 'category'" class="category-list-view">
-      <h2>Выберите категорию</h2>
-      <p class="mode-desc">Вам будет предложено 20 случайных вопросов из выбранной категории.</p>
+        <!-- Category Mode -->
+        <div v-if="viewMode === 'category'" class="category-list-view">
+          <h3>Выберите категорию</h3>
+          <p class="mode-desc">Вам будет предложено 20 случайных вопросов из выбранной категории.</p>
 
-      <div class="quiz-grid">
-        <div v-for="cat in allCategories" :key="cat" class="quiz-card category-card"
-          @click="emit('start-category', cat)">
-          <h3>{{ cat }}</h3>
-          <p>Случайные 20 вопросов</p>
-          <button class="start-btn">Начать тест</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Exam Mode -->
-    <div v-if="viewMode === 'exam'" class="exam-view">
-      <div class="exam-intro">
-        <h2>Финальный Экзамен</h2>
-        <div class="exam-info">
-          <div class="info-item">
-            <span class="emoji">❓</span>
-            <span>50 вопросов</span>
-          </div>
-          <div class="info-item">
-            <span class="emoji">⏱️</span>
-            <span>45 минут</span>
-          </div>
-          <div class="info-item">
-            <span class="emoji">🎲</span>
-            <span>Все темы</span>
+          <div class="quiz-grid">
+            <div v-for="cat in allCategories" :key="cat" class="quiz-card category-card"
+              @click="emit('start-category', cat)">
+              <h3>{{ cat }}</h3>
+              <p>Случайные 20 вопросов</p>
+              <button class="start-btn">Начать тест</button>
+            </div>
           </div>
         </div>
-        <p>
-          Вопросы выбираются случайно из всей базы знаний.
-          Таймер запустится автоматически. Результат будет сохранен только после завершения.
-        </p>
-        <button class="start-exam-btn" @click="emit('start-exam')">Начать экзамен</button>
-      </div>
-    </div>
 
-    <!-- Editor Overview Mode (Topic List) -->
-    <div v-if="viewMode === 'editor'" class="editor-topics">
-      <div class="topics-header">
-        <h3>Выберите тему для редактирования</h3>
-      </div>
+        <!-- Exam Mode -->
+        <div v-if="viewMode === 'exam'" class="exam-view">
+          <div class="exam-intro">
+            <h2>Финальный Экзамен</h2>
+            <div class="exam-info">
+              <div class="info-item">
+                <span class="emoji">❓</span>
+                <span>50 вопросов</span>
+              </div>
+              <div class="info-item">
+                <span class="emoji">⏱️</span>
+                <span>45 минут</span>
+              </div>
+              <div class="info-item">
+                <span class="emoji">🎲</span>
+                <span>Все темы</span>
+              </div>
+            </div>
+            <p>
+              Вопросы выбираются случайно из всей базы знаний.
+              Таймер запустится автоматически. Результат будет сохранен только после завершения.
+            </p>
+            <button class="start-exam-btn" @click="emit('start-exam')">Начать экзамен</button>
+          </div>
+        </div>
 
-      <div v-for="category in allCategories" :key="category" class="topic-group">
-        <h4 class="category-title">{{ category }}</h4>
-        <div class="quiz-grid">
-          <div v-for="quiz in quizzesByCategory[category]" :key="quiz.id" class="quiz-card"
-            @click="emit('open-editor', quiz)">
-            <h5>{{ quiz.title }}</h5>
-            <div class="topic-meta">
-              <span>{{ quiz.questions.length }} вопросов</span>
-              <span class="edit-icon">✏️</span>
+        <!-- Editor Overview Mode (Topic List) -->
+        <div v-if="viewMode === 'editor'" class="editor-topics">
+          <div class="topics-header">
+            <h3>Выберите тему для редактирования</h3>
+          </div>
+
+          <div v-for="category in allCategories" :key="category" class="topic-group">
+            <h4 class="category-title">{{ category }}</h4>
+            <div class="quiz-grid">
+              <div v-for="quiz in quizzesByCategory[category]" :key="quiz.id" class="quiz-card"
+                @click="emit('open-editor', quiz)">
+                <h5>{{ quiz.title }}</h5>
+                <div class="topic-meta">
+                  <span>{{ quiz.questions.length }} вопросов</span>
+                  <span class="edit-icon">✏️</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -119,39 +148,88 @@ const emit = defineEmits<{
 </template>
 
 <style scoped lang="scss">
-.menu-intro {
+/* Global styles for this component */
+.intro-header {
   text-align: center;
   margin-bottom: var(--spacing-xl);
+
+  h2 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+  }
 }
 
-.mode-tabs {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-sm);
-  margin-top: var(--spacing-md);
-  flex-wrap: wrap;
+.nav-title {
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
 }
 
-.mode-tab {
-  background: var(--bg-secondary);
+/* Desktop Layout */
+.quiz-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+.sidebar-nav {
+  position: sticky;
+  top: 100px;
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: 16px;
   border: 1px solid var(--border-color);
+  min-height: 300px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nav-item {
+  background: transparent;
+  border: 1px solid transparent;
   color: var(--text-secondary);
-  padding: 8px 24px;
-  border-radius: 20px;
+  padding: 12px 16px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.2s;
-  font-size: 0.95rem;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  width: 100%;
 
   &:hover {
-    border-color: var(--accent-primary);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
   }
 
   &.active {
     background: var(--accent-primary);
-    color: white;
-    border-color: var(--accent-primary);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
   }
+
+  .icon {
+    font-size: 1.2rem;
+  }
+}
+
+.mobile-tabs {
+  display: none;
+  /* Hidden on desktop */
 }
 
 .topics-header {
@@ -190,7 +268,8 @@ const emit = defineEmits<{
 
 .quiz-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  /* Force 2 columns on desktop to match user request */
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-lg);
 }
 
@@ -231,10 +310,17 @@ const emit = defineEmits<{
 
 /* Exam & Category specific styles */
 .exam-view,
-.category-list-view {
+/* Exam & Category specific styles */
+.exam-view {
   text-align: center;
-  max-width: 600px;
+  max-width: 800px;
+  /* Keep Exam somewhat focused but wider */
   margin: 0 auto;
+}
+
+.category-list-view {
+  /* Allow full width for grid */
+  text-align: left;
 }
 
 .exam-intro {
@@ -291,6 +377,48 @@ const emit = defineEmits<{
   font-weight: 600;
 }
 
+@media (max-width: 1024px) {
+  .quiz-layout {
+    display: block;
+  }
+
+  .sidebar-nav {
+    display: none;
+  }
+
+  .mobile-tabs {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-md);
+    flex-wrap: wrap;
+    /* Matches the update from earlier */
+    padding-bottom: 0;
+  }
+
+  .mode-tab {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.95rem;
+
+    &:hover {
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+    }
+
+    &.active {
+      background: var(--accent-primary);
+      color: white;
+      border-color: var(--accent-primary);
+    }
+  }
+}
+
 @media (max-width: 640px) {
   .quiz-grid {
     grid-template-columns: 1fr;
@@ -310,26 +438,13 @@ const emit = defineEmits<{
     min-width: 80px;
   }
 
-  .mode-tabs {
-    flex-wrap: wrap; /* Allow wrapping */
-    justify-content: center; /* Center the wrapped items */
-    gap: 8px; /* Slightly smaller gap */
-    overflow-x: visible; /* Remove scroll */
-    padding-bottom: 0;
-  }
-
-  /* Remove scrollbar hiding since we are not scrolling anymore */
-  .mode-tabs::-webkit-scrollbar {
-    display: none;
+  .mobile-tabs {
+    gap: 8px;
   }
 
   .mode-tab {
-    padding: 8px 16px;
-    white-space: normal; /* Allow text to wrap if really needed, though tabs will wrap first */
-    flex: 0 0 auto;
     font-size: 0.9rem;
-    text-align: center;
-    width: auto; /* Let them size naturally */
+    padding: 6px 12px;
   }
 }
 </style>

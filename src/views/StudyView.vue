@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useWindowVirtualizer } from '@tanstack/vue-virtual';
 
 import EditModal from '../features/editor/components/EditModal.vue';
@@ -13,8 +13,20 @@ const searchQuery = ref('');
 const isEditModalOpen = ref(false);
 const editingQuestion = ref<Question | null>(null);
 
+// Responsive logic
+const windowWidth = ref(window.innerWidth);
+
+const updateWidth = () => {
+  windowWidth.value = window.innerWidth;
+};
+
 onMounted(async () => {
+  window.addEventListener('resize', updateWidth);
   await QuestionStore.initialize();
+});
+
+onUnmounted(() => {
+  window.removeEventListener('resize', updateWidth);
 });
 
 const questions = computed(() => QuestionStore.getAllQuestions.value);
@@ -89,20 +101,31 @@ const groupedQuestions = computed(() => {
   return groups;
 });
 
+// Grid Logic
+const columnCount = computed(() => (windowWidth.value > 1024 ? 2 : 1));
+
 // Virtual Scroll Logic
 type FlatItem =
   | { type: 'header'; id: string; text: string }
-  | { type: 'question'; id: string; data: Question };
+  | { type: 'row'; id: string; items: Question[] };
 
 const flatList = computed(() => {
   const list: FlatItem[] = [];
   const groups = groupedQuestions.value;
+  const cols = columnCount.value;
 
   Object.keys(groups).sort().forEach(category => {
     list.push({ type: 'header', id: `cat-${category}`, text: category });
-    groups[category]!.forEach((q: Question) => {
-      list.push({ type: 'question', id: q.id.toString(), data: q });
-    });
+
+    const questionsInCat = groups[category]!;
+    for (let i = 0; i < questionsInCat.length; i += cols) {
+      const chunk = questionsInCat.slice(i, i + cols);
+      list.push({
+        type: 'row',
+        id: `row-${category}-${i}`,
+        items: chunk
+      });
+    }
   });
 
   return list;
@@ -124,43 +147,57 @@ const measureElement = (el: any) => {
 </script>
 
 <template>
-  <main class="container main-content">
+  <main class="container-wide main-content">
     <div class="intro">
       <h2>Вопросы для собеседования</h2>
       <p>Практикуйся и изучай Js и TypeScript помощью интерактивных карточек.</p>
     </div>
 
-    <div class="search-container">
-      <input v-model="searchQuery" type="text" placeholder="Поиск по номеру (100) или названию..." class="search-input">
-    </div>
+    <div class="study-layout">
+      <!-- Sidebar (Desktop) / Top Nav (Mobile) -->
+      <aside class="sidebar">
+        <div class="search-container">
+          <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
+        </div>
 
-    <div class="categories-nav">
-      <button v-for="cat in categories" :key="cat.name" class="category-chip"
-        :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
-        {{ cat.name }}
-        <span class="category-count">{{ cat.count }}</span>
-      </button>
-    </div>
+        <div class="categories-nav">
+          <h3 class="sidebar-title">Категории</h3>
+          <button v-for="cat in categories" :key="cat.name" class="category-chip"
+            :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+            {{ cat.name }}
+            <span class="category-count">{{ cat.count }}</span>
+          </button>
+        </div>
+      </aside>
 
-    <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
-      <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
-        :data-index="virtualRow.index" :ref="measureElement" :style="{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          transform: `translateY(${virtualRow.start}px)`,
-        }">
-        <template v-if="flatList[virtualRow.index]?.type === 'header'">
-          <div class="category-section">
-            <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+      <!-- Main Content Area -->
+      <div class="content-area">
+        <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+          <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
+            :data-index="virtualRow.index" :ref="measureElement" :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualRow.start}px)`,
+            }">
+            <template v-if="flatList[virtualRow.index]?.type === 'header'">
+              <div class="category-section">
+                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+              </div>
+            </template>
+            <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
+              <div class="questions-grid-row" :style="{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                gap: 'var(--spacing-sm)'
+              }">
+                <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
+                  @edit="openEditModal" />
+              </div>
+            </template>
           </div>
-        </template>
-        <template v-else-if="flatList[virtualRow.index]?.type === 'question'">
-          <div class="questions-list">
-            <QuestionCard :question="(flatList[virtualRow.index] as any).data" @edit="openEditModal" />
-          </div>
-        </template>
+        </div>
       </div>
     </div>
   </main>
@@ -196,6 +233,15 @@ const measureElement = (el: any) => {
   }
 }
 
+
+.container-wide {
+  width: 100%;
+  max-width: 1400px;
+  /* Wider container for desktop */
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+}
+
 .main-content {
   padding-top: var(--spacing-xl);
   padding-bottom: var(--spacing-xl);
@@ -218,51 +264,100 @@ const measureElement = (el: any) => {
   }
 }
 
+/* Desktop Grid Layout */
+.study-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: var(--spacing-xl);
+  align-items: start;
+  min-height: 80vh;
+}
+
+/* Sidebar Styles */
+.sidebar {
+  position: sticky;
+  top: 100px;
+  background: var(--bg-card);
+  padding: var(--spacing-lg);
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+}
+
+.sidebar-title {
+  font-size: 1.1rem;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-primary);
+}
+
 .search-container {
-  max-width: 600px;
-  margin: 0 auto var(--spacing-lg);
-  padding: 0 var(--spacing-md);
+  width: 100%;
+  margin-bottom: var(--spacing-lg);
+  padding: 0;
 }
 
 .search-input {
   width: 100%;
-  padding: 12px 20px;
-  font-size: 1rem;
+  padding: 12px 16px;
+  font-size: 0.95rem;
   color: var(--text-primary);
   background: var(--bg-secondary);
-  border: 2px solid var(--border-color);
-  border-radius: 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
   transition: all 0.2s ease;
 
   &:focus {
     outline: none;
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.1);
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
+  }
+}
+
+.categories-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.category-chip {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  padding: 10px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
   }
 
-  &::placeholder {
-    color: var(--text-secondary);
-    opacity: 0.7;
+  &.active {
+    background: var(--accent-primary);
+    color: #fff;
+    box-shadow: var(--shadow-sm);
   }
+}
+
+.category-count {
+  font-size: 0.8em;
+  opacity: 0.7;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 2px 8px;
+  border-radius: 12px;
 }
 
 .questions-list {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-sm);
-  animation: fadeIn 0.8s ease-out;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 .category-section {
@@ -279,54 +374,60 @@ const measureElement = (el: any) => {
   width: 100%;
 }
 
-.categories-nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--spacing-sm);
-  overflow-x: auto;
-  padding: 4px;
-  margin-bottom: var(--spacing-xl);
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+/* Mobile Responsive */
+@media (max-width: 1024px) {
+  .study-layout {
+    grid-template-columns: 1fr;
+    display: block;
+  }
 
-  &::-webkit-scrollbar {
+  .sidebar {
+    position: static;
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .sidebar-title {
     display: none;
   }
-}
 
-.category-chip {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  white-space: nowrap;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: var(--accent-primary);
-    color: var(--text-primary);
+  .categories-nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    /* Wrap on mobile */
+    overflow-x: visible;
+    /* No scroll */
+    padding-bottom: 0;
+    justify-content: center;
+    /* Center them */
   }
 
-  &.active {
-    background: var(--accent-primary);
-    color: #fff;
-    border-color: var(--accent-primary);
-  }
-}
+  .category-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 20px;
 
-.category-count {
-  font-size: 0.8em;
-  opacity: 0.7;
-  margin-left: 4px;
+    &.active {
+      background: var(--accent-primary);
+    }
+
+    /* Reset flex/justify for chips */
+    display: inline-flex;
+  }
 }
 
 @media (max-width: 640px) {
+  .container-wide {
+    padding: 0 var(--spacing-sm);
+  }
+
   .main-content {
     padding-top: var(--spacing-md);
-    padding-bottom: var(--spacing-xl);
   }
 
   .intro h2 {
@@ -336,21 +437,6 @@ const measureElement = (el: any) => {
   .intro p {
     font-size: 1rem;
     padding: 0 var(--spacing-sm);
-  }
-
-  .search-input {
-    font-size: 0.95rem;
-    padding: 10px 16px;
-  }
-
-  .categories-nav {
-    gap: 8px;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .category-chip {
-    padding: 6px 12px;
-    font-size: 0.85rem;
   }
 
   .fab-add {

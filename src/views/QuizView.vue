@@ -214,6 +214,11 @@ const saveCustomQuiz = async (quiz: CustomQuiz) => {
 .quiz-container {
     padding-top: var(--spacing-xl);
     padding-bottom: var(--spacing-xl);
-    max-width: 800px;
+    padding-left: var(--spacing-lg);
+    padding-right: var(--spacing-lg);
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
+    /* Ensure centering */
 }
 </style>
