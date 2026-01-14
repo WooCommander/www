@@ -54,7 +54,7 @@ onMounted(() => {
         <router-link v-if="!user" to="/auth" class="auth-link">
           Войти
         </router-link>
-        <router-link v-else to="/auth" class="auth-link profile-link">
+        <router-link v-else to="/profile" class="auth-link profile-link">
           👤
         </router-link>
       </nav>

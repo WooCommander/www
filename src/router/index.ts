@@ -26,6 +26,11 @@ const router = createRouter({
       path: '/leaderboard',
       name: 'leaderboard',
       component: LeaderboardView
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: () => import('../views/auth/ProfileView.vue')
     }
   ]
 });

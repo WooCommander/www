@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, onMounted, onUnmounted } from 'vue';
-import { useWindowVirtualizer } from '@tanstack/vue-virtual';
+import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 
 import EditModal from '../features/editor/components/EditModal.vue';
 import { QuestionStore } from '../services/QuestionStore';
@@ -22,13 +21,42 @@ const updateWidth = () => {
   windowWidth.value = window.innerWidth;
 };
 
+// Pagination / Infinite Scroll
+const visibleLimit = ref(20);
+const PAGE_SIZE = 20;
+const observerTarget = ref<HTMLElement | null>(null);
+
 onMounted(async () => {
   window.addEventListener('resize', updateWidth);
   await QuestionStore.initialize();
+
+  // Setup Intersection Observer for infinite scroll
+  const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting) {
+      loadMore();
+    }
+  }, { rootMargin: '200px' });
+
+  if (observerTarget.value) {
+    observer.observe(observerTarget.value);
+  }
 });
 
 onUnmounted(() => {
   window.removeEventListener('resize', updateWidth);
+});
+
+const loadMore = () => {
+  if (visibleLimit.value < flatList.value.length) {
+    visibleLimit.value += PAGE_SIZE;
+  }
+};
+
+// Reset pagination when filters change
+watch([selectedCategory, searchQuery], () => {
+  visibleLimit.value = PAGE_SIZE;
+  // Scroll to top might be nice here
+  window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
 const questions = computed(() => QuestionStore.getAllQuestions.value);
@@ -104,9 +132,8 @@ const groupedQuestions = computed(() => {
 });
 
 // Grid Logic
-const columnCount = computed(() => (windowWidth.value > 1024 ? 2 : 1));
+const columnCount = computed(() => (windowWidth.value > 1024 ? 1 : 1));
 
-// Virtual Scroll Logic
 type FlatItem =
   | { type: 'header'; id: string; text: string }
   | { type: 'row'; id: string; items: Question[] };
@@ -133,19 +160,9 @@ const flatList = computed(() => {
   return list;
 });
 
-const rowVirtualizer = useWindowVirtualizer({
-  count: flatList.value.length,
-  estimateSize: () => 200, // Estimate height in px
-  overscan: 5,
+const visibleList = computed(() => {
+  return flatList.value.slice(0, visibleLimit.value);
 });
-
-const virtualRows = computed(() => rowVirtualizer.value.getVirtualItems());
-const totalSize = computed(() => rowVirtualizer.value.getTotalSize());
-
-const measureElement = (el: any) => {
-  if (!el) return;
-  rowVirtualizer.value.measureElement(el);
-};
 </script>
 
 <template>
@@ -186,30 +203,27 @@ const measureElement = (el: any) => {
       </template>
 
       <template #content>
-        <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
-          <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
-            :data-index="virtualRow.index" :ref="measureElement" :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualRow.start}px)`,
-            }">
-            <template v-if="flatList[virtualRow.index]?.type === 'header'">
+        <div class="questions-wrapper">
+          <div v-for="item in visibleList" :key="item.id" class="list-item">
+            <template v-if="item.type === 'header'">
               <div class="category-section">
-                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+                <h3 class="category-title">{{ item.text }}</h3>
               </div>
             </template>
-            <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
+            <template v-else-if="item.type === 'row'">
               <div class="questions-grid-row" :style="{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
                 gap: 'var(--spacing-sm)'
               }">
-                <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
-                  @edit="openEditModal" />
+                <QuestionCard v-for="q in item.items" :key="q.id" :question="q" @edit="openEditModal" />
               </div>
             </template>
+          </div>
+
+          <!-- Intersection Observer Target -->
+          <div ref="observerTarget" class="loading-trigger">
+            <span v-if="visibleLimit < flatList.length">Загрузка...</span>
           </div>
         </div>
       </template>
@@ -387,5 +401,16 @@ const measureElement = (el: any) => {
     right: 1.5rem;
     bottom: 1.5rem;
   }
+}
+
+.loading-trigger {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-secondary);
+  min-height: 50px;
+}
+
+.list-item {
+  width: 100%;
 }
 </style>

@@ -43,7 +43,12 @@ const md = new MarkdownIt({
 });
 
 const renderedAnswer = computed(() => {
-  let content = props.question.answer;
+  let content = props.question.answer || '';
+
+  if (!content) {
+    return '<p><em>Ответ отсутствует</em></p>';
+  }
+
   if (props.question.code) {
     content += `\n\n\`\`\`typescript\n${props.question.code}\n\`\`\``;
   }
@@ -101,10 +106,6 @@ const renderedAnswer = computed(() => {
 .card-header {
   padding: var(--spacing-md);
   display: flex;
-  height: 100%;
-  justify-content: space-between;
-  /* align-items: center; */
-
   gap: 10px;
   flex-direction: column;
   align-items: flex-start;

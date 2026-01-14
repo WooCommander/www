@@ -5,13 +5,16 @@ import PageHeader from '../components/common/PageHeader.vue';
 import { QuestionStore } from '../services/QuestionStore';
 
 const filterMode = ref<'all' | 'exam' | 'category'>('all');
+const scope = ref<'global' | 'local'>('global');
 
 onMounted(() => {
   // Store handles loading and syncing
 });
 
 const filteredRecords = computed(() => {
-  let records = [...QuestionStore.state.examHistory];
+  let records = scope.value === 'global'
+    ? [...QuestionStore.state.globalLeaderboard]
+    : [...QuestionStore.state.examHistory];
 
   if (filterMode.value !== 'all') {
     records = records.filter(r => r.mode === filterMode.value);
@@ -57,6 +60,16 @@ const clearHistory = () => {
 
     <template #sidebar>
       <div class="filters-card">
+        <h3>Источник</h3>
+        <div class="scope-toggle">
+          <button class="scope-btn" :class="{ active: scope === 'global' }" @click="scope = 'global'">
+            🌍 Весь мир
+          </button>
+          <button class="scope-btn" :class="{ active: scope === 'local' }" @click="scope = 'local'">
+            👤 Мои
+          </button>
+        </div>
+
         <h3>Фильтры</h3>
         <div class="filters-list">
           <button class="filter-btn" :class="{ active: filterMode === 'all' }" @click="filterMode = 'all'">
@@ -71,11 +84,14 @@ const clearHistory = () => {
         </div>
       </div>
 
-      <button class="clear-btn" @click="clearHistory">🗑️ Очистить историю</button>
+      <button class="clear-btn" @click="clearHistory" v-if="scope === 'local'">🗑️ Очистить историю</button>
     </template>
 
     <template #mobile-nav>
       <div class="mobile-filters">
+        <button class="filter-btn" :class="{ active: scope === 'global' }" @click="scope = 'global'">🌍</button>
+        <button class="filter-btn" :class="{ active: scope === 'local' }" @click="scope = 'local'">👤</button>
+        <div class="divider"></div>
         <button class="filter-btn" :class="{ active: filterMode === 'all' }" @click="filterMode = 'all'">Все</button>
         <button class="filter-btn" :class="{ active: filterMode === 'exam' }"
           @click="filterMode = 'exam'">Экзамены</button>
@@ -86,7 +102,8 @@ const clearHistory = () => {
 
     <template #content>
       <div v-if="filteredRecords.length === 0" class="empty-state">
-        <p>Пока нет записей. Пройдите тест или экзамен!</p>
+        <p v-if="scope === 'local'">Пока нет записей. Пройдите тест или экзамен!</p>
+        <p v-else>Список лидеров пуст или загружается...</p>
       </div>
 
       <div v-else class="table-wrapper">
@@ -94,6 +111,7 @@ const clearHistory = () => {
           <thead>
             <tr>
               <th>#</th>
+              <th>Игрок</th>
               <th>Дата</th>
               <th>Режим</th>
               <th>Тема</th>
@@ -108,6 +126,11 @@ const clearHistory = () => {
                 <span v-else-if="index === 1">🥈</span>
                 <span v-else-if="index === 2">🥉</span>
                 <span v-else>{{ index + 1 }}</span>
+              </td>
+              <td class="user">
+                <span class="username">
+                  {{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}
+                </span>
               </td>
               <td class="date">{{ formatDate(record.date) }}</td>
               <td class="mode">
@@ -307,5 +330,42 @@ h2 {
 
 .top-record {
   background: rgba(255, 255, 255, 0.02);
+}
+
+.scope-toggle {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.scope-btn {
+  flex: 1;
+  padding: 8px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.2s;
+
+  &.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+}
+
+.user {
+  font-weight: 600;
+  color: var(--text-primary);
+
+  .username {
+    display: block;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 </style>

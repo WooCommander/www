@@ -16,7 +16,8 @@ interface QuestionState {
   customQuizzes: CustomQuiz[];
   overrides: Record<string, Question>;
   deletedIds: Set<string>;
-  examHistory: any[]; // Using any[] for now to avoid circular dependencies or complex types, can be typed later
+  examHistory: any[];
+  globalLeaderboard: any[];
   isLoaded: boolean;
 }
 
@@ -26,6 +27,7 @@ const state = reactive<QuestionState>({
   overrides: {},
   deletedIds: new Set(),
   examHistory: [],
+  globalLeaderboard: [],
   isLoaded: false
 });
 
@@ -166,41 +168,84 @@ export const QuestionStore = {
       }
     } catch (e) { console.warn('Sync questions failed', e); }
 
-    // 2. Sync Exam Results
+    // 2. Sync Global Leaderboard & Backfill
     try {
       const { data: remoteResults, error } = await import('./supabase').then(m => m.supabase
         .from('exam_results')
-        .select('*')
+        .select('*, profiles(username)')
+        .order('score', { ascending: false })
+        .limit(100)
       );
 
       if (remoteResults && !error) {
-        const localIds = new Set(state.examHistory.map(r => r.id));
-        const newRemote = remoteResults.filter((r: any) => !localIds.has(r.id));
+        // Backfill Check: If we have local results not in remote, push them
+        // Note: This relies on IDs matching. If local IDs are random UUIDs generated locally, it works.
+        const remoteIds = new Set(remoteResults.map((r: any) => r.id));
 
-        if (newRemote.length > 0) {
-          // Map snake_case to camelCase if needed, but our type aligns mostly?
-          // DB: created_at, time_taken. Local: date, timeTaken.
-          const mapped = newRemote.map((r: any) => ({
-            id: r.id,
-            date: r.created_at,
-            mode: r.mode,
-            title: r.title,
-            score: r.score,
-            total: r.total,
-            correct: r.correct,
-            timeTaken: r.time_taken
+        // Find local items NOT in remote (assuming user is owner of these local items)
+        // We only backfill if we are sure they belong to current user (which they should if stored locally)
+        const missingLocal = state.examHistory.filter(l => !remoteIds.has(l.id));
+
+        if (missingLocal.length > 0) {
+          console.log(`Backfilling ${missingLocal.length} exams to cloud...`);
+          const toInsert = missingLocal.map(l => ({
+            id: l.id,
+            user_id: user.id,
+            score: l.score,
+            total: l.total,
+            correct: l.correct,
+            mode: l.mode,
+            title: l.title,
+            time_taken: l.timeTaken,
+            created_at: l.date
           }));
-          state.examHistory.push(...mapped);
-          // Sort
-          state.examHistory.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
-          await Preferences.set({
-            key: 'quiz_history',
-            value: JSON.stringify(state.examHistory)
-          });
+          const { error: insertError } = await import('./supabase').then(m => m.supabase
+            .from('exam_results')
+            .upsert(toInsert)
+          );
+
+          if (!insertError) {
+            // Re-fetch to update global leaderboard with new items
+            const { data: refreshed } = await import('./supabase').then(m => m.supabase
+              .from('exam_results')
+              .select('*, profiles(username)')
+              .order('score', { ascending: false })
+              .limit(100)
+            );
+            if (refreshed) {
+              state.globalLeaderboard = refreshed.map((r: any) => ({
+                id: r.id,
+                date: r.created_at,
+                mode: r.mode,
+                title: r.title,
+                score: r.score,
+                total: r.total,
+                correct: r.correct,
+                timeTaken: r.time_taken,
+                username: r.profiles?.username || 'Аноним'
+              }));
+              return;
+            }
+          } else {
+            console.warn('Backfill failed', insertError);
+          }
         }
+
+        // Standard assignment if no backfill needed or backfill failed
+        state.globalLeaderboard = remoteResults.map((r: any) => ({
+          id: r.id,
+          date: r.created_at,
+          mode: r.mode,
+          title: r.title,
+          score: r.score,
+          total: r.total,
+          correct: r.correct,
+          timeTaken: r.time_taken,
+          username: r.profiles?.username || 'Аноним'
+        }));
       }
-    } catch (e) { console.warn('Sync history failed', e); }
+    } catch (e) { console.warn('Sync leaderboard failed', e); }
   },
 
   async saveQuestion(question: Question) {
@@ -252,7 +297,7 @@ export const QuestionStore = {
     const { data: { user } } = await import('./supabase').then(m => m.supabase.auth.getUser());
     if (user) {
       // Convert to DB format
-      await import('./supabase').then(m => m.supabase.from('exam_results').insert({
+      const { error } = await import('./supabase').then(m => m.supabase.from('exam_results').insert({
         id: result.id, // Ensure UUID is used or let DB gen? Using local ID if UUID
         user_id: user.id,
         score: result.score,
@@ -263,6 +308,15 @@ export const QuestionStore = {
         time_taken: result.timeTaken,
         created_at: result.date // Ensure ISO string
       }));
+
+      if (error) {
+        console.error('Supabase Save Error:', error);
+        alert('Error saving to cloud: ' + error.message);
+      } else {
+        console.log('✅ Exam result saved to cloud');
+      }
+    } else {
+      console.log('User not logged in, skipping cloud save');
     }
   },
 

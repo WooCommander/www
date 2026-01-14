@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
+import { QuestionStore } from './services/QuestionStore';
 
 const isDark = ref(true);
 
@@ -12,6 +13,9 @@ onMounted(() => {
     isDark.value = window.matchMedia('(prefers-color-scheme: dark)').matches;
   }
   updateThemeClass();
+
+  // Initialize data globally
+  QuestionStore.initialize();
 });
 
 const toggleTheme = () => {

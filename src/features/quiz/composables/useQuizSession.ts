@@ -1,3 +1,4 @@
+import { QuestionStore } from '../../../services/QuestionStore';
 import { ref, computed } from 'vue';
 import type { QuizTopic } from '../../../data/quiz_data';
 import { soundService } from '../../../services/SoundService';
@@ -84,12 +85,28 @@ export function useQuizSession() {
     stopTimer();
   };
 
+  const shuffleOptions = (quiz: QuizTopic): QuizTopic => {
+    // Deep clone to avoid mutating store
+    const cloned = JSON.parse(JSON.stringify(quiz));
+    cloned.questions.forEach((q: any) => {
+      if (q.options && q.options.length > 0) {
+        // Fisher-Yates shuffle
+        for (let i = q.options.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [q.options[i], q.options[j]] = [q.options[j], q.options[i]];
+        }
+      }
+    });
+    return cloned;
+  };
+
   const startQuiz = (quiz: QuizTopic) => {
-    currentQuiz.value = quiz;
+    currentQuiz.value = shuffleOptions(quiz);
     resetState();
   };
 
   const startExamMode = (quiz: QuizTopic) => {
+    // Already random, but options defined in quiz_data need shuffling
     startQuiz(quiz);
     timeRemaining.value = 45 * 60;
     startTimer();
@@ -129,7 +146,7 @@ export function useQuizSession() {
     }
   };
 
-  const finishQuiz = (modeName: string = 'Unknown') => {
+  const finishQuiz = async (modeName: string = 'Unknown') => {
     stopTimer();
     showResults.value = true;
 
@@ -144,6 +161,12 @@ export function useQuizSession() {
     }
 
     if (currentQuiz.value) {
+      // Determine mode if not passed plainly
+      // Actually modeName comes from View usually (viewMode ref), but let's trust argument
+      let safeMode = 'topic';
+      if (modeName === 'exam' || currentQuiz.value.id === 'exam-full') safeMode = 'exam';
+      else if (modeName === 'category' || currentQuiz.value.id.startsWith('cat-')) safeMode = 'category';
+
       const record = {
         id: crypto.randomUUID(),
         date: new Date().toISOString(),
@@ -151,14 +174,11 @@ export function useQuizSession() {
         correct: result.correct,
         total: result.total,
         timeTaken: currentQuiz.value.id === 'exam-full' ? (45 * 60 - timeRemaining.value) : 0,
-        mode: modeName,
+        mode: safeMode,
         title: currentQuiz.value.title
       };
 
-      const existing = localStorage.getItem('quiz_records');
-      const history = existing ? JSON.parse(existing) : [];
-      history.push(record);
-      localStorage.setItem('quiz_records', JSON.stringify(history));
+      await QuestionStore.saveExamResult(record);
     }
   };
 
