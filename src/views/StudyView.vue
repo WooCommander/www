@@ -322,4 +322,43 @@ const measureElement = (el: any) => {
   opacity: 0.7;
   margin-left: 4px;
 }
+
+@media (max-width: 640px) {
+  .main-content {
+    padding-top: var(--spacing-md);
+    padding-bottom: var(--spacing-xl);
+  }
+
+  .intro h2 {
+    font-size: 1.8rem;
+  }
+
+  .intro p {
+    font-size: 1rem;
+    padding: 0 var(--spacing-sm);
+  }
+
+  .search-input {
+    font-size: 0.95rem;
+    padding: 10px 16px;
+  }
+
+  .categories-nav {
+    gap: 8px;
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .category-chip {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+  }
+
+  .fab-add {
+    width: 48px;
+    height: 48px;
+    font-size: 1.5rem;
+    right: 1.5rem;
+    bottom: 1.5rem;
+  }
+}
 </style>

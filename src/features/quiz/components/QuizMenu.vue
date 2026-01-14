@@ -311,24 +311,25 @@ const emit = defineEmits<{
   }
 
   .mode-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    justify-content: flex-start;
-    padding-bottom: 4px;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
+    flex-wrap: wrap; /* Allow wrapping */
+    justify-content: center; /* Center the wrapped items */
+    gap: 8px; /* Slightly smaller gap */
+    overflow-x: visible; /* Remove scroll */
+    padding-bottom: 0;
   }
 
+  /* Remove scrollbar hiding since we are not scrolling anymore */
   .mode-tabs::-webkit-scrollbar {
     display: none;
   }
 
   .mode-tab {
     padding: 8px 16px;
-    white-space: nowrap;
+    white-space: normal; /* Allow text to wrap if really needed, though tabs will wrap first */
     flex: 0 0 auto;
     font-size: 0.9rem;
     text-align: center;
+    width: auto; /* Let them size naturally */
   }
 }
 </style>

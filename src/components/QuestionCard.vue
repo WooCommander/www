@@ -279,4 +279,26 @@ const renderedAnswer = computed(() => {
   color: inherit;
   font-size: 0.9em;
 }
+
+@media (max-width: 640px) {
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .question-title {
+    width: 100%;
+    margin-bottom: var(--spacing-sm);
+    padding-right: 0;
+  }
+
+  .card-meta {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .icon-chevron {
+    margin-left: auto;
+  }
+}
 </style>
