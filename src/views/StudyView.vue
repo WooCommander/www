@@ -6,6 +6,8 @@ import EditModal from '../features/editor/components/EditModal.vue';
 import { QuestionStore } from '../services/QuestionStore';
 import type { Question } from '../types';
 import QuestionCard from '../components/QuestionCard.vue';
+import MainLayout from '../components/layout/MainLayout.vue';
+import PageHeader from '../components/common/PageHeader.vue';
 
 const selectedCategory = ref('Все');
 const searchQuery = ref('');
@@ -147,60 +149,70 @@ const measureElement = (el: any) => {
 </script>
 
 <template>
-  <main class="container-wide main-content">
-    <div class="intro">
-      <h2>Вопросы для собеседования</h2>
-      <p>Практикуйся и изучай Js и TypeScript помощью интерактивных карточек.</p>
-    </div>
+  <MainLayout>
+    <template #header>
+      <PageHeader title="Вопросы для собеседования"
+        description="Практикуйся и изучай Js и TypeScript помощью интерактивных карточек." />
+    </template>
 
-    <div class="study-layout">
-      <!-- Sidebar (Desktop) / Top Nav (Mobile) -->
-      <aside class="sidebar">
-        <div class="search-container">
-          <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
-        </div>
+    <template #sidebar>
+      <div class="search-container">
+        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
+      </div>
 
-        <div class="categories-nav">
-          <h3 class="sidebar-title">Категории</h3>
-          <button v-for="cat in categories" :key="cat.name" class="category-chip"
-            :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
-            {{ cat.name }}
-            <span class="category-count">{{ cat.count }}</span>
-          </button>
-        </div>
-      </aside>
+      <div class="categories-nav">
+        <h3 class="sidebar-title">Категории</h3>
+        <button v-for="cat in categories" :key="cat.name" class="category-chip"
+          :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+          {{ cat.name }}
+          <span class="category-count">{{ cat.count }}</span>
+        </button>
+      </div>
+    </template>
 
-      <!-- Main Content Area -->
-      <div class="content-area">
-        <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
-          <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
-            :data-index="virtualRow.index" :ref="measureElement" :style="{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              width: '100%',
-              transform: `translateY(${virtualRow.start}px)`,
+    <template #mobile-nav>
+      <div class="search-container mobile-search">
+        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
+      </div>
+
+      <div class="categories-nav mobile-categories">
+        <button v-for="cat in categories" :key="cat.name" class="category-chip"
+          :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+          {{ cat.name }}
+          <span class="category-count">{{ cat.count }}</span>
+        </button>
+      </div>
+    </template>
+
+    <template #content>
+      <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+        <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
+          :data-index="virtualRow.index" :ref="measureElement" :style="{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            transform: `translateY(${virtualRow.start}px)`,
+          }">
+          <template v-if="flatList[virtualRow.index]?.type === 'header'">
+            <div class="category-section">
+              <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+            </div>
+          </template>
+          <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
+            <div class="questions-grid-row" :style="{
+              display: 'grid',
+              gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+              gap: 'var(--spacing-sm)'
             }">
-            <template v-if="flatList[virtualRow.index]?.type === 'header'">
-              <div class="category-section">
-                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
-              </div>
-            </template>
-            <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
-              <div class="questions-grid-row" :style="{
-                display: 'grid',
-                gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-                gap: 'var(--spacing-sm)'
-              }">
-                <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
-                  @edit="openEditModal" />
-              </div>
-            </template>
-          </div>
+              <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
+                @edit="openEditModal" />
+            </div>
+          </template>
         </div>
       </div>
-    </div>
-  </main>
+    </template>
+  </MainLayout>
 
   <button class="fab-add" @click="openEditModal(null)" title="Add Question">+</button>
 
@@ -231,58 +243,6 @@ const measureElement = (el: any) => {
   &:hover {
     transform: scale(1.1);
   }
-}
-
-
-.container-wide {
-  width: 100%;
-  max-width: 1400px;
-  /* Wider container for desktop */
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
-}
-
-.main-content {
-  padding-top: var(--spacing-xl);
-  padding-bottom: var(--spacing-xl);
-}
-
-.intro {
-  text-align: center;
-  margin-bottom: var(--spacing-xl);
-
-  h2 {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--text-primary);
-    margin-bottom: var(--spacing-xs);
-  }
-
-  p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-  }
-}
-
-/* Desktop Grid Layout */
-.study-layout {
-  display: grid;
-  grid-template-columns: 300px 1fr;
-  gap: var(--spacing-xl);
-  align-items: start;
-  min-height: 80vh;
-}
-
-/* Sidebar Styles */
-.sidebar {
-  position: sticky;
-  top: 100px;
-  background: var(--bg-card);
-  padding: var(--spacing-lg);
-  border-radius: 16px;
-  border: 1px solid var(--border-color);
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
 }
 
 .sidebar-title {
@@ -374,26 +334,9 @@ const measureElement = (el: any) => {
   width: 100%;
 }
 
-/* Mobile Responsive */
+/* Mobile Responsive Adjustments for Nav Slots */
 @media (max-width: 1024px) {
-  .study-layout {
-    grid-template-columns: 1fr;
-    display: block;
-  }
-
-  .sidebar {
-    position: static;
-    background: transparent;
-    border: none;
-    padding: 0;
-    margin-bottom: var(--spacing-lg);
-  }
-
-  .sidebar-title {
-    display: none;
-  }
-
-  .categories-nav {
+  .categories-nav.mobile-categories {
     flex-direction: row;
     flex-wrap: wrap;
     /* Wrap on mobile */
@@ -411,6 +354,15 @@ const measureElement = (el: any) => {
     flex-shrink: 0;
     padding: 8px 16px;
     border-radius: 20px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--accent-primary);
+      color: var(--text-primary);
+    }
 
     &.active {
       background: var(--accent-primary);
@@ -419,26 +371,13 @@ const measureElement = (el: any) => {
     /* Reset flex/justify for chips */
     display: inline-flex;
   }
+
+  .mobile-search {
+    margin-bottom: var(--spacing-md);
+  }
 }
 
 @media (max-width: 640px) {
-  .container-wide {
-    padding: 0 var(--spacing-sm);
-  }
-
-  .main-content {
-    padding-top: var(--spacing-md);
-  }
-
-  .intro h2 {
-    font-size: 1.8rem;
-  }
-
-  .intro p {
-    font-size: 1rem;
-    padding: 0 var(--spacing-sm);
-  }
-
   .fab-add {
     width: 48px;
     height: 48px;

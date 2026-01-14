@@ -15,6 +15,7 @@ import EditModal from '../features/editor/components/EditModal.vue';
 
 // Composables
 import { useQuizSession } from '../features/quiz/composables/useQuizSession';
+import MainLayout from '../components/layout/MainLayout.vue';
 
 const {
     currentQuiz,
@@ -176,31 +177,30 @@ const saveCustomQuiz = async (quiz: CustomQuiz) => {
 </script>
 
 <template>
-    <main class="container quiz-container">
+    <!-- Menu / Overview (Has its own MainLayout) -->
+    <QuizMenu v-if="!currentQuiz && !editingTopic" :view-mode="viewMode" :all-categories="allCategories"
+        :quizzes-by-category="quizzesByCategory" @update:view-mode="viewMode = $event" @start-quiz="handleStartQuiz"
+        @start-category="handleStartCategory" @start-exam="handleStartExam" @open-editor="openEditor"
+        @create-quiz="isQuizEditorOpen = true" />
 
-        <!-- Menu / Overview -->
-        <QuizMenu v-if="!currentQuiz && !editingTopic" :view-mode="viewMode" :all-categories="allCategories"
-            :quizzes-by-category="quizzesByCategory" @update:view-mode="viewMode = $event" @start-quiz="handleStartQuiz"
-            @start-category="handleStartCategory" @start-exam="handleStartExam" @open-editor="openEditor"
-            @create-quiz="isQuizEditorOpen = true" />
+    <!-- Editor Detail Mode -->
+    <QuizTopicEditor v-else-if="editingTopic" :topic="editingTopic" @back="editingTopic = null"
+        @add-question="openAddQuestionModal" @edit-question="openEditQuestionModal" @delete-question="deleteQuestion" />
 
-        <!-- Editor Detail Mode -->
-        <QuizTopicEditor v-else-if="editingTopic" :topic="editingTopic" @back="editingTopic = null"
-            @add-question="openAddQuestionModal" @edit-question="openEditQuestionModal"
-            @delete-question="deleteQuestion" />
+    <!-- Active Quiz (Needs Layout Container) -->
+    <MainLayout v-else-if="!showResults && activeQuestion && currentQuiz">
+        <QuizRunner :current-quiz="currentQuiz" :active-question="activeQuestion"
+            :current-question-index="currentQuestionIndex" :progress="progress" :formatted-time="formattedTime"
+            :time-remaining="timeRemaining" :is-shaking="isShaking" v-model:current-input-answer="currentInputAnswer"
+            :user-answers="userAnswers" @go-back="goBack" @select-option="onSelectOption"
+            @next-question="() => nextQuestion(viewMode)" />
+    </MainLayout>
 
-        <!-- Active Quiz Runner -->
-        <QuizRunner v-else-if="!showResults && activeQuestion && currentQuiz" :current-quiz="currentQuiz"
-            :active-question="activeQuestion" :current-question-index="currentQuestionIndex" :progress="progress"
-            :formatted-time="formattedTime" :time-remaining="timeRemaining" :is-shaking="isShaking"
-            v-model:current-input-answer="currentInputAnswer" :user-answers="userAnswers" @go-back="goBack"
-            @select-option="onSelectOption" @next-question="() => nextQuestion(viewMode)" />
-
-        <!-- Results -->
-        <QuizResults v-else-if="showResults && currentQuiz" :current-quiz="currentQuiz" :score-data="calculateScore"
-            :user-answers="userAnswers" @retry="resetQuiz" @go-back="goBack" />
-
-    </main>
+    <!-- Results (Needs Layout Container) -->
+    <MainLayout v-else-if="showResults && currentQuiz">
+        <QuizResults :current-quiz="currentQuiz" :score-data="calculateScore" :user-answers="userAnswers"
+            @retry="resetQuiz" @go-back="goBack" />
+    </MainLayout>
 
     <!-- Modals -->
     <QuizCreateModal :is-open="isQuizEditorOpen" @close="isQuizEditorOpen = false" @save="saveCustomQuiz" />
@@ -208,17 +208,5 @@ const saveCustomQuiz = async (quiz: CustomQuiz) => {
     <EditModal :is-open="isEditModalOpen" :question="questionToEdit" :categories="allCategories"
         @close="isEditModalOpen = false" @save="saveQuestion"
         @delete="(id) => { deleteQuestion(id as string); isEditModalOpen = false; }" />
-</template>
 
-<style scoped>
-.quiz-container {
-    padding-top: var(--spacing-xl);
-    padding-bottom: var(--spacing-xl);
-    padding-left: var(--spacing-lg);
-    padding-right: var(--spacing-lg);
-    max-width: 1400px;
-    width: 100%;
-    margin: 0 auto;
-    /* Ensure centering */
-}
-</style>
+</template>

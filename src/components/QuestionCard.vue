@@ -35,7 +35,7 @@ const md = new MarkdownIt({
     if (lang && hljs.getLanguage(lang)) {
       try {
         return hljs.highlight(str, { language: lang }).value;
-      } catch (__) {}
+      } catch (__) { }
     }
 
     return ''; // use external default escaping
@@ -52,11 +52,7 @@ const renderedAnswer = computed(() => {
 </script>
 
 <template>
-  <div 
-    class="question-card" 
-    :class="{ 'is-open': isOpen }"
-    @click="toggle"
-  >
+  <div class="question-card" :class="{ 'is-open': isOpen }" @click="toggle">
     <div class="card-header">
       <h3 class="question-title">{{ question.title }}</h3>
       <div class="card-meta">
@@ -70,11 +66,14 @@ const renderedAnswer = computed(() => {
           {{ question.difficulty }}
         </span>
         <span class="icon-chevron" :class="{ rotate: isOpen }">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
         </span>
       </div>
     </div>
-    
+
     <div class="card-body" :style="{ maxHeight: isOpen ? '2000px' : '0px' }">
       <div class="answer-content markdown-body" v-html="renderedAnswer"></div>
     </div>
@@ -102,8 +101,13 @@ const renderedAnswer = computed(() => {
 .card-header {
   padding: var(--spacing-md);
   display: flex;
+  height: 100%;
   justify-content: space-between;
-  align-items: center;
+  /* align-items: center; */
+
+  gap: 10px;
+  flex-direction: column;
+  align-items: flex-start;
 }
 
 .question-title {
@@ -163,9 +167,20 @@ const renderedAnswer = computed(() => {
   letter-spacing: 0.5px;
 }
 
-.badge.easy { background: rgba(34, 197, 94, 0.2); color: #4ade80; }
-.badge.medium { background: rgba(234, 179, 8, 0.2); color: #facc15; }
-.badge.hard { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+.badge.easy {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+}
+
+.badge.medium {
+  background: rgba(234, 179, 8, 0.2);
+  color: #facc15;
+}
+
+.badge.hard {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
 
 .icon-chevron {
   transition: transform 0.3s ease;
@@ -281,10 +296,10 @@ const renderedAnswer = computed(() => {
 }
 
 @media (max-width: 640px) {
-  .card-header {
+  /* .card-header {
     flex-direction: column;
     align-items: flex-start;
-  }
+  } */
 
   .question-title {
     width: 100%;
