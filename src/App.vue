@@ -1,11 +1,8 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
+import { ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
 
 const isDark = ref(true);
-const route = useRoute();
-const router = useRouter();
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
@@ -30,33 +27,32 @@ const updateThemeClass = () => {
     document.body.classList.add('light-theme');
   }
 };
-
-// Map route name to view name for Header compatibility or refactor Header
-const currentView = computed(() => {
-    const name = route.name as string;
-    return (['study', 'quiz', 'leaderboard'].includes(name) ? name : 'study') as 'study' | 'quiz' | 'leaderboard';
-});
-
-const handleViewChange = (view: string) => {
-    // Adapter for Header event -> Router
-    if (view === 'study') router.push('/');
-    else if (view === 'quiz') router.push('/quiz');
-    else if (view === 'leaderboard') router.push('/leaderboard');
-};
 </script>
 
 <template>
-  <Header 
-    :is-dark="isDark" 
-    :current-view="currentView"
-    @toggle-theme="toggleTheme" 
-    @change-view="handleViewChange"
-  />
-  
-  <router-view />
+  <Header :is-dark="isDark" @toggle-theme="toggleTheme" />
+
+  <router-view v-slot="{ Component }">
+    <transition name="page-fade" mode="out-in">
+      <component :is="Component" />
+    </transition>
+  </router-view>
 </template>
 
 <style>
-/* Global resets or shared styles if needed, 
-   but specific styles should reside in components */
+/* Page Transitions */
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-10px);
+}
 </style>

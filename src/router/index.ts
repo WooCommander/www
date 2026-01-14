@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import StudyView from '../views/StudyView.vue';
 import QuizView from '../views/QuizView.vue';
 import LeaderboardView from '../views/LeaderboardView.vue';
+import AuthView from '../views/auth/AuthView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -10,6 +11,11 @@ const router = createRouter({
       path: '/',
       name: 'study',
       component: StudyView
+    },
+    {
+      path: '/auth',
+      name: 'auth',
+      component: AuthView
     },
     {
       path: '/quiz',

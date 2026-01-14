@@ -1,33 +1,46 @@
 <script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { supabase } from '../services/supabase';
+
 defineProps<{
   isDark: boolean;
-  currentView: 'study' | 'quiz' | 'leaderboard';
 }>();
 
 defineEmits<{
   (e: 'toggleTheme'): void;
-  (e: 'changeView', view: 'study' | 'quiz' | 'leaderboard'): void;
 }>();
+
+const user = ref<any>(null);
+
+onMounted(() => {
+  supabase.auth.getSession().then(({ data }) => {
+    user.value = data.session?.user;
+  });
+
+  supabase.auth.onAuthStateChange((_, session) => {
+    user.value = session?.user;
+  });
+});
 </script>
 
 <template>
   <header class="app-header">
     <div class="container header-content">
-      <h1 class="logo" @click="$emit('changeView', 'study')" style="cursor: pointer;">
+      <router-link to="/" class="logo">
         <span class="logo-icon">TS</span>
         <span class="text-gradient">Interview</span>
-      </h1>
+      </router-link>
+
       <nav class="nav-items">
-        <button class="nav-link" :class="{ active: currentView === 'study' }" @click="$emit('changeView', 'study')">
+        <router-link to="/" class="nav-link" active-class="active">
           Учить
-        </button>
-        <button class="nav-link" :class="{ active: currentView === 'quiz' }" @click="$emit('changeView', 'quiz')">
+        </router-link>
+        <router-link to="/quiz" class="nav-link" active-class="active">
           Тест
-        </button>
-        <button class="nav-link" :class="{ active: currentView === 'leaderboard' }"
-          @click="$emit('changeView', 'leaderboard')">
+        </router-link>
+        <router-link to="/leaderboard" class="nav-link" active-class="active">
           Топ
-        </button>
+        </router-link>
 
         <div class="divider"></div>
 
@@ -36,6 +49,14 @@ defineEmits<{
           <span v-if="isDark">☀️</span>
           <span v-else>🌙</span>
         </button>
+
+        <!-- Auth Status -->
+        <router-link v-if="!user" to="/auth" class="auth-link">
+          Войти
+        </router-link>
+        <router-link v-else to="/auth" class="auth-link profile-link">
+          👤
+        </router-link>
       </nav>
     </div>
   </header>

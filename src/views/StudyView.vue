@@ -149,75 +149,77 @@ const measureElement = (el: any) => {
 </script>
 
 <template>
-  <MainLayout>
-    <template #header>
-      <PageHeader title="Вопросы для собеседования"
-        description="Практикуйся и изучай Js и TypeScript помощью интерактивных карточек." />
-    </template>
+  <div>
+    <MainLayout>
+      <template #header>
+        <PageHeader title="Вопросы для собеседования"
+          description="Практикуйся и изучай Js и TypeScript помощью интерактивных карточек." />
+      </template>
 
-    <template #sidebar>
-      <div class="search-container">
-        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
-      </div>
-
-      <div class="categories-nav">
-        <h3 class="sidebar-title">Категории</h3>
-        <button v-for="cat in categories" :key="cat.name" class="category-chip"
-          :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
-          {{ cat.name }}
-          <span class="category-count">{{ cat.count }}</span>
-        </button>
-      </div>
-    </template>
-
-    <template #mobile-nav>
-      <div class="search-container mobile-search">
-        <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
-      </div>
-
-      <div class="categories-nav mobile-categories">
-        <button v-for="cat in categories" :key="cat.name" class="category-chip"
-          :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
-          {{ cat.name }}
-          <span class="category-count">{{ cat.count }}</span>
-        </button>
-      </div>
-    </template>
-
-    <template #content>
-      <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
-        <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
-          :data-index="virtualRow.index" :ref="measureElement" :style="{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            transform: `translateY(${virtualRow.start}px)`,
-          }">
-          <template v-if="flatList[virtualRow.index]?.type === 'header'">
-            <div class="category-section">
-              <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
-            </div>
-          </template>
-          <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
-            <div class="questions-grid-row" :style="{
-              display: 'grid',
-              gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-              gap: 'var(--spacing-sm)'
-            }">
-              <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
-                @edit="openEditModal" />
-            </div>
-          </template>
+      <template #sidebar>
+        <div class="search-container">
+          <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
         </div>
-      </div>
-    </template>
-  </MainLayout>
 
-  <button class="fab-add" @click="openEditModal(null)" title="Add Question">+</button>
+        <div class="categories-nav">
+          <h3 class="sidebar-title">Категории</h3>
+          <button v-for="cat in categories" :key="cat.name" class="category-chip"
+            :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+            {{ cat.name }}
+            <span class="category-count">{{ cat.count }}</span>
+          </button>
+        </div>
+      </template>
 
-  <EditModal :is-open="isEditModalOpen" :question="editingQuestion" :categories="uniqueCategories"
-    @close="isEditModalOpen = false" @save="saveQuestion" @delete="deleteQuestion" />
+      <template #mobile-nav>
+        <div class="search-container mobile-search">
+          <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
+        </div>
+
+        <div class="categories-nav mobile-categories">
+          <button v-for="cat in categories" :key="cat.name" class="category-chip"
+            :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+            {{ cat.name }}
+            <span class="category-count">{{ cat.count }}</span>
+          </button>
+        </div>
+      </template>
+
+      <template #content>
+        <div class="questions-wrapper" :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+          <div v-for="virtualRow in virtualRows" :key="flatList[virtualRow.index]?.id || virtualRow.index"
+            :data-index="virtualRow.index" :ref="measureElement" :style="{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              width: '100%',
+              transform: `translateY(${virtualRow.start}px)`,
+            }">
+            <template v-if="flatList[virtualRow.index]?.type === 'header'">
+              <div class="category-section">
+                <h3 class="category-title">{{ (flatList[virtualRow.index] as any).text }}</h3>
+              </div>
+            </template>
+            <template v-else-if="flatList[virtualRow.index]?.type === 'row'">
+              <div class="questions-grid-row" :style="{
+                display: 'grid',
+                gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+                gap: 'var(--spacing-sm)'
+              }">
+                <QuestionCard v-for="q in (flatList[virtualRow.index] as any).items" :key="q.id" :question="q"
+                  @edit="openEditModal" />
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </MainLayout>
+
+    <button class="fab-add" @click="openEditModal(null)" title="Add Question">+</button>
+
+    <EditModal :is-open="isEditModalOpen" :question="editingQuestion" :categories="uniqueCategories"
+      @close="isEditModalOpen = false" @save="saveQuestion" @delete="deleteQuestion" />
+  </div>
 </template>
 
 <style scoped lang="scss">

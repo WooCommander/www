@@ -2,54 +2,27 @@
 import { ref, onMounted, computed } from 'vue';
 import MainLayout from '../components/layout/MainLayout.vue';
 import PageHeader from '../components/common/PageHeader.vue';
+import { QuestionStore } from '../services/QuestionStore';
 
-interface QuizResult {
-  id: string;
-  date: string; // ISO string
-  mode: 'exam' | 'category' | 'topic';
-  title: string;
-  score: number; // percentage
-  total: number;
-  correct: number;
-  timeTaken: number; // seconds
-}
-
-const history = ref<QuizResult[]>([]);
 const filterMode = ref<'all' | 'exam' | 'category'>('all');
 
 onMounted(() => {
-  loadHistory();
+  // Store handles loading and syncing
 });
 
-const loadHistory = () => {
-  const stored = localStorage.getItem('quiz_history');
-  if (stored) {
-    try {
-      history.value = JSON.parse(stored);
-    } catch (e) {
-      console.error('Failed to parse history', e);
-    }
-  }
-};
-
 const filteredRecords = computed(() => {
-  let records = [...history.value];
+  let records = [...QuestionStore.state.examHistory];
+
   if (filterMode.value !== 'all') {
     records = records.filter(r => r.mode === filterMode.value);
   }
-  // Sort: Score Desc, then Date Desc
+
+  // Sort by score (desc) then date (desc)
   return records.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 });
-
-const formatTime = (seconds: number) => {
-  if (!seconds) return '-';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-};
 
 const formatDate = (isoString: string) => {
   return new Date(isoString).toLocaleDateString('ru-RU', {
@@ -60,10 +33,18 @@ const formatDate = (isoString: string) => {
   });
 };
 
+const formatTime = (seconds: number) => {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+};
+
 const clearHistory = () => {
   if (confirm('Вы уверены, что хотите очистить историю?')) {
-    history.value = [];
-    localStorage.removeItem('quiz_history');
+    QuestionStore.state.examHistory = [];
+    localStorage.removeItem('quiz_history'); // Legacy cleanup
+    // Ideally we should have a QuestionStore.clearHistory() that also deletes from DB?
+    // For now, local clear is safer to avoid accidental bulk delete
   }
 };
 </script>
