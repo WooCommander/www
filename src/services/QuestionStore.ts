@@ -81,8 +81,26 @@ const getAllQuestions = computed(() => {
       return state.overrides[q.id] || q;
     });
 
-  // 2. Append user-created questions
-  return [...merged, ...state.userQuestions];
+  // 2. Map Quiz Data (New format) to Questions (Old format)
+  const quizQuestions: Question[] = staticQuizzes.flatMap(topic =>
+    topic.questions.map(q => ({
+      id: q.id,
+      title: q.text,
+      // Use explanation as answer, or join correct/incorrect options if needed
+      answer: q.explanation || (Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer) || 'No explanation available',
+      category: topic.category, // Use the proper category from the topic
+      difficulty: 'Medium',
+      type: q.type,
+      options: q.options?.map(o => ({
+        id: o.id,
+        text: o.text,
+        isCorrect: !!o.isCorrect // Ensure boolean
+      }))
+    }))
+  );
+
+  // 3. Append user-created questions
+  return [...merged, ...quizQuestions, ...state.userQuestions];
 });
 
 // Helper for Flashcard/Study modes using flat questions

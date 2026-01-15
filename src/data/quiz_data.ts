@@ -4090,5 +4090,235 @@ export const quizzes: QuizTopic[] = [
                 explanation: 'Suspense позволяет показывать "Loading..." состояние, пока разрешаются все async setup() дочернего дерева.'
             }
         ]
+    },
+    {
+        id: 'vue_interview',
+        title: 'Vue Interview Prep',
+        category: 'Interview Prep',
+        questions: [
+            {
+                id: 'vi_1',
+                text: 'Какой архитектурный паттерн реализует Vue.js?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'MVC (Model-View-Controller)' },
+                    { id: 'b', text: 'MVVM (Model-View-ViewModel)', isCorrect: true },
+                    { id: 'c', text: 'Flux' },
+                    { id: 'd', text: 'Singleton' }
+                ],
+                explanation: 'Vue реализует паттерн MVVM, где ViewModel (экземпляр Vue) связывает Model (данные JS) и View (DOM) через двустороннее связывание (Data Binding).'
+            },
+            {
+                id: 'vi_2',
+                text: 'Почему изменение пропса (props) из дочернего компонента считается анти-паттерном?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Потому что пропсы неизменяемы (immutable) технически' },
+                    { id: 'b', text: 'Это нарушает One-Way Data Flow (однонаправленный поток данных), делая отладку сложной', isCorrect: true },
+                    { id: 'c', text: 'Это вызывает утечку памяти' }
+                ],
+                explanation: 'Данные должны течь вниз (props), а события — вверх (emits). Если ребенок меняет пропс, родитель может перезаписать его обратно при ре-рендере, что приведет к непредсказуемому состоянию.'
+            },
+            {
+                id: 'vi_3',
+                text: 'Как изменилась система реактивности в Vue 3 по сравнению с Vue 2?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Она осталась прежней (Object.defineProperty)' },
+                    { id: 'b', text: 'Vue 3 использует ES6 Proxy, что позволяет отслеживать добавление свойств и работу с массивами без "хаков"', isCorrect: true },
+                    { id: 'c', text: 'Vue 3 использует грязную проверку (dirty checking) как AngularJS' }
+                ],
+                explanation: 'Proxy позволяет перехватывать любые операции с объектом, включая добавление новых ключей, чего не мог Object.defineProperty в Vue 2.'
+            },
+            {
+                id: 'vi_4',
+                text: 'В чем разница между `v-bind` и `v-model`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Это одно и то же' },
+                    { id: 'b', text: 'v-bind — это односторонняя привязка (данные -> DOM), v-model — двусторонняя (данные <-> DOM)', isCorrect: true },
+                    { id: 'c', text: 'v-model работает только с формами, v-bind только с атрибутами' }
+                ],
+                explanation: 'v-model — это синтаксический сахар, который объединяет v-bind:value и обработчик события v-on:input (или update:modelValue).'
+            },
+            {
+                id: 'vi_5',
+                text: 'Для чего нужна гидратация (Hydration) в SSR (Server-Side Rendering)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Для загрузки стилей CSS' },
+                    { id: 'b', text: 'Для "оживления" статического HTML, пришедшего с сервера (привязка обработчиков событий и создание виртуального DOM)', isCorrect: true },
+                    { id: 'c', text: 'Для кэширования запросов к базе данных' }
+                ],
+                explanation: 'Сервер присылает готовый HTML. Клиентский JS (Vue) должен "пробежаться" по этому HTML и привязать к нему интерактивность, не перерисовывая всё заново.'
+            },
+            {
+                id: 'vi_6',
+                text: 'Почему Mixins (примеси) считаются плохой практикой в Vue 3 и от них советуют отказаться в пользу Composables?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Миксины работают медленнее' },
+                    { id: 'b', text: 'Неясный источник свойств (name clash), неявные зависимости и плохая поддержка TypeScript', isCorrect: true },
+                    { id: 'c', text: 'Миксины удалены из Vue 3' }
+                ],
+                explanation: 'В миксинах свойства "появляются из ниоткуда" (this.helper), и если миксинов несколько, возможны конфликты имен. Composables (useHooks) делают зависимости явными.'
+            },
+            {
+                id: 'vi_7',
+                text: 'Что такое Virtual DOM и зачем он нужен?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Это копия DOM в памяти браузера для резервного копирования' },
+                    { id: 'b', text: 'Абстракция структуры DOM в виде JS-объектов. Позволяет вычислять разницу (diff) и менять в реальном DOM только то, что изменилось', isCorrect: true },
+                    { id: 'c', text: 'Это новый стандарт HTML5' }
+                ],
+                explanation: 'Работа с реальным DOM — самая дорогая операция. VDOM минимизирует количество таких операций, группируя изменения.'
+            },
+            {
+                id: 'vi_8',
+                text: 'Какая главная причина введения Composition API?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Чтобы усложнить жизнь новичкам' },
+                    { id: 'b', text: 'Для типа-безопасности' },
+                    { id: 'c', text: 'Для лучшего переиспользования логики (Logic Reuse) и организации кода по фичам, а не по опциям (data, methods)', isCorrect: true }
+                ],
+                explanation: 'Options API размазывает логику одной фичи (например, "поиск") по data, methods, computed. Composition API позволяет собрать её вместе.'
+            },
+            {
+                id: 'vi_9',
+                text: 'Как работает модификатор `.passive` в событияхDOM?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Защищает от двойного клика' },
+                    { id: 'b', text: 'Сообщает браузеру, что обработчик не вызовет preventDefault(), что позволяет не блокировать прокрутку (scroll performance)', isCorrect: true },
+                    { id: 'c', text: 'Делает событие одноразовым' }
+                ],
+                explanation: 'Это критично для плавности скролла на мобильных устройствах.'
+            },
+            {
+                id: 'vi_10',
+                text: 'Можно ли использовать Vuex/Pinia вместе с provide/inject?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Нет, это взаимоисключающие технологии' },
+                    { id: 'b', text: 'Да. Pinia для глобального состояния приложения, provide/inject для передачи данных глубоко по дереву конкретной ветки компонентов', isCorrect: true },
+                    { id: 'c', text: 'Только в Vue 2' }
+                ],
+                explanation: 'Инструменты решают разные задачи. Pinia — глобальный стор. Provide/Inject — способ избежать props drilling внутри плагина или сложного компонента.'
+            }
+        ]
+    },
+    {
+        id: 'vue_pitfalls',
+        title: 'Vue Common Pitfalls',
+        category: 'Vue.js Pitfalls',
+        questions: [
+            {
+                id: 'vp_1',
+                text: 'Почему деструктуризация `const { count } = props` убивает реактивность?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Потому что props — это readonly объект' },
+                    { id: 'b', text: 'Потому что вы извлекаете примитивное значение, разрывая связь с Proxy-объектом props', isCorrect: true },
+                    { id: 'c', text: 'Это работает нормально, если использовать let' }
+                ],
+                explanation: 'Чтобы сохранить реактивность при деструктуризации, нужно использовать `toRefs(props)`.'
+            },
+            {
+                id: 'vp_2',
+                text: 'Что будет, если забыть `await` перед асинхронным вызовом внутри `setup` (или `<script setup>`)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Ничего, Vue сам подождет' },
+                    { id: 'b', text: 'Функция setup вернет Promise, и компонент станет неявно асинхронным, требуя <Suspense> у родителя', isCorrect: true },
+                    { id: 'c', text: 'Ошибка компиляции' }
+                ],
+                explanation: 'Если setup() становится async, он корректно отобразится только внутри Suspense. Иначе компонент может просто не отрендериться.'
+            },
+            {
+                id: 'vp_3',
+                text: 'Почему нельзя мутировать `props` напрямую?',
+                codeSnippet: 'props.title = "New Title"; // Warn!',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Vue заблокирует это и выдаст предупреждение в консоль', isCorrect: true },
+                    { id: 'b', text: 'Это сработает, но только локально' },
+                    { id: 'c', text: 'Это вызовет бесконечный цикл' }
+                ],
+                explanation: 'Props принадлежат родителю. Если вам нужно изменить значение, используйте emit события или локальную копию данных.'
+            },
+            {
+                id: 'vp_4',
+                text: 'Почему `watchEffect` может вызвать бесконечный цикл?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Если он слишком сложный' },
+                    { id: 'b', text: 'Если внутри него синхронно изменять реактивное состояние, от которого он сам же и зависит', isCorrect: true },
+                    { id: 'c', text: 'Это баг Vue 3' }
+                ],
+                explanation: 'watchEffect автоматически подписывается на зависимости. Изменение зависимости внутри эффекта немедленно триггерит его повторный запуск.'
+            },
+            {
+                id: 'vp_5',
+                text: 'Что произойдет, если присвоить `ref`-переменной новый объект? (myRef = { val: 1 })',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Значение обновится реактивно' },
+                    { id: 'b', text: 'Вы потеряете реактивность, так как перезаписали сам ref-объект, а не его .value', isCorrect: true }
+                ],
+                explanation: 'Нужно всегда писать `myRef.value = ...`. Если вы перезапишете саму переменную (let), связь с шаблоном разорвется.'
+            },
+            {
+                id: 'vp_6',
+                text: 'Можно ли получить доступ к `this` внутри `setup()`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Да, как обычно' },
+                    { id: 'b', text: 'Нет, setup выполняется до создания экземпляра компонента', isCorrect: true }
+                ],
+                explanation: 'В Composition API нет `this`. Используйте аргументы props и context, или composables.'
+            },
+            {
+                id: 'vp_7',
+                text: 'Почему массив не обновляется в DOM при `arr[0] = newVal` в Vue 2 (и иногда путаются в Vue 3)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Ограничение Object.defineProperty' },
+                    { id: 'b', text: 'В Vue 3 это работает (из-за Proxy), но привычка использовать `.splice` или `.value = [...]` осталась хорошим тоном для реактивности', isCorrect: true }
+                ],
+                explanation: 'Vue 3 решил эту проблему, но важно помнить, что замена всего массива (`arr.value = []` для ref) часто надежнее мутаций.'
+            },
+            {
+                id: 'vp_8',
+                text: 'Где находится элемент, к которому применен `<Teleport>`, в дереве компонентов Vue?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Там же, где он объявлен (логически), но в другом месте DOM (физически)', isCorrect: true },
+                    { id: 'b', text: 'Он полностью переносится в другой компонент' }
+                ],
+                explanation: 'Логически он остается child-ом текущего компонента (работают provide/inject), но рендерится в другом месте DOM.'
+            },
+            {
+                id: 'vp_9',
+                text: 'Нужен ли `.value` в шаблоне (template)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Да, всегда' },
+                    { id: 'b', text: 'Нет, Vue автоматически разворачивает (unwraps) ref-ы верхнего уровня в шаблоне', isCorrect: true }
+                ],
+                explanation: 'В шаблоне мы пишем `{{ count }}`, а не `{{ count.value }}`.'
+            },
+            {
+                id: 'vp_10',
+                text: 'Что будет, если использовать `v-if` и `v-for` на одном элементе?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Это отлично работает' },
+                    { id: 'b', text: 'Это плохая практика, так как приоритеты (precedence) неявны. Лучше использовать <template v-for> с вложенным v-if', isCorrect: true }
+                ],
+                explanation: 'В Vue 3 `v-if` имеет приоритет над `v-for`, что может привести к ошибкам, если условие зависит от переменной цикла.'
+            }
+        ]
     }
 ];
