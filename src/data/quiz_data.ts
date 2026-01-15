@@ -1616,7 +1616,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'currentTarget' },
-                    { id: 'b', text: 'target', isCorrect: true }
+                    { id: 'b', text: 'target', isCorrect: true },
+                    { id: 'c', text: 'delegateTarget' },
+                    { id: 'd', text: 'originalTarget' }
                 ],
                 explanation: 'target - это исходный элемент (на который кликнули). currentTarget - элемент, на котором висит обработчик (изменяется при всплытии).'
             },
@@ -1626,7 +1628,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Событие идет от document вниз к элементу' },
-                    { id: 'b', text: 'Событие идет от целевого элемента вверх к родителям', isCorrect: true }
+                    { id: 'b', text: 'Событие идет от целевого элемента вверх к родителям', isCorrect: true },
+                    { id: 'c', text: 'Событие выполняется сразу на всех элементах одновременно' },
+                    { id: 'd', text: 'Событие идет от window к target и останавливается' }
                 ],
                 explanation: 'По умолчанию события всплывают от target наверх до window.'
             },
@@ -1636,7 +1640,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'event.preventDefault()' },
-                    { id: 'b', text: 'event.stopPropagation()', isCorrect: true }
+                    { id: 'b', text: 'event.stopPropagation()', isCorrect: true },
+                    { id: 'c', text: 'event.stopPadding()' },
+                    { id: 'd', text: 'return false' }
                 ],
                 explanation: 'stopPropagation() прекращает передачу события родителям. preventDefault() только отменяет действие браузера.'
             }
@@ -1660,7 +1666,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да' },
-                    { id: 'b', text: 'Нет', isCorrect: true }
+                    { id: 'b', text: 'Нет', isCorrect: true },
+                    { id: 'c', text: 'Только если вызвать дважды' },
+                    { id: 'd', text: 'Да, но только в Chrome' }
                 ],
                 explanation: 'Passive: true сообщает браузеру, что preventDefault() не будет вызван, что позволяет оптимизировать скролл.'
             }
@@ -1724,7 +1732,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да' },
-                    { id: 'b', text: 'Нет, это запрещено', isCorrect: true }
+                    { id: 'b', text: 'Нет, это запрещено', isCorrect: true },
+                    { id: 'c', text: 'Да, но get будет игнорироваться' },
+                    { id: 'd', text: 'Только если writable: false' }
                 ],
                 explanation: 'Дескриптор может быть либо полем данных (value, writable), либо аксессором (get, set). Смешивать их нельзя.'
             }
@@ -1752,7 +1762,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Вернет undefined сразу' },
-                    { id: 'b', text: 'В прототипе, затем в прототипе прототипа и так далее по цепочке', isCorrect: true }
+                    { id: 'b', text: 'В прототипе, затем в прототипе прототипа и так далее по цепочке', isCorrect: true },
+                    { id: 'c', text: 'Будет искать в Object.keys()' },
+                    { id: 'd', text: 'Выбросит ошибку ReferenceError' }
                 ],
                 explanation: 'Поиск идет вверх по цепочке прототипов до null.'
             },
@@ -1776,7 +1788,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Оно доступно во всех экземплярах как свойство .prototype' },
-                    { id: 'b', text: 'При вызове new F(), оно устанавливается как [[Prototype]] нового объекта', isCorrect: true }
+                    { id: 'b', text: 'При вызове new F(), оно устанавливается как [[Prototype]] нового объекта', isCorrect: true },
+                    { id: 'c', text: 'Это просто статическое свойство, не влияющее на наследование' },
+                    { id: 'd', text: 'Оно хранит список всех созданных объектов' }
                 ],
                 explanation: 'F.prototype используется только в момент вызова new F() для установки __proto__ создаваемому объекту.'
             },
@@ -1786,7 +1800,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да', isCorrect: true },
-                    { id: 'b', text: 'Нет' }
+                    { id: 'b', text: 'Нет' },
+                    { id: 'c', text: 'Только для объектов, созданных через new Object()' },
+                    { id: 'd', text: 'Нет, по умолчанию прототип null' }
                 ],
                 explanation: 'Любой литерал объекта {} наследует от Object.prototype (где лежат методы toString, hasOwnProperty и др).'
             }
@@ -1803,7 +1819,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да, type of class вернет "class"' },
-                    { id: 'b', text: 'Нет, это "синтаксический сахар" над функцией', isCorrect: true }
+                    { id: 'b', text: 'Нет, это "синтаксический сахар" над функцией', isCorrect: true },
+                    { id: 'c', text: 'Да, это специальный объект' },
+                    { id: 'd', text: 'Нет, это массив методов' }
                 ],
                 explanation: 'typeof MyClass вернет "function". Классы в JS построены на прототипном наследовании.'
             },
@@ -1813,7 +1831,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'В самом объекте-экземпляре' },
-                    { id: 'b', text: 'В prototype класса (MyClass.prototype)', isCorrect: true }
+                    { id: 'b', text: 'В prototype класса (MyClass.prototype)', isCorrect: true },
+                    { id: 'c', text: 'В конструкторе' },
+                    { id: 'd', text: 'В глобальном объекте' }
                 ],
                 explanation: 'Все методы класса записываются в prototype.'
             },
@@ -1823,7 +1843,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да, всегда' },
-                    { id: 'b', text: 'Нет, если его нет, он создается автоматически', isCorrect: true }
+                    { id: 'b', text: 'Нет, если его нет, он создается автоматически', isCorrect: true },
+                    { id: 'c', text: 'Только если есть наследование' },
+                    { id: 'd', text: 'Нет, классы могут быть без конструктора и методов' }
                 ],
                 explanation: 'Если конструктор не указан, создается пустой конструктор по умолчанию (который вызывает super() в случае наследования).'
             }
@@ -1862,7 +1884,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет, он полностью затерт' },
-                    { id: 'b', text: 'Да, через super.method()', isCorrect: true }
+                    { id: 'b', text: 'Да, через super.method()', isCorrect: true },
+                    { id: 'c', text: 'Да, через this.parent.method()' },
+                    { id: 'd', text: 'Да, используя Parent.prototype.method.call(this)' }
                 ],
                 explanation: 'super предоставляет доступ к методам прототипа родительского класса.'
             }
@@ -1879,7 +1903,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Каждому экземпляру (через this)' },
-                    { id: 'b', text: 'Самому классу (функции-конструктору)', isCorrect: true }
+                    { id: 'b', text: 'Самому классу (функции-конструктору)', isCorrect: true },
+                    { id: 'c', text: 'Глобальному объекту' },
+                    { id: 'd', text: 'Прототипу класса' }
                 ],
                 explanation: 'Статические методы записываются прямо в функцию класса, а не в prototype, и вызываются как Class.method().'
             },
@@ -1889,7 +1915,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет' },
-                    { id: 'b', text: 'Да, он указывает на сам класс', isCorrect: true }
+                    { id: 'b', text: 'Да, он указывает на сам класс', isCorrect: true },
+                    { id: 'c', text: 'Да, он указывает на экземпляр' },
+                    { id: 'd', text: 'Нет, будет ошибка ReferenceError' }
                 ],
                 explanation: 'Внутри static метода this ссылается на класс (конструктор), а не на экземпляр.'
             },
@@ -1899,7 +1927,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да', isCorrect: true },
-                    { id: 'b', text: 'Нет' }
+                    { id: 'b', text: 'Нет' },
+                    { id: 'c', text: 'Только если они объявлены как public' },
+                    { id: 'd', text: 'Только в TypeScript' }
                 ],
                 explanation: 'Да, наследование классов наследует как prototype для экземпляров, так и статические методы самих классов.'
             }
@@ -1927,7 +1957,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да, если знать имя' },
-                    { id: 'b', text: 'Нет, будет ошибка синтаксиса', isCorrect: true }
+                    { id: 'b', text: 'Нет, будет ошибка синтаксиса', isCorrect: true },
+                    { id: 'c', text: 'Да, через Object.getOwnPropertySymbols' },
+                    { id: 'd', text: 'Да, с помощью рефлексии (Reflect)' }
                 ],
                 explanation: 'JS защищает приватные поля жестко. Попытка обращения user.#password снаружи вызовет ошибку.'
             }
@@ -1944,7 +1976,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет' },
-                    { id: 'b', text: 'Да, class MyArr extends Array {}', isCorrect: true }
+                    { id: 'b', text: 'Да, class MyArr extends Array {}', isCorrect: true },
+                    { id: 'c', text: 'Только abstract классы' },
+                    { id: 'd', text: 'Да, но методы не будут работать' }
                 ],
                 explanation: 'Встроенные классы можно расширять, добавляя свои методы.'
             },
@@ -1954,7 +1988,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет, они вернут обычный Array' },
-                    { id: 'b', text: 'Да, они автоматически используют конструктор потомка (Symbol.species)', isCorrect: true }
+                    { id: 'b', text: 'Да, они автоматически используют конструктор потомка (Symbol.species)', isCorrect: true },
+                    { id: 'c', text: 'Они вернут Undefined' },
+                    { id: 'd', text: 'Вернут Object' }
                 ],
                 explanation: 'Встроенные методы используют constructor[Symbol.species] для создания новых объектов, сохраняя тип вашего класса.'
             }
@@ -1971,7 +2007,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Создан ли объект именно этим конструктором (прямая ссылка)' },
-                    { id: 'b', text: 'Присутствует ли Class.prototype в цепочке прототипов obj', isCorrect: true }
+                    { id: 'b', text: 'Присутствует ли Class.prototype в цепочке прототипов obj', isCorrect: true },
+                    { id: 'c', text: 'Есть ли у объекта метод constructor' },
+                    { id: 'd', text: 'Является ли объект типом Class' }
                 ],
                 explanation: 'instanceof ищет совпадение prototype по всей цепочке наследования.'
             },
@@ -1981,7 +2019,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да', isCorrect: true },
-                    { id: 'b', text: 'Нет' }
+                    { id: 'b', text: 'Нет' },
+                    { id: 'c', text: 'Только если массив не пустой' },
+                    { id: 'd', text: 'Ошибка выполнения' }
                 ],
                 explanation: 'Array наследует от Object, поэтому массив является экземпляром Object.'
             },
@@ -2005,7 +2045,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Специальный тип класса' },
-                    { id: 'b', text: 'Объект с методами, который можно "подмешать" в прототип другого класса', isCorrect: true }
+                    { id: 'b', text: 'Объект с методами, который можно "подмешать" в прототип другого класса', isCorrect: true },
+                    { id: 'c', text: 'Функция, возвращающая новый класс' },
+                    { id: 'd', text: 'Интерфейс' }
                 ],
                 explanation: 'Примеси позволяют добавлять свойства и методы к классам без использования жесткого наследования.'
             },
@@ -2030,7 +2072,8 @@ export const quizzes: QuizTopic[] = [
                 options: [
                     { id: 'a', text: 'catch' },
                     { id: 'b', text: 'default' },
-                    { id: 'c', text: 'finally', isCorrect: true }
+                    { id: 'c', text: 'finally', isCorrect: true },
+                    { id: 'd', text: 'then' }
                 ],
                 explanation: 'Конструкция try...catch...finally гарантирует выполнение блока finally.'
             },
@@ -2040,7 +2083,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Сообщение об ошибке' },
-                    { id: 'b', text: 'Стек вызовов, где произошла ошибка', isCorrect: true }
+                    { id: 'b', text: 'Стек вызовов, где произошла ошибка', isCorrect: true },
+                    { id: 'c', text: 'Код ошибки' },
+                    { id: 'd', text: 'Время возникновения ошибки' }
                 ],
                 explanation: 'stack помогает отследить последовательность вызовов функций, приведшую к ошибке.'
             }
@@ -2058,7 +2103,8 @@ export const quizzes: QuizTopic[] = [
                 options: [
                     { id: 'a', text: 'function generator() {}' },
                     { id: 'b', text: 'function* gen() {}', isCorrect: true },
-                    { id: 'c', text: 'async function gen() {}' }
+                    { id: 'c', text: 'async function gen() {}' },
+                    { id: 'd', text: 'generator function() {}' }
                 ],
                 explanation: 'Звездочка (*) после function указывает, что это генератор.'
             },
@@ -2068,7 +2114,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Просто следующее значение' },
-                    { id: 'b', text: 'Объект формата { value: ..., done: boolean }', isCorrect: true }
+                    { id: 'b', text: 'Объект формата { value: ..., done: boolean }', isCorrect: true },
+                    { id: 'c', text: 'Promise' },
+                    { id: 'd', text: 'Boolean' }
                 ],
                 explanation: 'Итератор генератора возвращает объект с текущим значением и флагом завершения.'
             }
@@ -2086,7 +2134,8 @@ export const quizzes: QuizTopic[] = [
                 options: [
                     { id: 'a', text: 'for...of' },
                     { id: 'b', text: 'for await...of', isCorrect: true },
-                    { id: 'c', text: 'forEach' }
+                    { id: 'c', text: 'forEach' },
+                    { id: 'd', text: 'map' }
                 ],
                 explanation: 'Обычный for...of не умеет ждать промисы, поэтому для асинхронных итераторов нужен for await...of.'
             },
@@ -2096,7 +2145,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Объект {value, done}' },
-                    { id: 'b', text: 'Промис, который резолвится в {value, done}', isCorrect: true }
+                    { id: 'b', text: 'Промис, который резолвится в {value, done}', isCorrect: true },
+                    { id: 'c', text: 'Значение (value)' },
+                    { id: 'd', text: 'Undefined' }
                 ],
                 explanation: 'AsyncIterator всегда возвращает Promise.'
             }
@@ -2113,7 +2164,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Reference Counting (Подсчет ссылок)' },
-                    { id: 'b', text: 'Mark-and-Sweep (Пометить и вымести)', isCorrect: true }
+                    { id: 'b', text: 'Mark-and-Sweep (Пометить и вымести)', isCorrect: true },
+                    { id: 'c', text: 'Manual Management' },
+                    { id: 'd', text: 'Stack Allocation' }
                 ],
                 explanation: 'Mark-and-Sweep определяет "достижимость" объектов от корней, что позволяет убирать циклические ссылки.'
             },
@@ -2123,7 +2176,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Только глобальный объект window' },
-                    { id: 'b', text: 'Набор базовых достижимых значений (глобальные переменные, локальные переменные функции в стеке)', isCorrect: true }
+                    { id: 'b', text: 'Набор базовых достижимых значений (глобальные переменные, локальные переменные функции в стеке)', isCorrect: true },
+                    { id: 'c', text: 'DOM-дерево' },
+                    { id: 'd', text: 'Кэш браузера' }
                 ],
                 explanation: 'Сборщик мусора начинает обход графа объектов именно с этих корней.'
             }
@@ -2141,7 +2196,8 @@ export const quizzes: QuizTopic[] = [
                 options: [
                     { id: 'a', text: 'Ключи могут быть только примитивами' },
                     { id: 'b', text: 'Ключи могут быть только объектами, и они не удерживаются от сборки мусора', isCorrect: true },
-                    { id: 'c', text: 'WeakMap итерируемый, а Map нет' }
+                    { id: 'c', text: 'WeakMap итерируемый, а Map нет' },
+                    { id: 'd', text: 'WeakMap имеет свойство size' }
                 ],
                 explanation: 'WeakMap держит "слабую" ссылку на ключ-объект. Если объект удален везде, кроме WeakMap, он будет удален и оттуда GC.'
             },
@@ -2151,7 +2207,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Да' },
-                    { id: 'b', text: 'Нет, он не итерируемый', isCorrect: true }
+                    { id: 'b', text: 'Нет, он не итерируемый', isCorrect: true },
+                    { id: 'c', text: 'Только если ключи не удалены' },
+                    { id: 'd', text: 'Да, через getOwnPropertySymbols' }
                 ],
                 explanation: 'Так как содержимое зависит от GC, методы keys(), values(), entries() и size недоступны.'
             }
@@ -2169,7 +2227,8 @@ export const quizzes: QuizTopic[] = [
                 options: [
                     { id: 'a', text: 'setTimeout(..., 0)' },
                     { id: 'b', text: 'Обработчики .then/catch/finally промисов', isCorrect: true },
-                    { id: 'c', text: 'События мыши' }
+                    { id: 'c', text: 'События мыши' },
+                    { id: 'd', text: 'requestAnimationFrame' }
                 ],
                 explanation: 'Промисы и queueMicrotask создают микрозадачи, которые имеют приоритет перед макрозадачами.'
             },
@@ -2179,7 +2238,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Сразу после текущего макротаска (скрипта), перед рендерингом и следующими макротасками', isCorrect: true },
-                    { id: 'b', text: 'В произвольном порядке' }
+                    { id: 'b', text: 'В произвольном порядке' },
+                    { id: 'c', text: 'После рендеринга' },
+                    { id: 'd', text: 'Каждые 16мс' }
                 ],
                 explanation: 'Движок выполняет все микрозадачи подряд до очистки очереди, и только потом переходит к рендерингу или таймерам.'
             }
@@ -2196,7 +2257,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'console -> setTimeout -> Promise' },
-                    { id: 'b', text: 'console -> Promise -> setTimeout', isCorrect: true }
+                    { id: 'b', text: 'console -> Promise -> setTimeout', isCorrect: true },
+                    { id: 'c', text: 'Promise -> console -> setTimeout' },
+                    { id: 'd', text: 'setTimeout -> console -> Promise' }
                 ],
                 explanation: '1. Синхронный код (console). 2. Микрозадачи (Promise). 3. Макрозадачи (setTimeout).'
             },
@@ -2206,7 +2269,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет, браузер его прервет' },
-                    { id: 'b', text: 'Да, страница зависнет', isCorrect: true }
+                    { id: 'b', text: 'Да, страница зависнет', isCorrect: true },
+                    { id: 'c', text: 'Нет, он выполнится в фоне' },
+                    { id: 'd', text: 'Зависит от браузера' }
                 ],
                 explanation: 'Поскольку микрозадачи выполняются до очистки очереди, бесконечное добавление микрозадач блокирует рендеринг и макрозадачи.'
             }
@@ -2223,7 +2288,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'import all from "mod"' },
-                    { id: 'b', text: 'import * as obj from "mod"', isCorrect: true }
+                    { id: 'b', text: 'import * as obj from "mod"', isCorrect: true },
+                    { id: 'c', text: 'import { * } from "mod"' },
+                    { id: 'd', text: 'include "mod" as obj' }
                 ],
                 explanation: 'Синтаксис import * as Name собирает все именованные экспорты в объект Name.'
             },
@@ -2233,7 +2300,9 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Нет, import всегда в начале файла' },
-                    { id: 'b', text: 'Да, используя функцию import(...)', isCorrect: true }
+                    { id: 'b', text: 'Да, используя функцию import(...)', isCorrect: true },
+                    { id: 'c', text: 'Да, используя require()' },
+                    { id: 'd', text: 'Только в Node.js' }
                 ],
                 explanation: 'import(path) возвращает промис и может быть вызван в любом месте кода.'
             }
@@ -3768,6 +3837,257 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Загрузка ресурса по HTTP на странице, открытой по HTTPS', isCorrect: true }
                 ],
                 explanation: 'Браузеры блокируют "активный" смешанный контент (скрипты, iframe), так как он компрометирует безопасность всей защищенной страницы.'
+            }
+        ]
+    },
+    {
+        id: 'css_mastery',
+        title: 'CSS Mastery',
+        category: 'CSS & Layout',
+        questions: [
+            {
+                id: 'css_1',
+                text: 'В чем ключевая разница между `align-items` и `align-content` в Flexbox?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'align-items работает по главной оси, align-content по поперечной' },
+                    { id: 'b', text: 'align-items выравнивает сами элементы, а align-content управляет пространством между строками (если есть перенос)', isCorrect: true },
+                    { id: 'c', text: 'Это одно и то же, просто синонимы' },
+                    { id: 'd', text: 'align-content работает только в CSS Grid' }
+                ],
+                explanation: '`align-content` работает только если есть несколько строк (flex-wrap: wrap) и свободное место по поперечной оси.'
+            },
+            {
+                id: 'css_2',
+                text: 'Как ведет себя `minmax(100px, 1fr)` в CSS Grid?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Элемент всегда равен 100px' },
+                    { id: 'b', text: 'Элемент занимает от 100px до 1 доли свободного пространства (растягивается)', isCorrect: true },
+                    { id: 'c', text: 'Элемент сжимается до 1fr, но не больше 100px' },
+                    { id: 'd', text: 'Вызывает ошибку синтаксиса' }
+                ],
+                explanation: 'Это мощный инструмент Grid: колонка будет минимум 100px, но если есть место - займет его (1fr).'
+            },
+            {
+                id: 'css_3',
+                text: 'Какой селектор имеет наибольшую специфичность (вес)?',
+                codeSnippet: 'A: #nav .list\nB: html body div.content\nC: <div style="color: red">\nD: .container #main',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'A' },
+                    { id: 'b', text: 'B' },
+                    { id: 'c', text: 'C', isCorrect: true },
+                    { id: 'd', text: 'D' }
+                ],
+                explanation: 'Инлайн стили (style="") имеют вес 1000, что выше любых ID (100) и классов (10).'
+            },
+            {
+                id: 'css_4',
+                text: 'Если width: 100px, padding: 10px, border: 5px. Какова полная ширина элемента при `box-sizing: content-box`?',
+                type: 'input',
+                correctAnswer: '130px',
+                explanation: '100 (content) + 20 (padding L+R) + 10 (border L+R) = 130px. При border-box было бы 100px.'
+            },
+            {
+                id: 'css_5',
+                text: 'Какое свойство создает новый контекст наложения (Stacking Context)?',
+                type: 'multiple',
+                options: [
+                    { id: 'a', text: 'opacity меньше 1', isCorrect: true },
+                    { id: 'b', text: 'transform отличный от none', isCorrect: true },
+                    { id: 'c', text: 'filter отличный от none', isCorrect: true },
+                    { id: 'd', text: 'position: relative без z-index' }
+                ],
+                explanation: 'Многие современные CSS свойства (transform, filter, opacity, will-change) создают новый контекст наложения, влияя на z-index дочерних элементов.'
+            },
+            {
+                id: 'css_6',
+                text: 'Почему `position: sticky` может перестать "липнуть"?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'У родителя задан overflow: hidden (или auto/scroll)', isCorrect: true },
+                    { id: 'b', text: 'Не задан z-index' },
+                    { id: 'c', text: 'Элемент имеет display: flex' },
+                    { id: 'd', text: 'Слишком старый браузер' }
+                ],
+                explanation: 'Если у любого родителя есть overflow отличный от visible, sticky элемент ограничивается областью этого родителя и может не сработать относительно body.'
+            },
+            {
+                id: 'css_7',
+                text: 'В чем разница между `:nth-child` и `:nth-of-type`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Разницы нет' },
+                    { id: 'b', text: ':nth-child считает все элементы подряд, :nth-of-type только элементы того же тега', isCorrect: true },
+                    { id: 'c', text: ':nth-of-type работает быстрее' },
+                    { id: 'd', text: ':nth-child работает только с div' }
+                ],
+                explanation: 'Если у вас <p> и <div> вперемешку, p:nth-child(2) выберет p только если он ФАКТИЧЕСКИ второй ребенок. p:nth-of-type(2) выберет второй по счету p, игнорируя div.'
+            },
+            {
+                id: 'css_8',
+                text: 'Чему равен 1em внутри элемента с font-size: 20px, если у родителя шрифт 16px?',
+                type: 'input',
+                correctAnswer: '20px',
+                explanation: 'em всегда относительно **текущего** размера шрифта элемента. rem - относительно корня (html).'
+            },
+            {
+                id: 'css_9',
+                text: 'Что выберет селектор `div:has(> img)`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Все img внутри div' },
+                    { id: 'b', text: 'Div, который содержит img как прямого потомка', isCorrect: true },
+                    { id: 'c', text: 'Div, который стоит сразу после img' },
+                    { id: 'd', text: 'Ничего, это невалидный CSS' }
+                ],
+                explanation: ':has() - это "родительский селектор". Он выбирает элемент, если (has) внутри него есть указанное условие.'
+            },
+            {
+                id: 'css_10',
+                text: 'Зачем в новых проектах используют `::before` (с двумя двоеточиями) вместо `:before`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Чтобы отличать псевдо-элементы (::) от псевдо-классов (:)', isCorrect: true },
+                    { id: 'b', text: 'Это требования React' },
+                    { id: 'c', text: 'Старый синтаксис :before больше не поддерживается' },
+                    { id: 'd', text: 'Для повышения специфичности' }
+                ],
+                explanation: 'CSS3 ввел :: для псевдо-элементов (часть DOM) и : для псевдо-классов (состояние). Браузеры поддерживают оба варианта для совместимости.'
+            }
+        ]
+    },
+    {
+        id: 'vue_advanced',
+        title: 'Vue 3 Advanced',
+        category: 'Vue.js Ecosystem',
+        questions: [
+            {
+                id: 'va_1',
+                text: 'Когда лучше использовать `v-show` вместо `v-if`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Когда условие редко меняется' },
+                    { id: 'b', text: 'Когда элемент нужно часто переключать (toggle)', isCorrect: true },
+                    { id: 'c', text: 'Когда нужно улучшить время первоначального рендеринга' },
+                    { id: 'd', text: 'Когда элемент загружается асинхронно' }
+                ],
+                explanation: '`v-show` просто переключает CSS `display`, что дешевле для частого переключения. `v-if` удаляет/создает элементы DOM, что дороже.'
+            },
+            {
+                id: 'va_2',
+                text: 'Почему не рекомендуется использовать индекс массива как `key` в `v-for`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Это вызывает ошибку компиляции' },
+                    { id: 'b', text: 'Это приводит к багам при изменении порядка элементов или удалении', isCorrect: true },
+                    { id: 'c', text: 'Vue не поддерживает числовые ключи' },
+                    { id: 'd', text: 'Это замедляет рендеринг' }
+                ],
+                explanation: 'Если порядок элементов меняется, Vue с index-ключом может неправильно переиспользовать компоненты и их состояние.'
+            },
+            {
+                id: 'va_3',
+                text: 'Как определить события (emits) в `<script setup>`?',
+                type: 'input',
+                correctAnswer: 'defineEmits',
+                explanation: 'Макрос `defineEmits()` используется для объявления событий, которые компонент может отправлять родителю.'
+            },
+            {
+                id: 'va_4',
+                text: 'Что такое Scoped Slots?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Слоты, доступные только внутри компонента' },
+                    { id: 'b', text: 'Механизм передачи данных из дочернего компонента в контент слота, определенный в родителе', isCorrect: true },
+                    { id: 'c', text: 'Слоты с ограниченной областью видимости CSS' }
+                ],
+                explanation: 'Scoped Slots позволяют "вернуть" данные из ребенка в родительский шаблон, чтобы родитель мог отрендерить их по-своему.'
+            },
+            {
+                id: 'va_5',
+                text: 'Для чего используется компонент `<Teleport>`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Для анимации переходов между страницами' },
+                    { id: 'b', text: 'Для рендеринга элемента в другом месте DOM (например, body) вне иерархии компонента', isCorrect: true },
+                    { id: 'c', text: 'Для асинхронной подгрузки компонентов' }
+                ],
+                explanation: 'Teleport полезен для модальных окон, тултипов и уведомлений, которые должны быть поверх всего интерфейса.'
+            },
+            {
+                id: 'va_6',
+                text: 'Какой хук жизненного цикла вызывается при активации компонента внутри `<KeepAlive>`?',
+                type: 'input',
+                correctAnswer: 'onActivated',
+                explanation: 'Компоненты в KeepAlive не монтируются заново, а активируются. Используйте onActivated/onDeactivated.'
+            },
+            {
+                id: 'va_7',
+                text: 'Есть ли Mutation в Pinia?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Да, обязательно использовать' },
+                    { id: 'b', text: 'Нет, состояние меняется напрямую или через Actions', isCorrect: true },
+                    { id: 'c', text: 'Только в SSR режиме' }
+                ],
+                explanation: 'Pinia упростила архитектуру Vuex, убрав мутации. State можно менять прямо в Actions.'
+            },
+            {
+                id: 'va_8',
+                text: 'В чем отличие `createWebHistory` от `createWebHashHistory`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'HashHistory требует настройки сервера' },
+                    { id: 'b', text: 'WebHistory использует HTML5 History API и требует настройки сервера (redirect to index.html)', isCorrect: true },
+                    { id: 'c', text: 'Они одинаковы' }
+                ],
+                explanation: 'WebHistory дает красивые URL (/about), но при перезагрузке страницы нужен ответ сервера. HashHistory (#/about) работает везде без настройки.'
+            },
+            {
+                id: 'va_9',
+                text: 'Что делает `nextTick()`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Ждет следующего кадра анимации' },
+                    { id: 'b', text: 'Ждет завершения обновления DOM после изменения реактивных данных', isCorrect: true },
+                    { id: 'c', text: 'Вызывает setTimeout(0)' }
+                ],
+                explanation: 'Vue обновляет DOM асинхронно. nextTick() помогает выполнить код сразу после того, как DOM обновится.'
+            },
+            {
+                id: 'va_10',
+                text: 'Как применить стили к дочернему компоненту из `scoped` стилей родителя?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: '!important' },
+                    { id: 'b', text: 'Глубокий селектор :deep() (или >>>)', isCorrect: true },
+                    { id: 'c', text: 'context.styles()' }
+                ],
+                explanation: 'Селектор :deep(.child-class) позволяет "пробить" scoped-изоляцию и стилизовать вложенные компоненты.'
+            },
+            {
+                id: 'va_11',
+                text: 'Как называется хук жизненного цикла пользовательской директивы, который вызывается, когда элемент смонтирован?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'bind' },
+                    { id: 'b', text: 'mounted', isCorrect: true },
+                    { id: 'c', text: 'inserted' }
+                ],
+                explanation: 'В Vue 3 хуки директив переименованы для соответствия хукам компонентов (mounted, updated, unmounted).'
+            },
+            {
+                id: 'va_12',
+                text: 'Для чего нужен компонент `<Suspense>` (экспериментальный)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Для обработки ошибок' },
+                    { id: 'b', text: 'Для отображения запасного контента (fallback) пока загружаются асинхронные компоненты (setup async)', isCorrect: true },
+                    { id: 'c', text: 'Для ленивой загрузки картинок' }
+                ],
+                explanation: 'Suspense позволяет показывать "Loading..." состояние, пока разрешаются все async setup() дочернего дерева.'
             }
         ]
     }

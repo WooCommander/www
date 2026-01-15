@@ -15,6 +15,9 @@ export function useQuizSession() {
   const isFinishing = ref(false);
   let timerInterval: any = null;
 
+  /* Storing original quiz to support re-shuffling on retry */
+  const originalQuiz = ref<QuizTopic | null>(null);
+
   const activeQuestion = computed(() => {
     if (!currentQuiz.value || !currentQuiz.value.questions) return null;
     return currentQuiz.value.questions[currentQuestionIndex.value];
@@ -103,6 +106,8 @@ export function useQuizSession() {
   };
 
   const startQuiz = (quiz: QuizTopic) => {
+    // Store original for resets
+    originalQuiz.value = quiz;
     currentQuiz.value = shuffleOptions(quiz);
     resetState();
   };
@@ -132,13 +137,6 @@ export function useQuizSession() {
       }
       userAnswers.value[activeQuestion.value.id] = optionId;
     } else if (activeQuestion.value.type === 'multiple') {
-      // For multiple choice, we don't play sound immediately on selection? 
-      // Or maybe just click sound? Let's keep it silent or impartial click.
-      // User requested sound triggers in QuizView, so keeping logic here is fine.
-      // But logic for "correctness" on multiple choice is only known when submitting or finishing?
-      // Usually implementation is: click updates selection. Validation touches separate.
-      // Current implementation tries to be interactive.
-      // Let's stick to update selection.
       const current = userAnswers.value[activeQuestion.value.id] || [];
       if (current.includes(optionId)) {
         userAnswers.value[activeQuestion.value.id] = current.filter((id: string) => id !== optionId);
@@ -166,8 +164,6 @@ export function useQuizSession() {
     }
 
     if (currentQuiz.value) {
-      // Determine mode if not passed plainly
-      // Actually modeName comes from View usually (viewMode ref), but let's trust argument
       let safeMode = 'topic';
       if (modeName === 'exam' || currentQuiz.value.id === 'exam-full') safeMode = 'exam';
       else if (modeName === 'category' || currentQuiz.value.id.startsWith('cat-')) safeMode = 'category';
@@ -213,12 +209,18 @@ export function useQuizSession() {
   };
 
   const resetQuiz = () => {
-    if (currentQuiz.value) {
+    if (originalQuiz.value) {
+      // Re-shuffle from original
+      currentQuiz.value = shuffleOptions(originalQuiz.value);
       resetState();
+
       if (currentQuiz.value.id === 'exam-full') {
         timeRemaining.value = 45 * 60;
         startTimer();
       }
+    } else if (currentQuiz.value) {
+      // Fallback if original is missing for some reason
+      resetState();
     }
   };
 
@@ -241,6 +243,6 @@ export function useQuizSession() {
     nextQuestion,
     resetQuiz,
     finishQuiz,
-    triggerShake // exposed if needed
+    triggerShake
   };
 }
