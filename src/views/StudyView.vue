@@ -166,8 +166,8 @@ const visibleList = computed(() => {
 </script>
 
 <template>
-  <div>
-    <MainLayout>
+  <div class="study-view">
+    <MainLayout fixed-height>
       <template #header>
         <PageHeader title="Вопросы для собеседования"
           description="Практикуйся и изучай Js и TypeScript помощью интерактивных карточек." />
@@ -179,12 +179,16 @@ const visibleList = computed(() => {
         </div>
 
         <div class="categories-nav">
-          <h3 class="sidebar-title">Категории</h3>
-          <button v-for="cat in categories" :key="cat.name" class="category-chip"
-            :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
-            {{ cat.name }}
-            <span class="category-count">{{ cat.count }}</span>
-          </button>
+          <div class="nav-header">
+            <h3 class="sidebar-title">Категории</h3>
+          </div>
+          <div class="nav-list">
+            <button v-for="cat in categories" :key="cat.name" class="category-chip"
+              :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
+              <span class="cat-name">{{ cat.name }}</span>
+              <span class="category-count">{{ cat.count }}</span>
+            </button>
+          </div>
         </div>
       </template>
 
@@ -237,7 +241,13 @@ const visibleList = computed(() => {
 </template>
 
 <style scoped lang="scss">
+.study-view {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .fab-add {
+  /* ... existing styles ... */
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -263,14 +273,17 @@ const visibleList = computed(() => {
 
 .sidebar-title {
   font-size: 1.1rem;
-  margin-bottom: var(--spacing-md);
+  margin-bottom: var(--spacing-sm);
   color: var(--text-primary);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .search-container {
   width: 100%;
   margin-bottom: var(--spacing-lg);
   padding: 0;
+  flex-shrink: 0;
 }
 
 .search-input {
@@ -293,41 +306,95 @@ const visibleList = computed(() => {
 .categories-nav {
   display: flex;
   flex-direction: column;
+  gap: 0;
+  /* Reset gap, handle in list */
+  flex: 1;
+  min-height: 0;
+  /* Allow shrinking */
+}
+
+.nav-header {
+  flex-shrink: 0;
+  margin-bottom: var(--spacing-sm);
+  position: sticky;
+  top: 0;
+  background: var(--bg-card);
+  z-index: 10;
+  padding-bottom: 5px;
+}
+
+.nav-list {
+  display: flex;
+  flex-direction: column;
   gap: 6px;
+  overflow-y: auto;
+  /* Internal scroll for categories if needed */
+  padding-right: 4px;
+  /* Space for scrollbar */
+}
+
+/* Custom thin scrollbar for nav-list */
+.nav-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.nav-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.nav-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
 
 .category-chip {
   background: transparent;
   border: 1px solid transparent;
   color: var(--text-secondary);
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   transition: all 0.2s ease;
+  width: 100%;
 
   &:hover {
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
+    transform: translateX(4px);
   }
 
   &.active {
-    background: var(--accent-primary);
-    color: #fff;
-    box-shadow: var(--shadow-sm);
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--accent-primary);
+    border-color: rgba(56, 189, 248, 0.2);
+    font-weight: 500;
   }
 }
 
+.cat-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-right: 10px;
+}
+
 .category-count {
-  font-size: 0.8em;
+  font-size: 0.75em;
   opacity: 0.7;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 2px 8px;
-  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 24px;
+  text-align: center;
+}
+
+.questions-wrapper {
+  padding-bottom: 40px;
 }
 
 .questions-list {
@@ -337,7 +404,12 @@ const visibleList = computed(() => {
 }
 
 .category-section {
-  margin-bottom: var(--spacing-xl);
+  margin-bottom: var(--spacing-lg);
+  margin-top: var(--spacing-md);
+
+  &:first-child {
+    margin-top: 0;
+  }
 }
 
 .category-title {
@@ -363,6 +435,17 @@ const visibleList = computed(() => {
     /* Center them */
   }
 
+  .nav-header {
+    display: none;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    overflow-y: visible;
+    justify-content: center;
+  }
+
   .category-chip {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -370,22 +453,18 @@ const visibleList = computed(() => {
     flex-shrink: 0;
     padding: 8px 16px;
     border-radius: 20px;
-    cursor: pointer;
-    white-space: nowrap;
-    font-size: 0.9rem;
-    transition: all 0.2s ease;
+    width: auto;
 
     &:hover {
       border-color: var(--accent-primary);
       color: var(--text-primary);
+      transform: none;
     }
 
     &.active {
       background: var(--accent-primary);
+      color: white;
     }
-
-    /* Reset flex/justify for chips */
-    display: inline-flex;
   }
 
   .mobile-search {

@@ -1,12 +1,16 @@
 <script setup lang="ts">
 import { useSlots, computed } from 'vue';
 
+const props = defineProps<{
+    fixedHeight?: boolean;
+}>();
+
 const slots = useSlots();
 const hasSidebar = computed(() => !!slots.sidebar);
 </script>
 
 <template>
-    <div class="container-wide main-layout">
+    <div class="container-wide main-layout" :class="{ 'fixed-height': fixedHeight }">
         <!-- Header Slot (PageHeader goes here) -->
         <div v-if="$slots.header" class="layout-header">
             <slot name="header"></slot>
@@ -41,8 +45,17 @@ const hasSidebar = computed(() => !!slots.sidebar);
     padding: var(--spacing-xl) var(--spacing-lg);
 }
 
+.container-wide.fixed-height {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding-bottom: 0;
+}
+
 .layout-header {
     margin-bottom: var(--spacing-xl);
+    flex-shrink: 0;
 }
 
 /* grid-template-columns default 1fr */
@@ -54,24 +67,51 @@ const hasSidebar = computed(() => !!slots.sidebar);
     min-height: 80vh;
 }
 
+.fixed-height .content-grid {
+    flex: 1;
+    overflow: hidden;
+    min-height: 0;
+    /* Important for flex child to shrink */
+    align-items: stretch;
+    /* Stretch to fill height */
+}
+
 /* If sidebar present: 300px 1fr */
 .content-grid.has-sidebar {
     grid-template-columns: 300px 1fr;
 }
-
 
 /* Sidebar Styling Wrapper */
 .layout-sidebar {
     position: sticky;
     top: 100px;
     background: var(--bg-card);
-    /* Optional default, can be overridden */
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    /* Optional default */
-    /* padding: var(--spacing-lg); handled by slot content usually, or we enforce it? */
-    /* Let's enforce padding here to ensure consistency unless overridden */
     padding: var(--spacing-lg);
+    display: flex;
+    flex-direction: column;
+}
+
+.fixed-height .layout-sidebar {
+    position: relative;
+    top: 0;
+    height: 100%;
+    overflow: hidden;
+    /* Internal scroll will be handled by children or here */
+    overflow-y: auto;
+}
+
+.layout-content {
+    /* min-width: 0;  Prevent grid blowout */
+}
+
+.fixed-height .layout-content {
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 2rem;
+    padding-right: 10px;
+    /* Space for scrollbar */
 }
 
 .layout-mobile-nav {
@@ -79,11 +119,33 @@ const hasSidebar = computed(() => !!slots.sidebar);
     /* Hidden on desktop */
 }
 
+/* Scrollbar Styling for fixed areas */
+.fixed-height .layout-sidebar::-webkit-scrollbar,
+.fixed-height .layout-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.fixed-height .layout-sidebar::-webkit-scrollbar-track,
+.fixed-height .layout-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+}
+
+.fixed-height .layout-sidebar::-webkit-scrollbar-thumb,
+.fixed-height .layout-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
 /* Responsive Logic */
 @media (max-width: 1024px) {
     .content-grid {
         display: block;
         /* Stack on mobile */
+    }
+
+    .fixed-height .content-grid {
+        display: flex;
+        flex-direction: column;
     }
 
     .layout-sidebar {
@@ -95,6 +157,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
         display: block;
         /* Show mobile nav */
         margin-bottom: var(--spacing-lg);
+        flex-shrink: 0;
     }
 }
 

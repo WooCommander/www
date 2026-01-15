@@ -190,7 +190,7 @@ const saveCustomQuiz = async (quiz: CustomQuiz) => {
             @delete-question="deleteQuestion" />
 
         <!-- Active Quiz (Needs Layout Container) -->
-        <MainLayout v-else-if="!showResults && activeQuestion && currentQuiz">
+        <MainLayout v-else-if="!showResults && activeQuestion && currentQuiz" fixed-height>
             <QuizRunner :current-quiz="currentQuiz" :active-question="activeQuestion"
                 :current-question-index="currentQuestionIndex" :progress="progress" :formatted-time="formattedTime"
                 :time-remaining="timeRemaining" :is-shaking="isShaking"
@@ -199,7 +199,7 @@ const saveCustomQuiz = async (quiz: CustomQuiz) => {
         </MainLayout>
 
         <!-- Results (Needs Layout Container) -->
-        <MainLayout v-else-if="showResults && currentQuiz">
+        <MainLayout v-else-if="showResults && currentQuiz" fixed-height>
             <QuizResults :current-quiz="currentQuiz" :score-data="calculateScore" :user-answers="userAnswers"
                 @retry="resetQuiz" @go-back="goBack" />
         </MainLayout>

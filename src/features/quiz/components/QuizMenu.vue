@@ -20,7 +20,7 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <MainLayout>
+  <MainLayout fixed-height>
     <template #header>
       <PageHeader title="Режимы тестирования" description="Проверь свои знания в различных режимах тестирования." />
     </template>

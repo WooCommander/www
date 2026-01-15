@@ -67,7 +67,7 @@ const manualSync = async () => {
 </script>
 
 <template>
-  <MainLayout>
+  <MainLayout fixed-height>
     <template #header>
       <PageHeader title="🏆 Таблица рекордов" description="Твои лучшие результаты и история прохождений." />
     </template>
@@ -213,7 +213,7 @@ h2 {
   cursor: pointer;
   font-size: 0.8rem;
   margin-left: 8px;
-  
+
   &:hover {
     background: var(--bg-card);
   }

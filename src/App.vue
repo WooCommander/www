@@ -34,16 +34,47 @@ const updateThemeClass = () => {
 </script>
 
 <template>
-  <Header :is-dark="isDark" @toggle-theme="toggleTheme" />
+  <div class="app-shell">
+    <Header :is-dark="isDark" @toggle-theme="toggleTheme" />
 
-  <router-view v-slot="{ Component }">
-    <transition name="page-fade" mode="out-in">
-      <component :is="Component" />
-    </transition>
-  </router-view>
+    <div class="app-main">
+      <router-view v-slot="{ Component }">
+        <transition name="page-fade" mode="out-in">
+          <component :is="Component" class="view-content" />
+        </transition>
+      </router-view>
+    </div>
+  </div>
 </template>
 
 <style>
+/* Global Layout Shell */
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-primary);
+  /* Ensure bg covers everything */
+}
+
+.app-main {
+  flex: 1;
+  overflow: hidden;
+  /* Prevent global scroll, delegation to views */
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+.view-content {
+  flex: 1;
+  height: 100%;
+  /* Ensure view takes full height of app-main */
+  overflow: hidden;
+  /* Views handle their own scrolling */
+}
+
 /* Page Transitions */
 .page-fade-enter-active,
 .page-fade-leave-active {

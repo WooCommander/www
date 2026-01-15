@@ -4432,6 +4432,120 @@ export const quizzes: QuizTopic[] = [
                 explanation: 'Vue компилятор видит, что `<div>Hello</div>` не меняется, и создает его один раз при запуске приложения.'
             }
         ]
+    },
+    {
+        id: 'vue_architecture',
+        title: 'Vue Architecture & Patterns',
+        category: 'Architecture',
+        questions: [
+            {
+                id: 'varch_1',
+                text: 'Что такое Feature-Sliced Design (FSD)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Плагин для Vite' },
+                    { id: 'b', text: 'Архитектурная методология, которая делит приложение на слои (Layers), слайсы (Slices) и сегменты (Segments) для улучшения масштабируемости', isCorrect: true },
+                    { id: 'c', text: 'Способ нарезки макетов в Figma' }
+                ],
+                explanation: 'FSD помогает избежать запутанных зависимостей (Spaghetti Code) в больших проектах, вводя строгие правила импорта: только "сверху вниз" (App -> Pages -> Features -> Entities -> Shared).'
+            },
+            {
+                id: 'varch_2',
+                text: 'Какой подход к организации стора (Pinia) считается более масштабируемым?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Один гигантский файл store.js' },
+                    { id: 'b', text: 'Модульные сторы, разделенные по доменным сущностям (UserStore, CartStore) или фичам, с явным разделением на State, Getter, Action', isCorrect: true },
+                    { id: 'c', text: 'Хранение всего состояния в локальном Storage' }
+                ],
+                explanation: 'Разделение сторов позволяет лениво загружать их (Code Splitting) и упрощает тестирование. Setup Stores (`const useUser = defineStore(...)`) дают еще больше гибкости.'
+            },
+            {
+                id: 'varch_3',
+                text: 'В чем суть паттерна "Container / Presentational Components" (Smart / Dumb)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Одни компоненты умные (AI), другие глупые' },
+                    { id: 'b', text: 'Разделение ответственности: Контейнеры управляют логикой/данными, а Презентационные компоненты (Dumb) только отображают props и эмитят события', isCorrect: true },
+                    { id: 'c', text: 'Устаревший паттерн, в Vue не используется' }
+                ],
+                explanation: 'Этот паттерн (хоть и не догма) помогает переиспользовать UI-компоненты ("Кнопка"), отвязывая их от бизнес-логики ("Купить товар").'
+            },
+            {
+                id: 'varch_4',
+                text: 'Когда стоит внедрять State Machine (например, XState) в Vue-приложение?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Для любой формы' },
+                    { id: 'b', text: 'Для управления сложной, разветвленной логикой переходов (например, процесс оформления заказа или сложный визард), где много состояний и условий', isCorrect: true },
+                    { id: 'c', text: 'Никогда, это React-way' }
+                ],
+                explanation: 'Конечные автоматы (FSM) делают логику предсказуемой и исключают "невозможные состояния" (например, "загрузка" и "успех" одновременно).'
+            },
+            {
+                id: 'varch_5',
+                text: 'Что такое "Headless UI" (например, TanStack Table, Headless UI)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'UI без головы (Header)' },
+                    { id: 'b', text: 'Библиотеки, предоставляющие только логику и a11y (доступность), но без стилей. Вы сами верстаете внешний вид', isCorrect: true },
+                    { id: 'c', text: 'UI, который рендерится на сервере' }
+                ],
+                explanation: 'Это дает максимальную свободу дизайна. Вы получаете рабочий `Combobox` с навигацией клавиатурой, но стилизуете его под свой Design System.'
+            },
+            {
+                id: 'varch_6',
+                text: 'Что лучше использовать для инъекции зависимостей (например, API сервис или конфиг) глубоко в дерево?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Глобальные свойства (app.config.globalProperties)' },
+                    { id: 'b', text: 'Provide / Inject', isCorrect: true },
+                    { id: 'c', text: 'Импортировать файл напрямую в каждый компонент' }
+                ],
+                explanation: 'Provide/Inject реализует паттерн Dependency Injection (DI), что облегчает подмену реализаций (например, MockService для тестов) и развязывает код.'
+            },
+            {
+                id: 'varch_7',
+                text: 'Какая стратегия тестирования (Testing Pyramid) наиболее эффективна экономически?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: '100% E2E тестов' },
+                    { id: 'b', text: 'Много быстрых Unit-тестов, меньше Integration-тестов и совсем немного E2E (UI) тестов для критических путей', isCorrect: true },
+                    { id: 'c', text: 'Тестировать только в продакшене' }
+                ],
+                explanation: 'E2E (Cypress/Playwright) медленные и хрупкие. Unit (Vitest) быстрые и дешевые.'
+            },
+            {
+                id: 'varch_8',
+                text: 'Что такое Monorepo и зачем оно нужно?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Один репозиторий для одного файла' },
+                    { id: 'b', text: 'Хранение кода нескольких проектов (например, web, admin, mobile, shared-ui) в одном репо для удобного шаринга кода и атомарных коммитов', isCorrect: true }
+                ],
+                explanation: 'Инструменты вроде Turborepo или Nx позволяют эффективно управлять зависимостями и билдить только то, что изменилось.'
+            },
+            {
+                id: 'varch_9',
+                text: 'BFF (Backend for Frontend) — это...',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Лучший друг фронтендера' },
+                    { id: 'b', text: 'Промежуточный слой API, который подготавливает и агрегирует данные специально для конкретного клиентского приложения (Web vs Mobile)', isCorrect: true }
+                ],
+                explanation: 'Это снимает нагрузку с фронтенда (меньше запросов, меньше маппинга данных) и скрывает сложность микросервисов.'
+            },
+            {
+                id: 'varch_10',
+                text: 'Почему стоит избегать "Magic Strings" и использовать Enums или Const Objects?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Это просто стиль' },
+                    { id: 'b', text: 'Это облегчает рефакторинг (Rename Symbol), улучшает читаемость и защищает от опечаток в TypeScript', isCorrect: true }
+                ],
+                explanation: 'Вместо `if (status === "active")` лучше `if (status === Status.Active)`. IDE подскажет возможные значения.'
+            }
+        ]
     }
 ];
 
