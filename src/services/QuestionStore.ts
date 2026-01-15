@@ -95,7 +95,8 @@ const getAllQuestions = computed(() => {
         id: o.id,
         text: o.text,
         isCorrect: !!o.isCorrect // Ensure boolean
-      }))
+      })),
+      code: q.codeSnippet // Map code snippet if available
     }))
   );
 

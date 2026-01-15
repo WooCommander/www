@@ -4106,7 +4106,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'c', text: 'Flux' },
                     { id: 'd', text: 'Singleton' }
                 ],
-                explanation: 'Vue реализует паттерн MVVM, где ViewModel (экземпляр Vue) связывает Model (данные JS) и View (DOM) через двустороннее связывание (Data Binding).'
+                explanation: 'Vue реализует паттерн MVVM. `View` — это DOM, `Model` — это чистые JS-объекты, а `ViewModel` — это экземпляр Vue (app), который синхронизирует их.\n\nПример: изменение `data.title` (Model) -> Vue (ViewModel) -> обновляет текст в DOM (View).'
             },
             {
                 id: 'vi_2',
@@ -4117,7 +4117,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Это нарушает One-Way Data Flow (однонаправленный поток данных), делая отладку сложной', isCorrect: true },
                     { id: 'c', text: 'Это вызывает утечку памяти' }
                 ],
-                explanation: 'Данные должны течь вниз (props), а события — вверх (emits). Если ребенок меняет пропс, родитель может перезаписать его обратно при ре-рендере, что приведет к непредсказуемому состоянию.'
+                explanation: 'Поток данных: Parent -> (props) -> Child -> (emits) -> Parent.\n\nЕсли Child меняет prop, Parent перезапишет его при следующем рендере. Правильно сделать копию в data или computed: `const localTitle = ref(props.title)`.'
             },
             {
                 id: 'vi_3',
@@ -4128,7 +4128,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Vue 3 использует ES6 Proxy, что позволяет отслеживать добавление свойств и работу с массивами без "хаков"', isCorrect: true },
                     { id: 'c', text: 'Vue 3 использует грязную проверку (dirty checking) как AngularJS' }
                 ],
-                explanation: 'Proxy позволяет перехватывать любые операции с объектом, включая добавление новых ключей, чего не мог Object.defineProperty в Vue 2.'
+                explanation: 'Vue 2 требовал `Vue.set(obj, "newKey", val)`. Vue 3 использует `Proxy`, который перехватывает ЛЮБЫЕ изменения объекта, включая удаление свойств и `arr.length`.'
             },
             {
                 id: 'vi_4',
@@ -4139,7 +4139,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'v-bind — это односторонняя привязка (данные -> DOM), v-model — двусторонняя (данные <-> DOM)', isCorrect: true },
                     { id: 'c', text: 'v-model работает только с формами, v-bind только с атрибутами' }
                 ],
-                explanation: 'v-model — это синтаксический сахар, который объединяет v-bind:value и обработчик события v-on:input (или update:modelValue).'
+                explanation: '`v-bind` (`:value="val"`) только передает данные вниз.\n`v-model` (`v-model="val"`) делает две вещи: 1. :value="val" 2. @input="(e) => val = e.target.value".'
             },
             {
                 id: 'vi_5',
@@ -4150,7 +4150,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Для "оживления" статического HTML, пришедшего с сервера (привязка обработчиков событий и создание виртуального DOM)', isCorrect: true },
                     { id: 'c', text: 'Для кэширования запросов к базе данных' }
                 ],
-                explanation: 'Сервер присылает готовый HTML. Клиентский JS (Vue) должен "пробежаться" по этому HTML и привязать к нему интерактивность, не перерисовывая всё заново.'
+                explanation: 'Серверный HTML — это просто текст. Гидратация — это когда Vue на клиенте "накладывается" на этот HTML, создавая VDOM и вешая `addEventListener`, не перерисовывая страницу.'
             },
             {
                 id: 'vi_6',
@@ -4161,7 +4161,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Неясный источник свойств (name clash), неявные зависимости и плохая поддержка TypeScript', isCorrect: true },
                     { id: 'c', text: 'Миксины удалены из Vue 3' }
                 ],
-                explanation: 'В миксинах свойства "появляются из ниоткуда" (this.helper), и если миксинов несколько, возможны конфликты имен. Composables (useHooks) делают зависимости явными.'
+                explanation: 'В Options API: `mixins: [MixinA, MixinB]`. Откуда пришло `this.user`? Неясно. Конфликты имен.\nВ Composition API: `const { user } = useUser()`. Явно и прозрачно.'
             },
             {
                 id: 'vi_7',
@@ -4172,7 +4172,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Абстракция структуры DOM в виде JS-объектов. Позволяет вычислять разницу (diff) и менять в реальном DOM только то, что изменилось', isCorrect: true },
                     { id: 'c', text: 'Это новый стандарт HTML5' }
                 ],
-                explanation: 'Работа с реальным DOM — самая дорогая операция. VDOM минимизирует количество таких операций, группируя изменения.'
+                explanation: 'Менять реальный DOM медленно. VDOM быстрее сравнить два JS-объекта (старый и новый), найти разницу (Patch) и точечно обновить DOM.'
             },
             {
                 id: 'vi_8',
@@ -4183,7 +4183,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Для типа-безопасности' },
                     { id: 'c', text: 'Для лучшего переиспользования логики (Logic Reuse) и организации кода по фичам, а не по опциям (data, methods)', isCorrect: true }
                 ],
-                explanation: 'Options API размазывает логику одной фичи (например, "поиск") по data, methods, computed. Composition API позволяет собрать её вместе.'
+                explanation: 'Пример папки: `useSearch.ts`. В нем есть `ref` (state), `computed` (getters), и `function` (actions). Всё вместе, а не размазано по файлу компонента.'
             },
             {
                 id: 'vi_9',
@@ -4194,7 +4194,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Сообщает браузеру, что обработчик не вызовет preventDefault(), что позволяет не блокировать прокрутку (scroll performance)', isCorrect: true },
                     { id: 'c', text: 'Делает событие одноразовым' }
                 ],
-                explanation: 'Это критично для плавности скролла на мобильных устройствах.'
+                explanation: '`@scroll.passive="onScroll"`. Браузер знает, что вы не отмените скролл, и запускает прокрутку плавно в отдельном потоке, не дожидаясь выполнения JS.'
             },
             {
                 id: 'vi_10',
@@ -4205,7 +4205,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Да. Pinia для глобального состояния приложения, provide/inject для передачи данных глубоко по дереву конкретной ветки компонентов', isCorrect: true },
                     { id: 'c', text: 'Только в Vue 2' }
                 ],
-                explanation: 'Инструменты решают разные задачи. Pinia — глобальный стор. Provide/Inject — способ избежать props drilling внутри плагина или сложного компонента.'
+                explanation: 'Pinia: UserSession, Theme. Доступно везде.\nProvide/Inject: FormContext (для инпутов внутри формы). Нужно только внутри формы.'
             }
         ]
     },
@@ -4223,7 +4223,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Потому что вы извлекаете примитивное значение, разрывая связь с Proxy-объектом props', isCorrect: true },
                     { id: 'c', text: 'Это работает нормально, если использовать let' }
                 ],
-                explanation: 'Чтобы сохранить реактивность при деструктуризации, нужно использовать `toRefs(props)`.'
+                explanation: 'Пример ошибки:\n`const { title } = props` -> `title` теперь просто строка.\n\nРешение:\n`const { title } = toRefs(props)` -> `title` теперь `Ref<string>`, который реагирует на изменения.'
             },
             {
                 id: 'vp_2',
@@ -4234,7 +4234,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Функция setup вернет Promise, и компонент станет неявно асинхронным, требуя <Suspense> у родителя', isCorrect: true },
                     { id: 'c', text: 'Ошибка компиляции' }
                 ],
-                explanation: 'Если setup() становится async, он корректно отобразится только внутри Suspense. Иначе компонент может просто не отрендериться.'
+                explanation: 'Ваш компонент перестанет рендериться, если родитель не обернет его в `<Suspense>`. Внутри `<script setup>` await на верхнем уровне автоматически делает компонент асинхронным.'
             },
             {
                 id: 'vp_3',
@@ -4246,7 +4246,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Это сработает, но только локально' },
                     { id: 'c', text: 'Это вызовет бесконечный цикл' }
                 ],
-                explanation: 'Props принадлежат родителю. Если вам нужно изменить значение, используйте emit события или локальную копию данных.'
+                explanation: 'Однонаправленный поток: `Parent -> Child`. Child не должен менять данные Parent. Вместо этого: `emit("update:title", "New")`.'
             },
             {
                 id: 'vp_4',
@@ -4257,7 +4257,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Если внутри него синхронно изменять реактивное состояние, от которого он сам же и зависит', isCorrect: true },
                     { id: 'c', text: 'Это баг Vue 3' }
                 ],
-                explanation: 'watchEffect автоматически подписывается на зависимости. Изменение зависимости внутри эффекта немедленно триггерит его повторный запуск.'
+                explanation: 'Пример цикла:\n`watchEffect(() => { count.value++ })`\nЭффект зависит от count -> запускается -> меняет count -> снова запускается...'
             },
             {
                 id: 'vp_5',
@@ -4267,7 +4267,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Значение обновится реактивно' },
                     { id: 'b', text: 'Вы потеряете реактивность, так как перезаписали сам ref-объект, а не его .value', isCorrect: true }
                 ],
-                explanation: 'Нужно всегда писать `myRef.value = ...`. Если вы перезапишете саму переменную (let), связь с шаблоном разорвется.'
+                explanation: 'Ошибка: `let count = ref(0); count = 1;` -> `count` теперь просто число 1.\nПравильно: `count.value = 1`.'
             },
             {
                 id: 'vp_6',
@@ -4277,7 +4277,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Да, как обычно' },
                     { id: 'b', text: 'Нет, setup выполняется до создания экземпляра компонента', isCorrect: true }
                 ],
-                explanation: 'В Composition API нет `this`. Используйте аргументы props и context, или composables.'
+                explanation: 'В Composition API нет `this`. Чтобы получить доступ к пропсам или контексту, используйте аргументы `setup(props, context)` или хуки.'
             },
             {
                 id: 'vp_7',
@@ -4287,7 +4287,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Ограничение Object.defineProperty' },
                     { id: 'b', text: 'В Vue 3 это работает (из-за Proxy), но привычка использовать `.splice` или `.value = [...]` осталась хорошим тоном для реактивности', isCorrect: true }
                 ],
-                explanation: 'Vue 3 решил эту проблему, но важно помнить, что замена всего массива (`arr.value = []` для ref) часто надежнее мутаций.'
+                explanation: '`options` API Vue 2 не видит изменения по индексу.\nVue 3 видит всё! Но лучше заменять массив целиком: `list.value = [...result]` для чистоты.'
             },
             {
                 id: 'vp_8',
@@ -4297,7 +4297,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Там же, где он объявлен (логически), но в другом месте DOM (физически)', isCorrect: true },
                     { id: 'b', text: 'Он полностью переносится в другой компонент' }
                 ],
-                explanation: 'Логически он остается child-ом текущего компонента (работают provide/inject), но рендерится в другом месте DOM.'
+                explanation: 'Важно: `provide/inject` работают через Телепорт! Родитель все равно остается родителем, даже если div улетел в `body`.'
             },
             {
                 id: 'vp_9',
@@ -4307,7 +4307,7 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Да, всегда' },
                     { id: 'b', text: 'Нет, Vue автоматически разворачивает (unwraps) ref-ы верхнего уровня в шаблоне', isCorrect: true }
                 ],
-                explanation: 'В шаблоне мы пишем `{{ count }}`, а не `{{ count.value }}`.'
+                explanation: 'Удобство: В `<script>` пишем `count.value`, в `<template>` просто `{{ count }}`.'
             },
             {
                 id: 'vp_10',
@@ -4317,8 +4317,121 @@ export const quizzes: QuizTopic[] = [
                     { id: 'a', text: 'Это отлично работает' },
                     { id: 'b', text: 'Это плохая практика, так как приоритеты (precedence) неявны. Лучше использовать <template v-for> с вложенным v-if', isCorrect: true }
                 ],
-                explanation: 'В Vue 3 `v-if` имеет приоритет над `v-for`, что может привести к ошибкам, если условие зависит от переменной цикла.'
+                explanation: 'В Vue 3 `v-if` имеет более высокий приоритет, чем `v-for`. Если использовать их вместе, `v-if` не увидит переменную цикла, что приведет к ошибке.\n\nРешение: используйте скрытую обертку `<template v-for="...">` для цикла, а `v-if` поместите внутри.',
+                codeSnippet: '<template v-for="item in list">\n  <li v-if="item.isActive">{{ item.name }}</li>\n</template>'
+            }
+        ]
+    },
+    {
+        id: 'vue_performance',
+        title: 'Vue Performance',
+        category: 'Performance',
+        questions: [
+            {
+                id: 'vperf_1',
+                text: 'Когда стоит использовать `shallowRef` вместо `ref`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Всегда, это быстрее' },
+                    { id: 'b', text: 'Для больших объектов (графики, карты, большие списки), где не нужно глубокое отслеживание изменений', isCorrect: true },
+                    { id: 'c', text: 'Только для примитивов' }
+                ],
+                explanation: '`shallowRef` делает реактивным только `.value`. Свойства объекта внутри него (например, `chart.data`) не оборачиваются в Proxy, что экономит память и процессор.'
+            },
+            {
+                id: 'vperf_2',
+                text: 'Что делает директива `v-once`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Выполняет обработчик события один раз' },
+                    { id: 'b', text: 'Рендерит элемент и его детей один раз и пропускает их при будущих обновлениях', isCorrect: true },
+                    { id: 'c', text: 'Удаляет элемент после первого клика' }
+                ],
+                explanation: 'Идеально для заголовков, футеров и статического контента. Vue просто пропускает этот узел при diff-алгоритме.'
+            },
+            {
+                id: 'vperf_3',
+                text: 'В чем преимущество `defineAsyncComponent`?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Он работает синхронно' },
+                    { id: 'b', text: 'Он позволяет загружать компонент (и его JS-код) только тогда, когда он действительно нужен (Lazy Loading)', isCorrect: true },
+                    { id: 'c', text: 'Он автоматически обрабатывает ошибки' }
+                ],
+                explanation: '`const AdminCmp = defineAsyncComponent(() => import("./Admin.vue"))`. Код админки не будет загружен клиенту, пока он не откроет админку.'
+            },
+            {
+                id: 'vperf_4',
+                text: 'Почему важно удалять слушатели событий (addEventListener), добавленные вручную?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Чтобы не было ошибок в консоли' },
+                    { id: 'b', text: 'Чтобы избежать утечек памяти (Memory Leaks), так как компонент удаляется, а слушатель остается висеть на window/document', isCorrect: true }
+                ],
+                explanation: 'Всегда очищайте события в `onUnmounted`: `window.removeEventListener(...)`.'
+            },
+            {
+                id: 'vperf_5',
+                text: 'Почему computed свойства эффективнее методов при выводе данных?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Они пишутся короче' },
+                    { id: 'b', text: 'Computed кешируются. Они пересчитываются только при изменении зависимостей, в то время как методы запускаются при каждом ре-рендере', isCorrect: true }
+                ],
+                explanation: 'Если у вас тяжелое вычисление (фильтрация большого списка), в методе оно будет выполняться каждый кадр обновления.'
+            },
+            {
+                id: 'vperf_6',
+                text: 'Как работает директива `v-memo` (Vue 3.2+)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Запоминает значение инпута' },
+                    { id: 'b', text: 'Мемоизирует часть шаблона. Vue пропустит рендер этой части, если значения в массиве зависимостей не изменились', isCorrect: true }
+                ],
+                explanation: '`<div v-memo="[valueA, valueB]">...</div>`. Аналог `React.useMemo` но для шаблона. Полезно для огромных списков v-for.'
+            },
+            {
+                id: 'vperf_7',
+                text: 'Как влияет использование `customRef` на производительность ввода (debounce)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Никак' },
+                    { id: 'b', text: 'Позволяет отложить обновление триггера (trigger), снижая количество рендеров при быстром вводе текста', isCorrect: true }
+                ],
+                explanation: 'С помощью `customRef` можно создать `useDebounsedRef(text, 500)`, который обновит DOM только после паузы в вводе.'
+            },
+            {
+                id: 'vperf_8',
+                text: 'Какая библиотека для статического анализа помогает найти неиспользуемый код и уменьшить бандл?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'ESLint' },
+                    { id: 'b', text: 'Bundle Analyzer (webpack/rollup-bundle-analyzer)', isCorrect: true },
+                    { id: 'c', text: 'Prettier' }
+                ],
+                explanation: 'Визуализация бандла помогает увидеть, что вы случайно импортировали огромную библиотеку (например, lodash целиком) вместо одной функции.'
+            },
+            {
+                id: 'vperf_9',
+                text: 'Что быстрее при первоначальной загрузке: v-if или v-show?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Одинаково' },
+                    { id: 'b', text: 'v-if быстрее (так как элемент вообще не создается), v-show медленнее (элемент создается, но скрывается)', isCorrect: true }
+                ],
+                explanation: '`v-if` — ленивый. Если условие false, ничего не рендерится. `v-show` рендерит всегда. Но переключать (toggle) быстрее `v-show`.'
+            },
+            {
+                id: 'vperf_10',
+                text: 'Как Vue 3 оптимизирует обновление статических узлов (Static Hoisting)?',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Он не оптимизирует их' },
+                    { id: 'b', text: 'Он выносит создание статических VNodes за пределы функции рендера, чтобы не пересоздавать их при каждом обновлении', isCorrect: true }
+                ],
+                explanation: 'Vue компилятор видит, что `<div>Hello</div>` не меняется, и создает его один раз при запуске приложения.'
             }
         ]
     }
 ];
+
