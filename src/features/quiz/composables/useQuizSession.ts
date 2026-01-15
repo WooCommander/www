@@ -12,6 +12,7 @@ export function useQuizSession() {
   const currentInputAnswer = ref('');
   const isShaking = ref(false);
   const timeRemaining = ref(0);
+  const isFinishing = ref(false);
   let timerInterval: any = null;
 
   const activeQuestion = computed(() => {
@@ -81,6 +82,7 @@ export function useQuizSession() {
     currentQuestionIndex.value = 0;
     userAnswers.value = {};
     showResults.value = false;
+    isFinishing.value = false;
     currentInputAnswer.value = '';
     stopTimer();
   };
@@ -147,6 +149,9 @@ export function useQuizSession() {
   };
 
   const finishQuiz = async (modeName: string = 'Unknown') => {
+    if (isFinishing.value || showResults.value) return;
+    isFinishing.value = true;
+
     stopTimer();
     showResults.value = true;
 

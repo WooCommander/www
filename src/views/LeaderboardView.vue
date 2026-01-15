@@ -50,6 +50,20 @@ const clearHistory = () => {
     // For now, local clear is safer to avoid accidental bulk delete
   }
 };
+
+const currentUser = ref<any>(null);
+const syncError = computed(() => QuestionStore.state.lastSyncError);
+
+onMounted(async () => {
+  const { supabase } = await import('../services/supabase');
+  const { data } = await supabase.auth.getUser();
+  currentUser.value = data.user;
+});
+
+const manualSync = async () => {
+  console.log('Manual sync triggered...');
+  await QuestionStore.sync();
+};
 </script>
 
 <template>
@@ -101,6 +115,18 @@ const clearHistory = () => {
     </template>
 
     <template #content>
+      <div v-if="!currentUser && scope === 'global'" class="debug-info">
+        <span>⚠️ Вы не вошли в систему. Глобальные рекорды недоступны.</span>
+      </div>
+      <div v-if="syncError" class="debug-info">
+        <span>⚠️ Ошибка синхронизации: {{ syncError }}</span>
+        <button class="sync-btn" @click="manualSync">Повторить</button>
+      </div>
+
+      <div class="debug-info" v-if="scope === 'local' || scope === 'global'">
+        <span>Локальные записи: {{ QuestionStore.state.examHistory.length }}</span>
+      </div>
+
       <div v-if="filteredRecords.length === 0" class="empty-state">
         <p v-if="scope === 'local'">Пока нет записей. Пройдите тест или экзамен!</p>
         <p v-else>Список лидеров пуст или загружается...</p>
@@ -163,6 +189,34 @@ h2 {
   text-align: center;
   margin-bottom: var(--spacing-xl);
   font-size: 2rem;
+}
+
+.debug-info {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sync-btn {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-left: 8px;
+  
+  &:hover {
+    background: var(--bg-card);
+  }
 }
 
 .controls {
