@@ -42,7 +42,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
     width: 100%;
     max-width: 1400px;
     margin: 0 auto;
-    padding: var(--spacing-xl) var(--spacing-lg);
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-lg) var(--spacing-lg);
 }
 
 .container-wide.fixed-height {
