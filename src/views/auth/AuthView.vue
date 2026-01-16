@@ -85,7 +85,7 @@ const handleAuth = async () => {
 
 .auth-card {
     background: var(--bg-card);
-    padding: var(--spacing-xl);
+    padding: var(--spacing-sm);
     border-radius: 24px;
     border: 1px solid var(--border-color);
     width: 100%;

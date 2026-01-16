@@ -32,13 +32,23 @@ p {
 }
 
 @media (max-width: 640px) {
+    .page-header {
+        margin-bottom: var(--spacing-md);
+        text-align: left;
+        /* Often looks better on mobile than center */
+    }
+
     h2 {
-        font-size: 1.8rem;
+        font-size: 1.5rem;
+        margin-bottom: 4px;
     }
 
     p {
-        font-size: 1rem;
-        padding: 0 var(--spacing-sm);
+        font-size: 0.9rem;
+        padding: 0;
+        line-height: 1.4;
+        display: none;
+        /* aggressive space saving: hide description on mobile? Or just make small */
     }
 }
 </style>

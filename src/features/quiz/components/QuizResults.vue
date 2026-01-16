@@ -171,4 +171,33 @@ const getCorrectAnswerText = (q: QuizQuestion) => {
     color: var(--accent-success);
     margin-bottom: 4px;
 }
+
+@media (max-width: 640px) {
+    .score-card {
+        padding: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .score-circle {
+        width: 100px;
+        height: 100px;
+        font-size: 2rem;
+        margin: 16px auto;
+        border-width: 6px;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .retry-btn,
+    .back-btn {
+        width: 100%;
+    }
+}
 </style>

@@ -64,6 +64,14 @@ const manualSync = async () => {
   console.log('Manual sync triggered...');
   await QuestionStore.sync();
 };
+
+const onHorizontalScroll = (e: WheelEvent) => {
+  const container = e.currentTarget as HTMLElement;
+  if (e.deltaY !== 0) {
+    e.preventDefault();
+    container.scrollLeft += e.deltaY;
+  }
+};
 </script>
 
 <template>
@@ -73,6 +81,7 @@ const manualSync = async () => {
     </template>
 
     <template #sidebar>
+      <!-- ... existing sidebar ... -->
       <div class="filters-card">
         <h3>Источник</h3>
         <div class="scope-toggle">
@@ -102,7 +111,7 @@ const manualSync = async () => {
     </template>
 
     <template #mobile-nav>
-      <div class="mobile-filters">
+      <div class="mobile-filters" @wheel="onHorizontalScroll">
         <button class="filter-btn" :class="{ active: scope === 'global' }" @click="scope = 'global'">🌍</button>
         <button class="filter-btn" :class="{ active: scope === 'local' }" @click="scope = 'local'">👤</button>
         <div class="divider"></div>
@@ -115,6 +124,7 @@ const manualSync = async () => {
     </template>
 
     <template #content>
+      <!-- ... content ... -->
       <div v-if="!currentUser && scope === 'global'" class="debug-info">
         <span>⚠️ Вы не вошли в систему. Глобальные рекорды недоступны.</span>
       </div>
@@ -185,6 +195,7 @@ const manualSync = async () => {
 </template>
 
 <style scoped lang="scss">
+/* ... existing styles ... */
 h2 {
   text-align: center;
   margin-bottom: var(--spacing-xl);
@@ -228,6 +239,67 @@ h2 {
   gap: 16px;
 }
 
+.filters-card {
+  /* Minimal styles for sidebar card */
+}
+
+.filters-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.mobile-filters {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .mobile-filters {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    gap: 8px;
+    padding-bottom: 4px;
+    /* Scrollbar space */
+    margin-bottom: 8px;
+    -webkit-overflow-scrolling: touch;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px 0;
+    /* Vertical padding */
+
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+  }
+
+  .divider {
+    width: 1px;
+    height: 24px;
+    background: var(--border-color);
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  /* Make filter buttons nicely sized for tap */
+  .filter-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 0.9rem;
+  }
+}
+
 .filters {
   display: flex;
   gap: 8px;
@@ -262,6 +334,8 @@ h2 {
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s;
+  margin-top: auto;
+  /* Push to bottom of sidebar if flex */
 
   &:hover {
     background: rgba(239, 68, 68, 0.2);
@@ -283,11 +357,15 @@ h2 {
   overflow: hidden;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+  /* Ensure table scrolls on mobile */
 }
 
 .leaderboard-table {
   width: 100%;
   border-collapse: collapse;
+  min-width: 600px;
+  /* Force scroll for wide table logic */
 
   th,
   td {

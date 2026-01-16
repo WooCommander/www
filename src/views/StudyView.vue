@@ -163,6 +163,14 @@ const flatList = computed(() => {
 const visibleList = computed(() => {
   return flatList.value.slice(0, visibleLimit.value);
 });
+
+const onHorizontalScroll = (e: WheelEvent) => {
+  const container = e.currentTarget as HTMLElement;
+  if (e.deltaY !== 0) {
+    e.preventDefault();
+    container.scrollLeft += e.deltaY;
+  }
+};
 </script>
 
 <template>
@@ -197,7 +205,7 @@ const visibleList = computed(() => {
           <input v-model="searchQuery" type="text" placeholder="Поиск..." class="search-input">
         </div>
 
-        <div class="categories-nav mobile-categories">
+        <div class="categories-nav mobile-categories" @wheel="onHorizontalScroll">
           <button v-for="cat in categories" :key="cat.name" class="category-chip"
             :class="{ active: selectedCategory === cat.name }" @click="selectedCategory = cat.name">
             {{ cat.name }}
@@ -427,15 +435,11 @@ const visibleList = computed(() => {
   .categories-nav.mobile-categories {
     flex-direction: row;
     flex-wrap: nowrap;
-    /* Prevent wrapping to save vertical space */
-
-    overflow-x: visible;
+    overflow-x: auto;
     /* Horizontal scroll */
     padding-bottom: 4px;
     /* Space for scrollbar */
-    // justify-content: flex-start;
-    justify-content: center;
-    /* Center them */
+    justify-content: flex-start;
     gap: 8px;
     -webkit-overflow-scrolling: touch;
     /* Smooth scroll on iOS */
