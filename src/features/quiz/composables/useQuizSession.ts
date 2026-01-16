@@ -17,11 +17,13 @@ export function useQuizSession() {
 
   /* Storing original quiz to support re-shuffling on retry */
   const originalQuiz = ref<QuizTopic | null>(null);
+  const startTime = ref(0);
 
   const activeQuestion = computed(() => {
     if (!currentQuiz.value || !currentQuiz.value.questions) return null;
     return currentQuiz.value.questions[currentQuestionIndex.value];
   });
+
 
   const progress = computed(() => {
     if (!currentQuiz.value) return 0;
@@ -110,6 +112,7 @@ export function useQuizSession() {
     originalQuiz.value = quiz;
     currentQuiz.value = shuffleOptions(quiz);
     resetState();
+    startTime.value = Date.now();
   };
 
   const startExamMode = (quiz: QuizTopic) => {
@@ -128,6 +131,9 @@ export function useQuizSession() {
     if (!activeQuestion.value || showResults.value) return;
 
     if (activeQuestion.value.type === 'single') {
+      // Prevent changing answer if already answered
+      if (userAnswers.value[activeQuestion.value.id]) return;
+
       const isCorrect = activeQuestion.value.options?.find(o => o.id === optionId)?.isCorrect;
       if (isCorrect) {
         soundService.playSuccess();
@@ -174,7 +180,8 @@ export function useQuizSession() {
         score: result.score,
         correct: result.correct,
         total: result.total,
-        timeTaken: currentQuiz.value.id === 'exam-full' ? (45 * 60 - timeRemaining.value) : 0,
+        // Calculate time taken for ALL modes in seconds
+        timeTaken: Math.floor((Date.now() - startTime.value) / 1000),
         mode: safeMode,
         title: currentQuiz.value.title
       };
