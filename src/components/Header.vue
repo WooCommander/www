@@ -32,6 +32,9 @@ onMounted(() => {
 
       <nav class="nav-items">
         <router-link to="/" class="nav-link" active-class="active">
+          Главная
+        </router-link>
+        <router-link to="/study" class="nav-link" active-class="active">
           Учить
         </router-link>
         <router-link to="/quiz" class="nav-link" active-class="active">
