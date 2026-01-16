@@ -71,8 +71,9 @@ const updateThemeClass = () => {
   flex: 1;
   height: 100%;
   /* Ensure view takes full height of app-main */
-  overflow: hidden;
-  /* Views handle their own scrolling */
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Views handle their own scrolling or let this container scroll */
 }
 
 /* Page Transitions */
