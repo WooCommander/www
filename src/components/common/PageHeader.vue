@@ -15,7 +15,7 @@ defineProps<{
 <style scoped>
 .page-header {
     text-align: center;
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: var(--spacing-lg);
 }
 
 h2 {

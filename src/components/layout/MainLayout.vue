@@ -54,7 +54,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
 }
 
 .layout-header {
-    margin-bottom: var(--spacing-xl);
+    margin-bottom: 0;
     flex-shrink: 0;
 }
 
@@ -62,7 +62,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
 .content-grid {
     display: grid;
     grid-template-columns: 1fr;
-    gap: var(--spacing-xl);
+    gap: var(--spacing-sm);
     align-items: start;
     min-height: 80vh;
 }
@@ -88,7 +88,8 @@ const hasSidebar = computed(() => !!slots.sidebar);
     background: var(--bg-card);
     border-radius: 16px;
     border: 1px solid var(--border-color);
-    padding: var(--spacing-lg);
+    padding: 1rem;
+    /* Decreased from var(--spacing-lg) */
     display: flex;
     flex-direction: column;
 }
@@ -96,10 +97,14 @@ const hasSidebar = computed(() => !!slots.sidebar);
 .fixed-height .layout-sidebar {
     position: relative;
     top: 0;
-    height: 100%;
+    height: auto;
+    /* Allow shrinking */
+    max-height: 100%;
+    /* But don't overflow viewport */
     overflow: hidden;
-    /* Internal scroll will be handled by children or here */
     overflow-y: auto;
+    align-self: start;
+    /* Prevent grid stretch */
 }
 
 .layout-content {
@@ -156,7 +161,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
     .layout-mobile-nav {
         display: block;
         /* Show mobile nav */
-        margin-bottom: var(--spacing-lg);
+        /* margin-bottom: var(--spacing-lg); */
         flex-shrink: 0;
     }
 }

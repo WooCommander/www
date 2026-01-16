@@ -242,7 +242,7 @@ const visibleList = computed(() => {
 
 <style scoped lang="scss">
 .study-view {
-  height: 100vh;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -426,24 +426,45 @@ const visibleList = computed(() => {
 @media (max-width: 1024px) {
   .categories-nav.mobile-categories {
     flex-direction: row;
-    flex-wrap: wrap;
-    /* Wrap on mobile */
+    flex-wrap: nowrap;
+    /* Prevent wrapping to save vertical space */
+
     overflow-x: visible;
-    /* No scroll */
-    padding-bottom: 0;
+    /* Horizontal scroll */
+    padding-bottom: 4px;
+    /* Space for scrollbar */
+    // justify-content: flex-start;
     justify-content: center;
     /* Center them */
+    gap: 8px;
+    -webkit-overflow-scrolling: touch;
+    /* Smooth scroll on iOS */
+    margin-bottom: 8px;
+
+    /* Hide scrollbar for cleaner look if desired, or style it thin */
+    &::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+    }
+
+    width: 100%;
   }
 
   .nav-header {
     display: none;
   }
 
+  /* Reset nav-list styles for mobile if used elsewhere */
   .nav-list {
     flex-direction: row;
-    flex-wrap: wrap;
-    overflow-y: visible;
-    justify-content: center;
+    flex-wrap: nowrap;
+    overflow-y: hidden;
+    overflow-x: auto;
+    justify-content: flex-start;
   }
 
   .category-chip {
@@ -451,9 +472,10 @@ const visibleList = computed(() => {
     border: 1px solid var(--border-color);
     white-space: nowrap;
     flex-shrink: 0;
-    padding: 8px 16px;
+    padding: 6px 14px;
     border-radius: 20px;
     width: auto;
+    font-size: 0.85rem;
 
     &:hover {
       border-color: var(--accent-primary);
@@ -464,11 +486,12 @@ const visibleList = computed(() => {
     &.active {
       background: var(--accent-primary);
       color: white;
+      border-color: var(--accent-primary);
     }
   }
 
   .mobile-search {
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
   }
 }
 

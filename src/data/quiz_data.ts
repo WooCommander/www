@@ -4447,7 +4447,8 @@ export const quizzes: QuizTopic[] = [
                     { id: 'b', text: 'Архитектурная методология, которая делит приложение на слои (Layers), слайсы (Slices) и сегменты (Segments) для улучшения масштабируемости', isCorrect: true },
                     { id: 'c', text: 'Способ нарезки макетов в Figma' }
                 ],
-                explanation: 'FSD помогает избежать запутанных зависимостей (Spaghetti Code) в больших проектах, вводя строгие правила импорта: только "сверху вниз" (App -> Pages -> Features -> Entities -> Shared).'
+                explanation: 'FSD (Feature-Sliced Design) решает проблему "спагетти-кода" в крупных проектах. \n\nОсновные принципы:\n1. **Слои (Layers)**: `app` -> `pages` -> `widgets` -> `features` -> `entities` -> `shared`. Зависимости могут идти только сверху вниз.\n2. **Слайсы (Slices)**: Группировка по бизнес-домену (например, `User`, `Cart`, `Checkout`).\n3. **Сегменты (Segments)**: Техническое разделение внутри слайса (`ui`, `model`, `api`).\n\nЭто позволяет изолировать фичи и безопасно изменять их.',
+                codeSnippet: '// Структура папок FSD\nsrc/\n  app/          // Инициализация, стили, провайдеры\n  pages/        // Страницы (Home, Profile)\n  widgets/      // Сборка из фич (Header, Sidebar)\n  features/     // Пользовательские сценарии (Login, AddToCart)\n  entities/     // Бизнес-сущности (User, Product)\n  shared/       // Переиспользуемый код (UI-Kit, API client)'
             },
             {
                 id: 'varch_2',
@@ -4455,10 +4456,11 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Один гигантский файл store.js' },
-                    { id: 'b', text: 'Модульные сторы, разделенные по доменным сущностям (UserStore, CartStore) или фичам, с явным разделением на State, Getter, Action', isCorrect: true },
+                    { id: 'b', text: 'Модульные Setup Stores, разделенные по доменным сущностям, с явным разделением на State, Getter, Action', isCorrect: true },
                     { id: 'c', text: 'Хранение всего состояния в локальном Storage' }
                 ],
-                explanation: 'Разделение сторов позволяет лениво загружать их (Code Splitting) и упрощает тестирование. Setup Stores (`const useUser = defineStore(...)`) дают еще больше гибкости.'
+                explanation: 'Использование Setup Stores (`defineStore` с функцией) позволяет использовать всю мощь Composition API внутри стора: `ref` (state), `computed` (getters) и `function` (actions), а также создавать приватные переменные и вотчеры.\n\nРазделение по доменам (`useUserStore`, `useCartStore`) обеспечивает Code Splitting и упрощает поддержку.',
+                codeSnippet: '// stores/cart.ts\nexport const useCartStore = defineStore(\'cart\', () => {\n  // State\n  const items = ref<CartItem[]>([])\n  \n  // Getter\n  const total = computed(() => items.value.reduce(...))\n  \n  // Action\n  function addItem(item) { items.value.push(item) }\n  \n  return { items, total, addItem }\n})'
             },
             {
                 id: 'varch_3',
@@ -4466,10 +4468,11 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Одни компоненты умные (AI), другие глупые' },
-                    { id: 'b', text: 'Разделение ответственности: Контейнеры управляют логикой/данными, а Презентационные компоненты (Dumb) только отображают props и эмитят события', isCorrect: true },
+                    { id: 'b', text: 'Разделение: "Умные" контейнеры управляют данными/логикой, а "Глупые" презентационные компоненты только рендерят UI через props', isCorrect: true },
                     { id: 'c', text: 'Устаревший паттерн, в Vue не используется' }
                 ],
-                explanation: 'Этот паттерн (хоть и не догма) помогает переиспользовать UI-компоненты ("Кнопка"), отвязывая их от бизнес-логики ("Купить товар").'
+                explanation: 'Этот паттерн повышает переиспользуемость компонентов. \n\n**Presentational Component (`UserCard.vue`)**: \n- Получает данные через `props`.\n- Не знает о Vuex/Pinia/API.\n- Сообщает о действиях через `emit`.\n- Легко тестировать и переиспользовать в storybook.\n\n**Container Component (`UserListContainer.vue`)**: \n- Подключается к стору/API.\n- Передает данные в dumb-компоненты.\n- Обрабатывает события.',
+                codeSnippet: '<!-- Smart (Container) -->\n<script setup>\nconst users = useUsersQuery()\nconst handleDelete = (id) => api.deleteUser(id)\n</script>\n<template>\n  <UserList :users="users" @delete="handleDelete" />\n</template>\n\n<!-- Dumb (Presentational) -->\n<template>\n  <ul>\n    <li v-for="u in users" :key="u.id">\n      {{ u.name }} \n      <button @click="$emit(\'delete\', u.id)">X</button>\n    </li>\n  </ul>\n</template>'
             },
             {
                 id: 'varch_4',
@@ -4477,73 +4480,101 @@ export const quizzes: QuizTopic[] = [
                 type: 'single',
                 options: [
                     { id: 'a', text: 'Для любой формы' },
-                    { id: 'b', text: 'Для управления сложной, разветвленной логикой переходов (например, процесс оформления заказа или сложный визард), где много состояний и условий', isCorrect: true },
+                    { id: 'b', text: 'Для сложной, разветвленной логики переходов (например, checkout, onboarding) с множеством состояний и условий', isCorrect: true },
                     { id: 'c', text: 'Никогда, это React-way' }
                 ],
-                explanation: 'Конечные автоматы (FSM) делают логику предсказуемой и исключают "невозможные состояния" (например, "загрузка" и "успех" одновременно).'
+                explanation: 'Конечные автоматы (Finite State Machines) гарантируют, что система всегда находится в валидном состоянии. Это исключает баги вроде "показался спиннер и ошибка одновременно".\n\nВ простых случаях достаточно `union type` статуса в TypeScript (`type Status = "idle" | "loading" | "success" | "error"`), но для сложных флоу лучше использовать XState.',
+                codeSnippet: 'const machine = createMachine({\n  initial: \'idle\',\n  states: {\n    idle: { on: { SUBMIT: \'loading\' } },\n    loading: {\n      on: { \n        SUCCESS: \'success\',\n        ERROR: \'failure\' \n      }\n    },\n    // ...нельзя перейти в success не пройдя loading\n  }\n})'
             },
             {
                 id: 'varch_5',
-                text: 'Что такое "Headless UI" (например, TanStack Table, Headless UI)?',
+                text: 'Что такое "Headless UI" и зачем он нужен?',
                 type: 'single',
                 options: [
                     { id: 'a', text: 'UI без головы (Header)' },
-                    { id: 'b', text: 'Библиотеки, предоставляющие только логику и a11y (доступность), но без стилей. Вы сами верстаете внешний вид', isCorrect: true },
-                    { id: 'c', text: 'UI, который рендерится на сервере' }
+                    { id: 'b', text: 'Библиотеки (TanStack, Headless UI), дающие логику и доступность (a11y), но без стилей. Вы сами верстаете внешний вид', isCorrect: true },
+                    { id: 'c', text: 'Рендеринг на сервере' }
                 ],
-                explanation: 'Это дает максимальную свободу дизайна. Вы получаете рабочий `Combobox` с навигацией клавиатурой, но стилизуете его под свой Design System.'
+                explanation: 'Headless UI компоненты решают проблему "борбы со стилями библиотеки".\nВы получаете полный функционал (выпадающий список, доступность с клавиатуры, фокус-ловушки), но верстаете `div`ы и классы (например, Tailwind) сами.\nЭто идеальный выбор для создания собственных Design Systems.',
+                codeSnippet: '<!-- Пример псевдо-кода с Headless компонентом -->\n<Listbox v-model="selectedPerson">\n  <ListboxButton class="my-custom-btn">{{ selectedPerson }}</ListboxButton>\n  <ListboxOptions class="my-dropdown-styles">\n    <ListboxOption \n      v-for="person in people" \n      :key="person.id" \n      :value="person"\n      as="template"\n    >\n      <li :class="{ \'bg-blue-500 text-white\': active }">\n        {{ person.name }}\n      </li>\n    </ListboxOption>\n  </ListboxOptions>\n</Listbox>'
             },
             {
                 id: 'varch_6',
-                text: 'Что лучше использовать для инъекции зависимостей (например, API сервис или конфиг) глубоко в дерево?',
+                text: 'Для чего лучше использовать Provide / Inject (Dependency Injection)?',
                 type: 'single',
                 options: [
-                    { id: 'a', text: 'Глобальные свойства (app.config.globalProperties)' },
-                    { id: 'b', text: 'Provide / Inject', isCorrect: true },
-                    { id: 'c', text: 'Импортировать файл напрямую в каждый компонент' }
+                    { id: 'a', text: 'Для передачи пропсов в дочерний компонент' },
+                    { id: 'b', text: 'Для предотвращения Prop Drilling (передачи данных через 10 слоев) и инъекции зависимостей (сервисов, конфигов)', isCorrect: true },
+                    { id: 'c', text: 'Вместо импортов' }
                 ],
-                explanation: 'Provide/Inject реализует паттерн Dependency Injection (DI), что облегчает подмену реализаций (например, MockService для тестов) и развязывает код.'
+                explanation: '`provide/inject` позволяет передавать данные глубоко вниз по дереву компонентов, минуя промежуточные слои. \n\nТакже это мощный паттерн для DI (Dependency Injection): вы можете provide-ить `AuthService` в корне, а в компонентах делать `inject`. В тестах это позволяет легко подменить сервис на мок.',
+                codeSnippet: '// Parent (или App plugin)\nprovide(\'apiClient\', new ApiClient())\n\n// Deep Child\nconst api = inject(\'apiClient\')\n// Использование символов (Symbols) делает это типобезопасным'
             },
             {
                 id: 'varch_7',
-                text: 'Какая стратегия тестирования (Testing Pyramid) наиболее эффективна экономически?',
+                text: 'Какая стратегия тестирования (Testing Pyramid) наиболее эффективна?',
                 type: 'single',
                 options: [
                     { id: 'a', text: '100% E2E тестов' },
-                    { id: 'b', text: 'Много быстрых Unit-тестов, меньше Integration-тестов и совсем немного E2E (UI) тестов для критических путей', isCorrect: true },
-                    { id: 'c', text: 'Тестировать только в продакшене' }
+                    { id: 'b', text: 'Широкое основание из Unit-тестов, средний слой Integration-тестов и узкая верхушка E2E тестов', isCorrect: true },
+                    { id: 'c', text: 'Ручное тестирование' }
                 ],
-                explanation: 'E2E (Cypress/Playwright) медленные и хрупкие. Unit (Vitest) быстрые и дешевые.'
+                explanation: '1. **Unit (Vitest)**: Быстрые, дешевые. Тестируют утилиты, хуки, сторы.\n2. **Component/Integration (Vue Test Utils)**: Тестируют взаимодействие компонентов, пропсы, события.\n3. **E2E (Playwright/Cypress)**: Медленные, дорогие. Проверяют критические сценарии пользователя в реальном браузере.'
             },
             {
                 id: 'varch_8',
-                text: 'Что такое Monorepo и зачем оно нужно?',
+                text: 'Что дает использование Monorepo (Turborepo, Nx, Lerna)?',
                 type: 'single',
                 options: [
-                    { id: 'a', text: 'Один репозиторий для одного файла' },
-                    { id: 'b', text: 'Хранение кода нескольких проектов (например, web, admin, mobile, shared-ui) в одном репо для удобного шаринга кода и атомарных коммитов', isCorrect: true }
+                    { id: 'a', text: 'Красивую структуру папок' },
+                    { id: 'b', text: 'Хранение нескольких пакетов/приложений в одном репозитории. Упрощает переиспользование кода (shared UI kit), управление зависимостями и атомарные коммиты', isCorrect: true }
                 ],
-                explanation: 'Инструменты вроде Turborepo или Nx позволяют эффективно управлять зависимостями и билдить только то, что изменилось.'
+                explanation: 'В монорепозитории вы можете иметь папку `packages/ui-kit` и импортировать её в `apps/web` и `apps/admin` как локальный npm пакет. \n\nИнструменты вроде Turborepo кэшируют результаты билда: если вы изменили только `admin`, `web` пересобираться не будет.',
+                codeSnippet: 'my-monorepo/\n  apps/\n    web/ (Vue app)\n    docs/ (VitePress)\n  packages/\n    ui/ (Shared Components)\n    utils/ (Shared Functions)\n    eslint-config/ (Shared Config)'
             },
             {
                 id: 'varch_9',
-                text: 'BFF (Backend for Frontend) — это...',
+                text: 'Что такое BFF (Backend for Frontend)?',
                 type: 'single',
                 options: [
-                    { id: 'a', text: 'Лучший друг фронтендера' },
-                    { id: 'b', text: 'Промежуточный слой API, который подготавливает и агрегирует данные специально для конкретного клиентского приложения (Web vs Mobile)', isCorrect: true }
+                    { id: 'a', text: 'База данных на фронтенде' },
+                    { id: 'b', text: 'Промежуточный API слой, который адаптирует данные микросервисов специально для конкретного клиента (Web, Mobile)', isCorrect: true }
                 ],
-                explanation: 'Это снимает нагрузку с фронтенда (меньше запросов, меньше маппинга данных) и скрывает сложность микросервисов.'
+                explanation: 'BFF агрегирует данные из разных источников, фильтрует лишние поля и форматирует их так, как удобно фронтенду. Это позволяет фронтенду делать 1 запрос вместо 10 и получать чистый JSON.\n\nВ Vue это часто реализуется через Nuxt server routes или отдельный Node.js сервис.',
+                codeSnippet: '// BFF (Node/Nuxt)\napp.get(\'/api/dashboard\', async () => {\n  const [user, orders, stats] = await Promise.all([\n    userService.get(),\n    orderService.getLast(),\n    statsService.get()\n  ])\n  // Возвращаем только то, что нужно UI\n  return { user: user.name, lastOrderVaule: orders[0].sum, stats }\n})'
             },
             {
                 id: 'varch_10',
-                text: 'Почему стоит избегать "Magic Strings" и использовать Enums или Const Objects?',
+                text: 'Лучшие практики: Props Stability и Unidirectional Data Flow',
                 type: 'single',
                 options: [
-                    { id: 'a', text: 'Это просто стиль' },
-                    { id: 'b', text: 'Это облегчает рефакторинг (Rename Symbol), улучшает читаемость и защищает от опечаток в TypeScript', isCorrect: true }
+                    { id: 'a', text: 'Можно менять пропсы внутри компонента, если очень хочется' },
+                    { id: 'b', text: 'Props Read-Only. Данные идут вниз, события наверх. Избегайте мутации объектов в пропсах', isCorrect: true }
                 ],
-                explanation: 'Вместо `if (status === "active")` лучше `if (status === Status.Active)`. IDE подскажет возможные значения.'
+                explanation: 'Мутация пропсов ломает однонаправленный поток данных ("One-Way Data Flow") и делает отладку невозможной.\n\nВместо мутации:\n1. Эмитьте событие `emit(\'update:modelValue\', newValue)`.\n2. Используйте `computed` с `get/set` для форм.\n\nДля оптимизации ре-рендеров старайтесь передавать примитивы или стабильные объекты.',
+                codeSnippet: '<!-- Неверно -->\nprops.user.name = "Ivan" // Mutation warning!\n\n<!-- Верно -->\nconst emit = defineEmits([\'update:name\'])\nfunction updateName(newName) {\n  emit(\'update:name\', newName)\n}'
+            },
+            {
+                id: 'varch_11',
+                text: 'Паттерн "Compound Components" (Составные компоненты)',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Компоненты из разных фреймворков' },
+                    { id: 'b', text: 'Группа компонентов, работающих вместе через общий неявный стейт (обычно Provide/Inject) для создания гибкого UI', isCorrect: true }
+                ],
+                explanation: 'Вместо одного гигантского компонента с кучей пропсов (`<Tabs :items="[...] />`), вы разбиваете его на части, которые общаются "под капотом". \nЭто дает разработчику (потребителю) полный контроль над версткой и порядком элементов.',
+                codeSnippet: '<!-- Compound Component Usage -->\n<Accordion>\n  <AccordionItem value="1">\n    <AccordionTrigger>Section 1</AccordionTrigger>\n    <AccordionContent>Content 1</AccordionContent>\n  </AccordionItem>\n  <AccordionItem value="2">...</AccordionItem>\n</Accordion>\n\n// Внутри Accordion используется provide(\'accordion\', state)'
+            },
+            {
+                id: 'varch_12',
+                text: 'Использование Generic Components в Vue 3.3+',
+                type: 'single',
+                options: [
+                    { id: 'a', text: 'Невозможно в Vue' },
+                    { id: 'b', text: 'Позволяет создавать переиспользуемые компоненты (таблицы, списки), которые сохраняют типизацию элементов (prop items: T[])', isCorrect: true }
+                ],
+                explanation: 'Атрибут `generic` в `<script setup>` позволяет компоненту работать с любым типом данных, сохраняя типобезопасность в слотах и пропсах.',
+                codeSnippet: '<script setup lang="ts" generic="T">\ndefineProps<{ items: T[] }>()\n</script>\n\n<template>\n  <ul>\n    <li v-for="item in items">\n      <!-- slotProps.item будет иметь тип T, а не any -->\n      <slot :item="item" />\n    </li>\n  </ul>\n</template>'
             }
         ]
     }
