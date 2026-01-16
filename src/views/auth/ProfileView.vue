@@ -293,6 +293,8 @@ const clearHistory = () => {
     .avatar-placeholder {
         width: 50px;
         height: 50px;
+        flex-shrink: 0;
+        /* Prevent squishing */
         background: var(--accent-primary);
         color: white;
         border-radius: 50%;
@@ -308,6 +310,8 @@ const clearHistory = () => {
         display: flex;
         flex-direction: column;
         gap: 4px;
+        min-width: 0;
+        /* Allow text truncate if needed */
     }
 
     .username-input {
@@ -318,6 +322,7 @@ const clearHistory = () => {
         color: var(--text-primary);
         padding: 0;
         border-bottom: 1px dashed var(--border-color);
+        width: 100%;
 
         &:focus {
             outline: none;
@@ -328,6 +333,8 @@ const clearHistory = () => {
     .email-display {
         color: var(--text-secondary);
         font-size: 0.9rem;
+        word-break: break-all;
+        /* Ensure long emails don't overflow */
     }
 
     .save-icon-btn {
@@ -336,6 +343,8 @@ const clearHistory = () => {
         border-radius: 8px;
         width: 40px;
         height: 40px;
+        flex-shrink: 0;
+        /* Prevent squishing */
         display: flex;
         align-items: center;
         justify-content: center;
