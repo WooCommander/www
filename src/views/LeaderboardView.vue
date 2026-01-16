@@ -20,9 +20,14 @@ const filteredRecords = computed(() => {
     records = records.filter(r => r.mode === filterMode.value);
   }
 
-  // Sort by score (desc) then date (desc)
+  // Sort by score (desc) then time (asc - faster is better) then date (desc)
   return records.sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
+    // Difference: if 'timeTaken' exists, compare it. 
+    // Assuming timeTaken is number of seconds. Lower is better.
+    if ((a.timeTaken || 0) !== (b.timeTaken || 0)) {
+      return (a.timeTaken || 0) - (b.timeTaken || 0);
+    }
     return new Date(b.date).getTime() - new Date(a.date).getTime();
   });
 });
@@ -142,53 +147,95 @@ const onHorizontalScroll = (e: WheelEvent) => {
         <p v-else>Список лидеров пуст или загружается...</p>
       </div>
 
-      <div v-else class="table-wrapper">
-        <table class="leaderboard-table">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Игрок</th>
-              <th>Дата</th>
-              <th>Режим</th>
-              <th>Тема</th>
-              <th>Результат</th>
-              <th>Время</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="(record, index) in filteredRecords" :key="index" :class="{ 'top-record': index < 3 }">
-              <td class="rank">
+      <div v-else class="leaderboard-container">
+        <!-- Desktop Table View -->
+        <div class="table-wrapper desktop-only">
+          <table class="leaderboard-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Игрок</th>
+                <th>Дата</th>
+                <th>Режим</th>
+                <th>Тема</th>
+                <th>Результат</th>
+                <th>Время</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(record, index) in filteredRecords" :key="index" :class="{ 'top-record': index < 3 }">
+                <td class="rank">
+                  <span v-if="index === 0">🥇</span>
+                  <span v-else-if="index === 1">🥈</span>
+                  <span v-else-if="index === 2">🥉</span>
+                  <span v-else>{{ index + 1 }}</span>
+                </td>
+                <td class="user">
+                  <span class="username">
+                    {{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}
+                  </span>
+                </td>
+                <td class="date">{{ formatDate(record.date) }}</td>
+                <td class="mode">
+                  <span class="badge" :class="record.mode">
+                    {{ record.mode === 'exam' ? 'Экзамен' : (record.mode === 'category' ? 'Категория' : 'Тема') }}
+                  </span>
+                </td>
+                <td class="title">{{ record.title }}</td>
+                <td class="score">
+                  <span :class="{
+                    'good': record.score >= 80,
+                    'avg': record.score >= 50 && record.score < 80,
+                    'bad': record.score < 50
+                  }">
+                    {{ record.score }}%
+                  </span>
+                  <span class="details">({{ record.correct }}/{{ record.total }})</span>
+                </td>
+                <td class="time">{{ formatTime(record.timeTaken) }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Mobile Card View -->
+        <div class="mobile-list mobile-only">
+          <div v-for="(record, index) in filteredRecords" :key="index" class="record-card"
+            :class="{ 'top-record': index < 3 }">
+            <div class="card-header">
+              <div class="rank-badge">
                 <span v-if="index === 0">🥇</span>
                 <span v-else-if="index === 1">🥈</span>
                 <span v-else-if="index === 2">🥉</span>
-                <span v-else>{{ index + 1 }}</span>
-              </td>
-              <td class="user">
-                <span class="username">
-                  {{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}
-                </span>
-              </td>
-              <td class="date">{{ formatDate(record.date) }}</td>
-              <td class="mode">
+                <span v-else>#{{ index + 1 }}</span>
+              </div>
+              <div class="user-info">
+                <span class="username">{{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}</span>
+                <span class="date">{{ formatDate(record.date) }}</span>
+              </div>
+              <div class="score-badge" :class="{
+                'good': record.score >= 80,
+                'avg': record.score >= 50 && record.score < 80,
+                'bad': record.score < 50
+              }">
+                {{ record.score }}%
+              </div>
+            </div>
+
+            <div class="card-body">
+              <div class="mode-tag">
                 <span class="badge" :class="record.mode">
                   {{ record.mode === 'exam' ? 'Экзамен' : (record.mode === 'category' ? 'Категория' : 'Тема') }}
                 </span>
-              </td>
-              <td class="title">{{ record.title }}</td>
-              <td class="score">
-                <span :class="{
-                  'good': record.score >= 80,
-                  'avg': record.score >= 50 && record.score < 80,
-                  'bad': record.score < 50
-                }">
-                  {{ record.score }}%
-                </span>
-                <span class="details">({{ record.correct }}/{{ record.total }})</span>
-              </td>
-              <td class="time">{{ formatTime(record.timeTaken) }}</td>
-            </tr>
-          </tbody>
-        </table>
+                <span class="topic-name">{{ record.title }}</span>
+              </div>
+              <div class="stats-row">
+                <span>✅ {{ record.correct }}/{{ record.total }}</span>
+                <span>⏱️ {{ formatTime(record.timeTaken) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
   </MainLayout>
@@ -239,9 +286,7 @@ h2 {
   gap: 16px;
 }
 
-.filters-card {
-  /* Minimal styles for sidebar card */
-}
+
 
 .filters-list {
   display: flex;
@@ -498,6 +543,110 @@ h2 {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+}
+
+/* Mobile Card View Styles */
+.mobile-only {
+  display: none;
+}
+
+.record-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+  .rank-badge {
+    font-size: 1.2rem;
+    font-weight: bold;
+    min-width: 30px;
+  }
+
+  .user-info {
+    flex: 1;
+    margin-left: 12px;
+    display: flex;
+    flex-direction: column;
+
+    .username {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .date {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+  }
+
+  .score-badge {
+    font-family: 'Fira Code', monospace;
+    font-weight: 700;
+    font-size: 1.1rem;
+
+    &.good {
+      color: #22c55e;
+    }
+
+    &.avg {
+      color: #f59e0b;
+    }
+
+    &.bad {
+      color: #ef4444;
+    }
+  }
+}
+
+.card-body {
+  .mode-tag {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+
+    .topic-name {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+
+  .stats-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    background: rgba(0, 0, 0, 0.2);
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none;
+  }
+
+  .mobile-only {
+    display: block;
+  }
+
+  .table-wrapper {
+    display: none;
   }
 }
 </style>

@@ -27,8 +27,7 @@ onMounted(() => {
   <header class="app-header">
     <div class="container header-content">
       <router-link to="/" class="logo">
-        <span class="logo-icon">TS</span>
-        <span class="text-gradient">Interview</span>
+        <span class="text-gradient">InterView</span>
       </router-link>
 
       <nav class="nav-items">
@@ -167,8 +166,9 @@ onMounted(() => {
 
 @media (max-width: 640px) {
   .text-gradient {
-    display: none;
-    /* Hide "Interview" text on mobile to save space */
+    /* display: none; Removed to show text on mobile */
+    font-size: 1.2rem;
+    /* Slightly smaller for mobile if needed */
   }
 
   .header-content {

@@ -387,7 +387,7 @@ const emit = defineEmits<{
     display: flex;
     justify-content: center;
     gap: var(--spacing-sm);
-    margin-top: var(--spacing-md);
+
     flex-wrap: wrap;
     /* Matches the update from earlier */
     padding-bottom: 0;
