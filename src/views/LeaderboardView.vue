@@ -4,42 +4,103 @@ import MainLayout from '../components/layout/MainLayout.vue';
 import PageHeader from '../components/common/PageHeader.vue';
 import { QuestionStore } from '../services/QuestionStore';
 
-const filterMode = ref<'all' | 'exam' | 'category'>('all');
+const filterMode = ref<'all' | 'exam' | 'category'>('all'); // Keeps mostly legacy functionality for filtering "types" of quizzes if needed, but for arcade total usually we want ALL.
 const scope = ref<'global' | 'local'>('global');
 
 onMounted(() => {
   // Store handles loading and syncing
 });
 
-const filteredRecords = computed(() => {
+interface AggregatedUser {
+  username: string;
+  totalScore: number;
+  totalTime: number;
+  testsPassed: number;
+  bestRuns: Record<string, any>; // title -> best record
+}
+
+const leaderboardData = computed(() => {
   let records = scope.value === 'global'
     ? [...QuestionStore.state.globalLeaderboard]
     : [...QuestionStore.state.examHistory];
 
-  if (filterMode.value !== 'all') {
-    records = records.filter(r => r.mode === filterMode.value);
-  }
+  // Group by User
+  const users: Record<string, AggregatedUser> = {};
 
-  // Sort by score (desc) then time (asc - faster is better) then date (desc)
-  return records.sort((a, b) => {
-    if (b.score !== a.score) return b.score - a.score;
-    // Difference: if 'timeTaken' exists, compare it. 
-    // Assuming timeTaken is number of seconds. Lower is better.
-    if ((a.timeTaken || 0) !== (b.timeTaken || 0)) {
-      return (a.timeTaken || 0) - (b.timeTaken || 0);
+  // For local scope, we treat "Anonymous" or "You" as one user usually, 
+  // but if we have multiple local entries with different names (unlikely in current app flow but possible), we group them.
+  // Actually for Local Scope, it's usually just ONE user (the current device user). 
+  // So Local Scope might just show "Your Stats" broken down, or just "You" as rank 1. 
+  // Let's stick to the Ranking Format:
+
+  records.forEach(r => {
+    // If filtering by mode is desired for the *source* of points:
+    if (filterMode.value !== 'all' && r.mode !== filterMode.value) return;
+
+    const name = r.username || (scope.value === 'local' ? 'Вы' : 'Аноним');
+
+    if (!users[name]) {
+      users[name] = {
+        username: name,
+        totalScore: 0,
+        totalTime: 0,
+        testsPassed: 0,
+        bestRuns: {}
+      };
     }
-    return new Date(b.date).getTime() - new Date(a.date).getTime();
+
+    const user = users[name];
+    const uniqueKey = r.title; // Group by Quiz Title (Topic)
+
+    // Check if this run is better than existing best run for this topic
+    const currentBest = user.bestRuns[uniqueKey];
+
+    // Better = Higher Score, or Same Score + Lower Time
+    let isBetter = false;
+    if (!currentBest) {
+      isBetter = true;
+    } else {
+      if (r.score > currentBest.score) isBetter = true;
+      else if (r.score === currentBest.score) {
+        // Lower time is better
+        const rTime = r.timeTaken || 0;
+        const bTime = currentBest.timeTaken || 0;
+        if (rTime < bTime) isBetter = true;
+      }
+    }
+
+    if (isBetter) {
+      user.bestRuns[uniqueKey] = r;
+    }
+  });
+
+  // Calculate Totals from Best Runs
+  return Object.values(users).map(user => {
+    let score = 0;
+    let time = 0;
+    let passed = 0;
+
+    Object.values(user.bestRuns).forEach((run: any) => {
+      score += run.score;
+      time += (run.timeTaken || 0);
+      passed++; // If we want to only count "passed" (>50%?), add check here. User asked for "more tests passed" implying completion.
+    });
+
+    return {
+      username: user.username,
+      totalScore: score,
+      totalTime: time,
+      testsPassed: passed,
+      // Keep reference to best runs if we want to expand details later
+      _bestRuns: user.bestRuns
+    };
+  }).sort((a, b) => {
+    // Sort: Total Score Desc -> Tests Passed Desc -> Total Time Asc
+    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
+    if (b.testsPassed !== a.testsPassed) return b.testsPassed - a.testsPassed;
+    return a.totalTime - b.totalTime;
   });
 });
-
-const formatDate = (isoString: string) => {
-  return new Date(isoString).toLocaleDateString('ru-RU', {
-    day: 'numeric',
-    month: 'short',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
 
 const formatTime = (seconds: number) => {
   const m = Math.floor(seconds / 60);
@@ -50,9 +111,7 @@ const formatTime = (seconds: number) => {
 const clearHistory = () => {
   if (confirm('Вы уверены, что хотите очистить историю?')) {
     QuestionStore.state.examHistory = [];
-    localStorage.removeItem('quiz_history'); // Legacy cleanup
-    // Ideally we should have a QuestionStore.clearHistory() that also deletes from DB?
-    // For now, local clear is safer to avoid accidental bulk delete
+    localStorage.removeItem('quiz_history');
   }
 };
 
@@ -66,7 +125,6 @@ onMounted(async () => {
 });
 
 const manualSync = async () => {
-  console.log('Manual sync triggered...');
   await QuestionStore.sync();
 };
 
@@ -82,11 +140,10 @@ const onHorizontalScroll = (e: WheelEvent) => {
 <template>
   <MainLayout fixed-height>
     <template #header>
-      <PageHeader title="🏆 Таблица рекордов" description="Твои лучшие результаты и история прохождений." />
+      <PageHeader title="🏆 Рейтинг Аркады" description="Накапливай баллы за лучшие прохождения разных тестов!" />
     </template>
 
     <template #sidebar>
-      <!-- ... existing sidebar ... -->
       <div class="filters-card">
         <h3>Источник</h3>
         <div class="scope-toggle">
@@ -98,38 +155,24 @@ const onHorizontalScroll = (e: WheelEvent) => {
           </button>
         </div>
 
-        <h3>Фильтры</h3>
+        <!-- Hidden Filter Mode for now, or keep if we want to see "Only Exam Points" leaderboard -->
+        <!-- 
+        <h3>Фильтры баллов</h3>
         <div class="filters-list">
-          <button class="filter-btn" :class="{ active: filterMode === 'all' }" @click="filterMode = 'all'">
-            Все
-          </button>
-          <button class="filter-btn" :class="{ active: filterMode === 'exam' }" @click="filterMode = 'exam'">
-            Экзамены
-          </button>
-          <button class="filter-btn" :class="{ active: filterMode === 'category' }" @click="filterMode = 'category'">
-            Категории
-          </button>
-        </div>
+          <button class="filter-btn" :class="{ active: filterMode === 'all' }" @click="filterMode = 'all'">Все</button>
+          ...
+        </div> 
+        -->
       </div>
 
       <button class="clear-btn" @click="clearHistory" v-if="scope === 'local'">🗑️ Очистить историю</button>
     </template>
 
     <template #mobile-nav>
-      <div class="mobile-filters" @wheel="onHorizontalScroll">
-        <button class="filter-btn" :class="{ active: scope === 'global' }" @click="scope = 'global'">🌍</button>
-        <button class="filter-btn" :class="{ active: scope === 'local' }" @click="scope = 'local'">👤</button>
-        <div class="divider"></div>
-        <button class="filter-btn" :class="{ active: filterMode === 'all' }" @click="filterMode = 'all'">Все</button>
-        <button class="filter-btn" :class="{ active: filterMode === 'exam' }"
-          @click="filterMode = 'exam'">Экзамены</button>
-        <button class="filter-btn" :class="{ active: filterMode === 'category' }"
-          @click="filterMode = 'category'">Категории</button>
-      </div>
+      <!-- Simplified mobile nav since filters are less relevant for aggregated view -->
     </template>
 
     <template #content>
-      <!-- ... content ... -->
       <div v-if="!currentUser && scope === 'global'" class="debug-info">
         <span>⚠️ Вы не вошли в систему. Глобальные рекорды недоступны.</span>
       </div>
@@ -138,12 +181,8 @@ const onHorizontalScroll = (e: WheelEvent) => {
         <button class="sync-btn" @click="manualSync">Повторить</button>
       </div>
 
-      <div class="debug-info" v-if="scope === 'local' || scope === 'global'">
-        <span>Локальные записи: {{ QuestionStore.state.examHistory.length }}</span>
-      </div>
-
-      <div v-if="filteredRecords.length === 0" class="empty-state">
-        <p v-if="scope === 'local'">Пока нет записей. Пройдите тест или экзамен!</p>
+      <div v-if="leaderboardData.length === 0" class="empty-state">
+        <p v-if="scope === 'local'">Нет данных. Пройдите тесты, чтобы набрать баллы!</p>
         <p v-else>Список лидеров пуст или загружается...</p>
       </div>
 
@@ -155,15 +194,13 @@ const onHorizontalScroll = (e: WheelEvent) => {
               <tr>
                 <th>#</th>
                 <th>Игрок</th>
-                <th>Дата</th>
-                <th>Режим</th>
-                <th>Тема</th>
-                <th>Результат</th>
-                <th>Время</th>
+                <th>Всего баллов</th>
+                <th>Пройдено тестов</th>
+                <th>Общее время</th>
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(record, index) in filteredRecords" :key="index" :class="{ 'top-record': index < 3 }">
+              <tr v-for="(user, index) in leaderboardData" :key="index" :class="{ 'top-record': index < 3 }">
                 <td class="rank">
                   <span v-if="index === 0">🥇</span>
                   <span v-else-if="index === 1">🥈</span>
@@ -171,28 +208,13 @@ const onHorizontalScroll = (e: WheelEvent) => {
                   <span v-else>{{ index + 1 }}</span>
                 </td>
                 <td class="user">
-                  <span class="username">
-                    {{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}
-                  </span>
+                  <span class="username">{{ user.username }}</span>
                 </td>
-                <td class="date">{{ formatDate(record.date) }}</td>
-                <td class="mode">
-                  <span class="badge" :class="record.mode">
-                    {{ record.mode === 'exam' ? 'Экзамен' : (record.mode === 'category' ? 'Категория' : 'Тема') }}
-                  </span>
-                </td>
-                <td class="title">{{ record.title }}</td>
                 <td class="score">
-                  <span :class="{
-                    'good': record.score >= 80,
-                    'avg': record.score >= 50 && record.score < 80,
-                    'bad': record.score < 50
-                  }">
-                    {{ record.score }}%
-                  </span>
-                  <span class="details">({{ record.correct }}/{{ record.total }})</span>
+                  <span class="good">{{ user.totalScore }}</span>
                 </td>
-                <td class="time">{{ formatTime(record.timeTaken) }}</td>
+                <td class="title" style="text-align: center;">{{ user.testsPassed }}</td>
+                <td class="time">{{ formatTime(user.totalTime) }}</td>
               </tr>
             </tbody>
           </table>
@@ -200,7 +222,7 @@ const onHorizontalScroll = (e: WheelEvent) => {
 
         <!-- Mobile Card View -->
         <div class="mobile-list mobile-only">
-          <div v-for="(record, index) in filteredRecords" :key="index" class="record-card"
+          <div v-for="(user, index) in leaderboardData" :key="index" class="record-card"
             :class="{ 'top-record': index < 3 }">
             <div class="card-header">
               <div class="rank-badge">
@@ -210,28 +232,17 @@ const onHorizontalScroll = (e: WheelEvent) => {
                 <span v-else>#{{ index + 1 }}</span>
               </div>
               <div class="user-info">
-                <span class="username">{{ record.username || (scope === 'local' ? 'Вы' : 'Аноним') }}</span>
-                <span class="date">{{ formatDate(record.date) }}</span>
+                <span class="username">{{ user.username }}</span>
               </div>
-              <div class="score-badge" :class="{
-                'good': record.score >= 80,
-                'avg': record.score >= 50 && record.score < 80,
-                'bad': record.score < 50
-              }">
-                {{ record.score }}%
+              <div class="score-badge good">
+                {{ user.totalScore }} pts
               </div>
             </div>
 
             <div class="card-body">
-              <div class="mode-tag">
-                <span class="badge" :class="record.mode">
-                  {{ record.mode === 'exam' ? 'Экзамен' : (record.mode === 'category' ? 'Категория' : 'Тема') }}
-                </span>
-                <span class="topic-name">{{ record.title }}</span>
-              </div>
               <div class="stats-row">
-                <span>✅ {{ record.correct }}/{{ record.total }}</span>
-                <span>⏱️ {{ formatTime(record.timeTaken) }}</span>
+                <span>📚 Тестов: {{ user.testsPassed }}</span>
+                <span>⏱️ Время: {{ formatTime(user.totalTime) }}</span>
               </div>
             </div>
           </div>
@@ -286,8 +297,6 @@ h2 {
   gap: 16px;
 }
 
-
-
 .filters-list {
   display: flex;
   flex-direction: column;
@@ -323,14 +332,6 @@ h2 {
       background: rgba(255, 255, 255, 0.2);
       border-radius: 4px;
     }
-  }
-
-  .divider {
-    width: 1px;
-    height: 24px;
-    background: var(--border-color);
-    flex-shrink: 0;
-    margin: 0 4px;
   }
 
   /* Make filter buttons nicely sized for tap */
