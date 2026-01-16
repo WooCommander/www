@@ -5,11 +5,20 @@ import MarkdownIt from 'markdown-it';
 import hljs from 'highlight.js';
 import 'highlight.js/styles/atom-one-dark.css';
 
+import { QuestionStore } from '../services/QuestionStore';
+
 const props = defineProps<{
   question: Question;
 }>();
 
 const isOpen = ref(false);
+
+const isFav = computed(() => QuestionStore.isFavorite(props.question.id.toString()));
+
+const toggleFav = (e: Event) => {
+  e.stopPropagation();
+  QuestionStore.toggleFavorite(props.question.id.toString());
+};
 
 const toggle = () => {
   isOpen.value = !isOpen.value;
@@ -64,6 +73,9 @@ const renderedAnswer = computed(() => {
         <span class="slug-id" @click.stop="copySlug" title="Copy ID">
           #{{ question.id }}
         </span>
+        <button class="fav-btn" :class="{ active: isFav }" @click="toggleFav" title="Bookmark">
+          {{ isFav ? '★' : '☆' }}
+        </button>
         <button class="edit-btn" @click.stop="$emit('edit', question)" title="Edit">
           ✏️
         </button>
@@ -136,6 +148,29 @@ const renderedAnswer = computed(() => {
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
+}
+
+
+
+.fav-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem;
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  padding: 0 4px;
+}
+
+.fav-btn:hover {
+  transform: scale(1.1);
+  color: #fbbf24;
+  /* yellow-400 */
+}
+
+.fav-btn.active {
+  color: #fbbf24;
+  /* yellow-400 */
 }
 
 .edit-btn {

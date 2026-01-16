@@ -8,7 +8,8 @@ const STORAGE_KEYS = {
   USER_QUESTIONS: 'user_questions',
   CUSTOM_QUIZZES: 'custom_quizzes',
   OVERRIDES: 'question_overrides',
-  DELETED_IDS: 'deleted_questions'
+  DELETED_IDS: 'deleted_questions',
+  FAVORITES: 'favorite_questions'
 };
 
 interface QuestionState {
@@ -16,6 +17,7 @@ interface QuestionState {
   customQuizzes: CustomQuiz[];
   overrides: Record<string, Question>;
   deletedIds: Set<string>;
+  favorites: Set<string>;
   examHistory: any[];
   globalLeaderboard: any[];
   isLoaded: boolean;
@@ -27,6 +29,7 @@ const state = reactive<QuestionState>({
   customQuizzes: [],
   overrides: {},
   deletedIds: new Set(),
+  favorites: new Set(),
   examHistory: [],
   globalLeaderboard: [],
   isLoaded: false,
@@ -126,13 +129,36 @@ export const QuestionStore = {
   getAllQuestions,
   getQuizQuestions,
 
+  get favorites() {
+    return state.favorites;
+  },
+
+  isFavorite(id: string) {
+    return state.favorites.has(id.toString());
+  },
+
+  async toggleFavorite(id: string) {
+    const strId = id.toString();
+    if (state.favorites.has(strId)) {
+      state.favorites.delete(strId);
+    } else {
+      state.favorites.add(strId);
+    }
+
+    await Preferences.set({
+      key: STORAGE_KEYS.FAVORITES,
+      value: JSON.stringify(Array.from(state.favorites))
+    });
+  },
+
   async initialize() {
     if (state.isLoaded) return;
     try {
-      const [uQ, ov, del, cq, history] = await Promise.all([
+      const [uQ, ov, del, fav, cq, history] = await Promise.all([
         Preferences.get({ key: STORAGE_KEYS.USER_QUESTIONS }),
         Preferences.get({ key: STORAGE_KEYS.OVERRIDES }),
         Preferences.get({ key: STORAGE_KEYS.DELETED_IDS }),
+        Preferences.get({ key: STORAGE_KEYS.FAVORITES }),
         Preferences.get({ key: STORAGE_KEYS.CUSTOM_QUIZZES }),
         Preferences.get({ key: 'quiz_history' }) // Legacy key from LeaderboardView
       ]);
@@ -140,6 +166,7 @@ export const QuestionStore = {
       if (uQ.value) state.userQuestions = JSON.parse(uQ.value);
       if (ov.value) state.overrides = JSON.parse(ov.value);
       if (del.value) state.deletedIds = new Set(JSON.parse(del.value));
+      if (fav.value) state.favorites = new Set(JSON.parse(fav.value));
       if (cq.value) state.customQuizzes = JSON.parse(cq.value);
       if (history.value) state.examHistory = JSON.parse(history.value);
 

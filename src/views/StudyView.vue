@@ -95,14 +95,20 @@ const deleteQuestion = async (id: number | string) => {
 
 const categories = computed(() => {
   const counts: Record<string, number> = { 'Все': questions.value.length };
+
+  // Calculate specific counts
   questions.value.forEach((q: Question) => {
     counts[q.category] = (counts[q.category] || 0) + 1;
   });
+
+  // Calculate Favorites count
+  const favCount = questions.value.filter(q => QuestionStore.favorites.has(q.id.toString())).length;
 
   const uniqueCats = Object.keys(counts).filter(c => c !== 'Все').sort();
 
   return [
     { name: 'Все', count: counts['Все'] },
+    { name: 'Избранное', count: favCount },
     ...uniqueCats.map(c => ({ name: c, count: counts[c] }))
   ];
 });
@@ -118,7 +124,9 @@ const groupedQuestions = computed(() => {
       if (!matchesId && !matchesTitle) return;
     }
 
-    if (selectedCategory.value !== 'Все' && q.category !== selectedCategory.value) {
+    if (selectedCategory.value === 'Избранное') {
+      if (!QuestionStore.favorites.has(q.id.toString())) return;
+    } else if (selectedCategory.value !== 'Все' && q.category !== selectedCategory.value) {
       return;
     }
 

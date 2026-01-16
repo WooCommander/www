@@ -224,6 +224,12 @@ export function useQuizSession() {
     }
   };
 
+  const prevQuestion = () => {
+    if (currentQuestionIndex.value > 0) {
+      currentQuestionIndex.value--;
+    }
+  };
+
   return {
     currentQuiz,
     currentQuestionIndex,
@@ -241,6 +247,7 @@ export function useQuizSession() {
     stopTimer,
     onSelectOption,
     nextQuestion,
+    prevQuestion,
     resetQuiz,
     finishQuiz,
     triggerShake
