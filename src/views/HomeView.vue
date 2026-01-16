@@ -15,6 +15,8 @@ const stats = ref({
     totalTests: 0
 });
 
+const trends = ref<{ popular: any[], hardest: any[] }>({ popular: [], hardest: [] });
+
 const topPlayers = ref<any[]>([]);
 
 onMounted(async () => {
@@ -40,10 +42,44 @@ onMounted(async () => {
         // Let's rely on a separate query or just fetch "recent 1000" to estimate? 
         // Or assume we have a 'platform_stats' table? We don't.
         // Let's fetch the `exam_results` count.
+        // 3. Fetch Aggregate Exam Stats (Time & Tests)
         const { count: testsCount, data: testsData } = await supabase
             .from('exam_results')
-            .select('time_taken', { count: 'exact' })
-            .limit(2000); // Limit to avoid massive load
+            .select('time_taken, title, score', { count: 'exact' })
+            .limit(2000);
+
+        stats.value.totalTests = testsCount || 0;
+
+        // Calculate Trends
+        if (testsData) {
+            const sumTime = testsData.reduce((acc, curr) => acc + (curr.time_taken || 0), 0);
+            stats.value.totalTime = sumTime;
+
+            // Trend Analysis
+            const topicStats: Record<string, { count: number, totalScore: number }> = {};
+
+            testsData.forEach(r => {
+                const t = r.title || 'Unknown';
+                if (!topicStats[t]) topicStats[t] = { count: 0, totalScore: 0 };
+                topicStats[t].count++;
+                topicStats[t].totalScore += r.score;
+            });
+
+            const analyzed = Object.keys(topicStats).map(title => ({
+                title,
+                count: topicStats[title].count,
+                avgScore: Math.round(topicStats[title].totalScore / topicStats[title].count)
+            }));
+
+            // Most Popular
+            trends.value.popular = [...analyzed].sort((a, b) => b.count - a.count).slice(0, 5);
+
+            // Hardest (Low Avg Score, min 3 attempts to reduce noise)
+            trends.value.hardest = [...analyzed]
+                .filter(a => a.count >= 1) // Lower threshold for testing
+                .sort((a, b) => a.avgScore - b.avgScore)
+                .slice(0, 5);
+        }
 
         stats.value.totalTests = testsCount || 0;
 
@@ -159,6 +195,43 @@ const goToQuiz = () => router.push('/quiz');
                         </div>
                     </section>
 
+                    <!-- Trends Section -->
+                    <section class="trends-section">
+                        <!-- Popular: Heatmap Cards -->
+                        <div class="trend-card popular-card">
+                            <div class="card-header">
+                                <h2>🔥 В тренде</h2>
+                                <span class="subtitle">Самые популярные тесты</span>
+                            </div>
+                            <div class="heatmap-grid">
+                                <div v-for="(item, idx) in trends.popular" :key="'pop-' + idx" class="heat-item"
+                                    :style="{ '--intensity': 1 - (idx * 0.15) }">
+                                    <div class="heat-bg"></div>
+                                    <div class="heat-content">
+                                        <div class="heat-rank">#{{ idx + 1 }}</div>
+                                        <div class="heat-title">{{ item.title }}</div>
+                                        <div class="heat-count">{{ item.count }} раз</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hardest: Danger Cloud -->
+                        <div class="trend-card hardest-card">
+                            <div class="card-header">
+                                <h2>💀 Хардкор</h2>
+                                <span class="subtitle">Сложнее всего пройти</span>
+                            </div>
+                            <div class="danger-cloud">
+                                <div v-for="(item, idx) in trends.hardest" :key="'hard-' + idx" class="danger-chip"
+                                    :style="{ '--severity': (100 - item.avgScore) / 100 }">
+                                    <span class="danger-score">{{ item.avgScore }}%</span>
+                                    <span class="danger-title">{{ item.title }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
                     <!-- Hall of Fame -->
                     <section class="leaderboard-section">
                         <div class="section-header">
@@ -183,7 +256,8 @@ const goToQuiz = () => router.push('/quiz');
 
 <style scoped lang="scss">
 .home-container {
-    max-width: 1000px;
+    width: 100%;
+    /* max-width: 1000px; Removed to match other pages */
     margin: 0 auto;
     padding: var(--spacing-lg) 0;
 }
@@ -207,6 +281,31 @@ const goToQuiz = () => router.push('/quiz');
         margin-left: auto;
         margin-right: auto;
     }
+}
+
+/* ... skipped intermediate styles ... */
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.trends-section {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 0;
+}
+
+.leaderboard-section {
+    grid-column: 2;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 24px;
+    /* height: 100%; Removed */
 }
 
 .action-buttons {
@@ -251,34 +350,76 @@ const goToQuiz = () => router.push('/quiz');
 
 .dashboard-grid {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: 2fr 1fr;
     gap: 24px;
+    align-items: start;
 
-    @media (max-width: 768px) {
+    @media (max-width: 1024px) {
         grid-template-columns: 1fr;
     }
 }
 
-.stats-section,
-.leaderboard-section {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 24px;
-}
-
-h2 {
-    font-size: 1.5rem;
-    margin-bottom: 24px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.stats-section {
+    grid-column: 1 / -1;
 }
 
 .stats-cards {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(4, 1fr);
     gap: 16px;
+}
+
+.trends-section {
+    grid-column: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 0;
+}
+
+.leaderboard-section {
+    grid-column: 2;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 24px;
+    height: 100%;
+    /* Match height */
+}
+
+/* Mobile Tweaks */
+@media (max-width: 1024px) {
+    .stats-cards {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .trends-section {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-section,
+    .trends-section,
+    .leaderboard-section {
+        grid-column: 1;
+    }
+}
+
+@media (max-width: 600px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+    }
+
+    .heatmap-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .stats-cards {
+        grid-template-columns: 1fr;
+    }
 }
 
 .stat-card {
@@ -416,6 +557,149 @@ h2 {
     }
 }
 
+/* Trends Redesign: Vibrant & Creative */
+.trends-section {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 10px;
+}
+
+@media (max-width: 768px) {
+    .trends-section {
+        grid-template-columns: 1fr;
+    }
+}
+
+.trend-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 24px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow: hidden;
+}
+
+.card-header h2 {
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+}
+
+.card-header .subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+/* Heatmap Grid */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.heat-item {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    aspect-ratio: 1;
+    /* Square cards */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s;
+
+    &:hover {
+        transform: scale(1.05);
+        z-index: 2;
+    }
+}
+
+.heat-bg {
+    position: absolute;
+    inset: 0;
+    background: var(--accent-primary);
+    opacity: calc(0.1 + (var(--intensity) * 0.4));
+    z-index: 0;
+}
+
+.heat-content {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    align-items: center;
+}
+
+.heat-rank {
+    font-size: 0.8rem;
+    font-weight: 800;
+    opacity: 0.7;
+    text-transform: uppercase;
+}
+
+.heat-title {
+    font-size: 1rem; // Increased from 0.8rem - too small
+    font-weight: 700;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.heat-count {
+    font-size: 0.8rem;
+    opacity: 0.8;
+}
+
+/* Danger Cloud */
+.danger-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-content: flex-start;
+}
+
+.danger-chip {
+    /* Severity variable from 0 to 1 */
+    --red-base: 239, 68, 68;
+    background: rgba(var(--red-base), calc(0.1 + (var(--severity) * 0.3)));
+    border: 1px solid rgba(var(--red-base), calc(0.2 + (var(--severity) * 0.5)));
+    color: rgb(var(--red-base));
+    /* Always red text */
+    padding: 10px 16px;
+    border-radius: 50px;
+    /* Pill shape */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    transition: all 0.2s;
+
+    &:hover {
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(var(--red-base), 0.2);
+    }
+}
+
+.danger-score {
+    font-weight: 800;
+    font-size: 1.1rem;
+}
+
+.danger-title {
+    font-size: 0.9rem;
+    opacity: 0.9;
+}
+
 /* Mobile Tweaks */
 @media (max-width: 600px) {
     .hero-section h1 {
@@ -426,8 +710,8 @@ h2 {
         flex-direction: column;
     }
 
-    .stats-cards {
-        grid-template-columns: 1fr;
+    .heatmap-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 </style>

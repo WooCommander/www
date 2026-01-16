@@ -190,18 +190,19 @@ const clearHistory = () => {
                             <span class="insight-icon">💪</span>
                             <div class="insight-info">
                                 <span class="insight-label">Сильная тема</span>
-                                <span class="insight-value">{{ topicInsights.strongest.title }}</span>
-                                <span class="insight-score">{{ Math.round(topicInsights.strongest.avg) }}% ср.
+                                <span class="insight-value">{{ topicInsights.strongest?.title || 'Нет данных' }}</span>
+                                <span class="insight-score">{{ Math.round(topicInsights.strongest?.avg || 0) }}% ср.
                                     балл</span>
                             </div>
                         </div>
                         <div class="insight-card bad"
-                            v-if="topicInsights.weakest.title !== topicInsights.strongest.title">
+                            v-if="topicInsights.weakest && topicInsights.strongest && topicInsights.weakest.title !== topicInsights.strongest.title">
                             <span class="insight-icon">🎯</span>
                             <div class="insight-info">
                                 <span class="insight-label">Нужна практика</span>
-                                <span class="insight-value">{{ topicInsights.weakest.title }}</span>
-                                <span class="insight-score">{{ Math.round(topicInsights.weakest.avg) }}% ср. балл</span>
+                                <span class="insight-value">{{ topicInsights.weakest?.title || 'Нет данных' }}</span>
+                                <span class="insight-score">{{ Math.round(topicInsights.weakest?.avg || 0) }}% ср.
+                                    балл</span>
                             </div>
                         </div>
                     </div>

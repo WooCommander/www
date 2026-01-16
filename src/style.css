@@ -1,4 +1,3 @@
-
 :root {
   /* Colors - Premium Dark Palette */
   --bg-primary: #0f172a;
@@ -113,15 +112,4 @@ button {
 }
 
 /* Hide Scrollbar on Mobile for cleaner Native App feel */
-@media (max-width: 768px) {
-  /* Chrome, Safari, Opera */
-  ::-webkit-scrollbar {
-    display: none;
-  }
-  
-  /* IE, Edge, Firefox */
-  html, body, div, main, aside {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
-  }
-}
+/* Scrollbar Hiding Removed per user feedback to ensure accessibility on all devices */
