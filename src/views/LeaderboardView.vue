@@ -169,7 +169,16 @@ const onHorizontalScroll = (e: WheelEvent) => {
     </template>
 
     <template #mobile-nav>
-      <!-- Simplified mobile nav since filters are less relevant for aggregated view -->
+      <div class="mobile-controls">
+        <div class="scope-toggle mobile-scope">
+          <button class="scope-btn" :class="{ active: scope === 'global' }" @click="scope = 'global'">
+            🌍 Весь мир
+          </button>
+          <button class="scope-btn" :class="{ active: scope === 'local' }" @click="scope = 'local'">
+            👤 Мои
+          </button>
+        </div>
+      </div>
     </template>
 
     <template #content>
@@ -302,6 +311,17 @@ h2 {
   flex-direction: column;
   gap: 8px;
   margin-top: 8px;
+}
+
+.mobile-controls {
+  padding-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-scope {
+  width: 100%;
 }
 
 .mobile-filters {
