@@ -70,7 +70,11 @@ onMounted(() => {
   background: rgba(15, 23, 42, 0.8);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-color);
-  padding: var(--spacing-sm) 0;
+  padding-top: calc(var(--spacing-sm) + env(safe-area-inset-top, 24px));
+  /* Fallback 24px for notch simulation in browser */
+  padding-bottom: var(--spacing-sm);
+  padding-left: 0;
+  padding-right: 0;
   transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 

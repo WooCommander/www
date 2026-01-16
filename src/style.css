@@ -1,3 +1,4 @@
+
 :root {
   /* Colors - Premium Dark Palette */
   --bg-primary: #0f172a;
@@ -109,4 +110,18 @@ button {
   -webkit-text-fill-color: transparent;
   background-clip: text;
   color: transparent;
+}
+
+/* Hide Scrollbar on Mobile for cleaner Native App feel */
+@media (max-width: 768px) {
+  /* Chrome, Safari, Opera */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* IE, Edge, Firefox */
+  html, body, div, main, aside {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+  }
 }

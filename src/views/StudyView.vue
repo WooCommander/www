@@ -32,7 +32,8 @@ onMounted(async () => {
 
   // Setup Intersection Observer for infinite scroll
   const observer = new IntersectionObserver((entries) => {
-    if (entries[0].isIntersecting) {
+    const entry = entries[0];
+    if (entry && entry.isIntersecting) {
       loadMore();
     }
   }, { rootMargin: '200px' });

@@ -107,9 +107,7 @@ const hasSidebar = computed(() => !!slots.sidebar);
     /* Prevent grid stretch */
 }
 
-.layout-content {
-    /* min-width: 0;  Prevent grid blowout */
-}
+
 
 .fixed-height .layout-content {
     height: 100%;
@@ -151,6 +149,10 @@ const hasSidebar = computed(() => !!slots.sidebar);
     .fixed-height .content-grid {
         display: flex;
         flex-direction: column;
+    }
+
+    .fixed-height .layout-content {
+        padding-right: 0;
     }
 
     .layout-sidebar {

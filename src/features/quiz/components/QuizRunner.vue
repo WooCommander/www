@@ -39,12 +39,18 @@ watch(() => props.currentQuestionIndex, (newVal, oldVal) => {
 });
 
 const handleTouchStart = (e: TouchEvent) => {
-    touchStartX.value = e.changedTouches[0].screenX;
+    const touch = e.changedTouches[0];
+    if (touch) {
+        touchStartX.value = touch.screenX;
+    }
 };
 
 const handleTouchEnd = (e: TouchEvent) => {
-    touchEndX.value = e.changedTouches[0].screenX;
-    handleSwipe();
+    const touch = e.changedTouches[0];
+    if (touch) {
+        touchEndX.value = touch.screenX;
+        handleSwipe();
+    }
 };
 
 const handleSwipe = () => {

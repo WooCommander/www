@@ -24,7 +24,7 @@ onMounted(async () => {
     user.value = session.user;
 
     // Fetch profile
-    const { data, error } = await supabase
+    const { data } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', session.user.id)
