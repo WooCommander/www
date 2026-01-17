@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { supabase } from '../services/supabase';
-import { QuestionStore } from '../services/QuestionStore';
+import { StatsService } from '../services/StatsService';
+import { UserService } from '../services/UserService';
 import MainLayout from '../components/layout/MainLayout.vue';
 import { useRouter } from 'vue-router';
 
@@ -22,108 +22,17 @@ const topPlayers = ref<any[]>([]);
 onMounted(async () => {
     loading.value = true;
     try {
-        // 1. Fetch Total Users
-        const { count: userCount } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-        stats.value.totalUsers = userCount || 0;
+        // 1. Fetch Global Stats
+        const platformStats = await StatsService.getPlatformStats();
+        stats.value = platformStats;
 
-        // 2. Fetch Total Questions (Static + Dynamic) - Approximation
-        // For accurate count, we'd need to query DB 'user_questions' + static count.
-        // Let's use QuestionStore for a "local view" of questions or just a hardcoded static + DB count.
-        // Let's just default to QuestionStore.getAllQuestions.length (which merges both)
-        // Ensure store is initialized? It might be empty if we just landed.
-        await QuestionStore.initialize();
-        stats.value.totalQuestions = QuestionStore.getAllQuestions.value.length;
+        // 2. Fetch Trends
+        const trendData = await StatsService.getTrends();
+        trends.value = trendData;
 
-        // 3. Fetch Aggregate Exam Stats (Time & Tests)
-        // We can't easily sum column in Supabase without a stored procedure or fetch all.
-        // FETCHING ALL MIGHT BE HEAVY if 1M records. But for now likely small.
-        // Let's rely on a separate query or just fetch "recent 1000" to estimate? 
-        // Or assume we have a 'platform_stats' table? We don't.
-        // Let's fetch the `exam_results` count.
-        // 3. Fetch Aggregate Exam Stats (Time & Tests)
-        const { count: testsCount, data: testsData } = await supabase
-            .from('exam_results')
-            .select('time_taken, title, score', { count: 'exact' })
-            .limit(2000);
-
-        stats.value.totalTests = testsCount || 0;
-
-        // Calculate Trends
-        if (testsData) {
-            const sumTime = testsData.reduce((acc, curr) => acc + (curr.time_taken || 0), 0);
-            stats.value.totalTime = sumTime;
-
-            // Trend Analysis
-            const topicStats: Record<string, { count: number, totalScore: number }> = {};
-
-            testsData.forEach(r => {
-                const t = r.title || 'Unknown';
-                if (!topicStats[t]) topicStats[t] = { count: 0, totalScore: 0 };
-                topicStats[t].count++;
-                topicStats[t].totalScore += r.score;
-            });
-
-            const analyzed = Object.entries(topicStats).map(([title, stat]) => ({
-                title,
-                count: stat.count,
-                avgScore: Math.round(stat.totalScore / stat.count)
-            }));
-
-            // Most Popular
-            trends.value.popular = [...analyzed].sort((a, b) => b.count - a.count).slice(0, 5);
-
-            // Hardest (Low Avg Score, min 3 attempts to reduce noise)
-            trends.value.hardest = [...analyzed]
-                .filter(a => a.count >= 1) // Lower threshold for testing
-                .sort((a, b) => a.avgScore - b.avgScore)
-                .slice(0, 5);
-        }
-
-        stats.value.totalTests = testsCount || 0;
-
-        // Approx time from the fetched sample
-        if (testsData) {
-            const sumTime = testsData.reduce((acc, curr) => acc + (curr.time_taken || 0), 0);
-            stats.value.totalTime = sumTime;
-        }
-
-        // 4. Fetch Top 5 Players (Hall of Fame)
-        // This mirrors Leaderboard logic but simpler
-        const { data: leaderboardData } = await supabase
-            .from('exam_results')
-            .select('*');
-
-        if (leaderboardData) {
-            // Process for "Best Unique Scores" aggregation (Arcade Mode logic)
-            // We need usernames.
-            const userIds = [...new Set(leaderboardData.map(r => r.user_id))];
-            const { data: profiles } = await supabase.from('profiles').select('id, username').in('id', userIds);
-
-            // Fix: Explicitly type userMap
-            const userMap: Record<string, string> = profiles?.reduce((acc, p) => ({ ...acc, [p.id]: p.username }), {}) || {};
-
-            const users: Record<string, any> = {};
-            leaderboardData.forEach(r => {
-                const uId = r.user_id;
-                // Fix: Access userMap with type safety (though uId covers it, the lint was complaining about index type)
-                if (!users[uId]) users[uId] = { username: userMap[uId] || 'User', bestRuns: {} };
-
-                const currentBest = users[uId].bestRuns[r.title];
-                if (!currentBest || r.score > currentBest.score || (r.score === currentBest.score && r.time_taken < currentBest.timeTaken)) {
-                    users[uId].bestRuns[r.title] = { score: r.correct || 0, timeTaken: r.time_taken || 0 };
-                }
-            });
-
-            const ranked = Object.values(users).map((u: any) => {
-                let totalScore = 0;
-                Object.values(u.bestRuns).forEach((run: any) => totalScore += run.score);
-                return { username: u.username, totalScore };
-            }).sort((a, b) => b.totalScore - a.totalScore).slice(0, 5); // Top 5
-
-            topPlayers.value = ranked;
-        }
+        // 3. Fetch Hall of Fame
+        const leaderboard = await UserService.getLeaderboard(5);
+        topPlayers.value = leaderboard;
 
     } catch (e) {
         console.error('Error loading global stats', e);

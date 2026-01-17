@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { supabase } from '../../services/supabase';
+import { UserService } from '../../services/UserService';
 import { useRouter } from 'vue-router';
 import MainLayout from '../../components/layout/MainLayout.vue';
 import { QuestionStore } from '../../services/QuestionStore';
@@ -17,7 +17,7 @@ const profile = ref({
 });
 
 onMounted(async () => {
-    const { data: { session } } = await supabase.auth.getSession();
+    const session = await UserService.getSession();
     if (!session) {
         router.push('/auth');
         return;
@@ -25,14 +25,14 @@ onMounted(async () => {
     user.value = session.user;
 
     // Fetch profile
-    const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', session.user.id)
-        .single();
+    const profileData = await UserService.getProfile(session.user.id);
 
-    if (data) {
-        profile.value = data;
+    if (profileData) {
+        profile.value = {
+            username: profileData.username || '',
+            avatar_url: profileData.avatar_url || '',
+            xp: profileData.xp || 0
+        };
     }
     loading.value = false;
 });
@@ -47,7 +47,7 @@ const updateProfile = async () => {
             updated_at: new Date()
         };
 
-        const { error } = await supabase.from('profiles').upsert(updates);
+        const { error } = await UserService.updateProfile(updates);
         if (error) throw error;
         alert('Профиль обновлен!');
     } catch (error: any) {
@@ -58,7 +58,7 @@ const updateProfile = async () => {
 };
 
 const signOut = async () => {
-    await supabase.auth.signOut();
+    await UserService.signOut();
     router.push('/auth');
 };
 

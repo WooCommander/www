@@ -3,6 +3,7 @@ import { Preferences } from '@capacitor/preferences';
 import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
 import type { Question, CustomQuiz } from '../types';
+import { UserService } from './UserService';
 
 const STORAGE_KEYS = {
   USER_QUESTIONS: 'user_questions',
@@ -181,7 +182,7 @@ export const QuestionStore = {
 
   async sync() {
     // Check for user
-    const { data: { user } } = await import('./supabase').then(m => m.supabase.auth.getUser());
+    const user = await UserService.getUser();
     if (!user) return;
 
     // 1. Sync User Questions
@@ -338,7 +339,7 @@ export const QuestionStore = {
       });
 
       // Cloud Push
-      const { data: { user } } = await import('./supabase').then(m => m.supabase.auth.getUser());
+      const user = await UserService.getUser();
       if (user) {
         await import('./supabase').then(m => m.supabase.from('user_questions').upsert({
           id: question.id,
@@ -362,7 +363,7 @@ export const QuestionStore = {
     });
 
     // Cloud Push
-    const { data: { user } } = await import('./supabase').then(m => m.supabase.auth.getUser());
+    const user = await UserService.getUser();
     if (user) {
       // Convert to DB format
       const { error } = await import('./supabase').then(m => m.supabase.from('exam_results').insert({
@@ -405,7 +406,7 @@ export const QuestionStore = {
       });
 
       // Cloud Delete
-      const { data: { user } } = await import('./supabase').then(m => m.supabase.auth.getUser());
+      const user = await UserService.getUser();
       if (user) {
         await import('./supabase').then(m => m.supabase.from('user_questions').delete().eq('id', id));
       }
