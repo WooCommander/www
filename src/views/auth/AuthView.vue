@@ -2,6 +2,9 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { supabase } from '../../services/supabase';
+import BaseButton from '../../components/ui/BaseButton.vue';
+import BaseInput from '../../components/ui/BaseInput.vue';
+import BaseCard from '../../components/ui/BaseCard.vue';
 
 const router = useRouter();
 const isLogin = ref(true);
@@ -42,39 +45,40 @@ const handleAuth = async () => {
 
 <template>
     <div class="auth-container">
-        <div class="auth-card">
-            <h2>{{ isLogin ? 'Вход' : 'Регистрация' }}</h2>
-            <p class="subtitle">Синхронизация прогресса и таблица лидеров</p>
+        <BaseCard class="auth-card-custom" padding="lg">
+            <template #header>
+                <div class="header-content">
+                    <h2>{{ isLogin ? 'Вход' : 'Регистрация' }}</h2>
+                    <p class="subtitle">Синхронизация прогресса и таблица лидеров</p>
+                </div>
+            </template>
 
             <form @submit.prevent="handleAuth" class="auth-form">
-                <div class="form-group">
-                    <label>Email</label>
-                    <input v-model="email" type="email" required placeholder="example@mail.com" />
-                </div>
+                <BaseInput v-model="email" label="Email" type="email" placeholder="example@mail.com" required />
 
-                <div class="form-group">
-                    <label>Пароль</label>
-                    <input v-model="password" type="password" required placeholder="••••••" minlength="6" />
-                </div>
+                <BaseInput v-model="password" label="Пароль" type="password" placeholder="••••••" :minlength="6"
+                    required />
 
                 <div v-if="errorMsg" class="error-msg">
                     {{ errorMsg }}
                 </div>
 
-                <button type="submit" class="auth-btn" :disabled="loading">
-                    {{ loading ? 'Загрузка...' : (isLogin ? 'Войти' : 'Создать аккаунт') }}
-                </button>
+                <BaseButton type="submit" variant="primary" block :loading="loading">
+                    {{ isLogin ? 'Войти' : 'Создать аккаунт' }}
+                </BaseButton>
             </form>
 
-            <div class="toggle-mode">
-                <span v-if="isLogin">Нет аккаунта? <a @click="isLogin = false">Регистрация</a></span>
-                <span v-else>Есть аккаунт? <a @click="isLogin = true">Войти</a></span>
-            </div>
-        </div>
+            <template #footer>
+                <div class="toggle-mode">
+                    <span v-if="isLogin">Нет аккаунта? <a @click="isLogin = false">Регистрация</a></span>
+                    <span v-else>Есть аккаунт? <a @click="isLogin = true">Войти</a></span>
+                </div>
+            </template>
+        </BaseCard>
     </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .auth-container {
     min-height: 80vh;
     display: flex;
@@ -83,77 +87,31 @@ const handleAuth = async () => {
     padding: var(--spacing-lg);
 }
 
-.auth-card {
-    background: var(--bg-card);
-    padding: var(--spacing-sm);
-    border-radius: 24px;
-    border: 1px solid var(--border-color);
+.auth-card-custom {
     width: 100%;
-    max-width: 400px;
-    box-shadow: var(--shadow-lg);
+    max-width: 440px;
 }
 
-h2 {
+.header-content {
     text-align: center;
-    color: var(--text-primary);
-    margin-bottom: 8px;
-}
+    width: 100%;
 
-.subtitle {
-    text-align: center;
-    color: var(--text-secondary);
-    margin-bottom: var(--spacing-xl);
-    font-size: 0.95rem;
+    h2 {
+        color: var(--text-primary);
+        margin-bottom: 4px;
+    }
+
+    .subtitle {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin: 0;
+    }
 }
 
 .auth-form {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-md);
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
-label {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-    font-weight: 500;
-}
-
-input {
-    padding: 12px;
-    border-radius: 12px;
-    background: var(--bg-secondary);
-    border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    font-size: 1rem;
-    transition: all 0.2s;
-}
-
-input:focus {
-    outline: none;
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.1);
-}
-
-.auth-btn {
-    margin-top: var(--spacing-sm);
-    padding: 14px;
-    background: var(--accent-primary);
-    color: white;
-    border-radius: 12px;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: opacity 0.2s;
-}
-
-.auth-btn:disabled {
-    opacity: 0.7;
-    cursor: wait;
 }
 
 .error-msg {
@@ -166,19 +124,19 @@ input:focus {
 }
 
 .toggle-mode {
-    margin-top: var(--spacing-lg);
     text-align: center;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-}
+    width: 100%;
 
-a {
-    color: var(--accent-primary);
-    cursor: pointer;
-    font-weight: 600;
-}
+    a {
+        color: var(--accent-primary);
+        cursor: pointer;
+        font-weight: 600;
 
-a:hover {
-    text-decoration: underline;
+        &:hover {
+            text-decoration: underline;
+        }
+    }
 }
 </style>

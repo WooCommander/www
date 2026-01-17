@@ -5,6 +5,9 @@ import type { UserProfile } from '../../types';
 import { useRouter } from 'vue-router';
 import MainLayout from '../../components/layout/MainLayout.vue';
 import { QuestionStore } from '../../services/QuestionStore';
+import BaseButton from '../../components/ui/BaseButton.vue';
+import BaseInput from '../../components/ui/BaseInput.vue';
+import BaseCard from '../../components/ui/BaseCard.vue';
 
 const router = useRouter();
 const loading = ref(true);
@@ -72,9 +75,6 @@ const history = computed(() => {
 });
 
 const totalScore = computed(() => {
-    // Score is percentage 0-100.
-    // If we want "Total XP", we might sum correct answers?
-    // Let's sum correct answers for "Points".
     return history.value.reduce((acc, curr) => acc + (curr.correct || 0), 0);
 });
 
@@ -142,35 +142,52 @@ const clearHistory = () => {
         localStorage.removeItem('quiz_history');
     }
 };
+
 </script>
 
 <template>
-    <MainLayout>
+    <MainLayout fixed-height>
+        <template #header>
+            <PageHeader title="Профиль" description="Управление аккаунтом" />
+        </template>
+
         <template #content>
             <div class="dashboard-container">
-                <div class="header-row">
-                    <h1>Личный кабинет</h1>
-                    <button class="logout-btn-text" @click="signOut">Выйти</button>
+                <div v-if="loading" class="loading-state">
+                    Загрузка профиля...
                 </div>
-
-                <div v-if="loading" class="loading">Загрузка...</div>
 
                 <div v-else class="dashboard-content">
 
-                    <!-- Profile Edit Card (Collapsed or Compact) -->
-                    <div class="section-card profile-edit">
-                        <div class="user-header">
-                            <div class="avatar-placeholder">{{ profile.username?.charAt(0)?.toUpperCase() || 'U' }}
+                    <!-- User Profile Card -->
+                    <BaseCard class="profile-card" padding="lg">
+                        <form @submit.prevent="updateProfile" class="profile-form">
+
+                            <div class="avatar-section">
+                                <div class="avatar-placeholder">
+                                    {{ profile.username ? profile.username.charAt(0).toUpperCase() : 'U' }}
+                                </div>
+                                <div class="user-meta">
+                                    <p class="xp-badge">XP: {{ profile.xp || 0 }}</p>
+                                    <p class="email-text">{{ user.email }}</p>
+                                </div>
                             </div>
-                            <div class="user-fields">
-                                <input v-model="profile.username" placeholder="Ваше имя" class="username-input" />
-                                <span class="email-display">{{ user.email }}</span>
+
+                            <BaseInput :modelValue="profile.username || ''"
+                                @update:modelValue="val => profile.username = String(val)" label="Имя пользователя"
+                                placeholder="Ваше имя" />
+
+                            <div class="actions">
+                                <BaseButton type="submit" variant="primary" :loading="saving">
+                                    Сохранить
+                                </BaseButton>
+
+                                <BaseButton type="button" variant="danger" @click="signOut">
+                                    Выйти
+                                </BaseButton>
                             </div>
-                            <button class="save-icon-btn" @click="updateProfile" :disabled="saving" title="Сохранить">
-                                💾
-                            </button>
-                        </div>
-                    </div>
+                        </form>
+                    </BaseCard>
 
                     <!-- Stat Cards -->
                     <div class="stats-grid">
@@ -212,11 +229,15 @@ const clearHistory = () => {
                     </div>
 
                     <!-- History Section -->
-                    <div class="section-card history-section">
-                        <div class="section-header">
-                            <h2>История активности</h2>
-                            <button v-if="history.length > 0" class="mini-btn" @click="clearHistory">Очистить</button>
-                        </div>
+                    <BaseCard class="history-section" padding="none">
+                        <template #header>
+                            <div class="history-header">
+                                <h2>История активности</h2>
+                                <BaseButton v-if="history.length > 0" variant="ghost" size="sm" @click="clearHistory">
+                                    Очистить
+                                </BaseButton>
+                            </div>
+                        </template>
 
                         <div v-if="history.length === 0" class="empty-history">
                             <p>Пока пусто. Начните проходить тесты!</p>
@@ -242,7 +263,7 @@ const clearHistory = () => {
                                 </div>
                             </div>
                         </div>
-                    </div>
+                    </BaseCard>
 
                 </div>
             </div>
@@ -257,109 +278,64 @@ const clearHistory = () => {
     padding: var(--spacing-lg) 0;
 }
 
-.header-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    padding: 0 8px;
-
-    h1 {
-        margin: 0;
-        font-size: 1.5rem;
-    }
-
-    .logout-btn-text {
-        background: none;
-        border: none;
-        color: #ef4444;
-        font-weight: 600;
-        cursor: pointer;
-    }
-}
-
 .dashboard-content {
     display: flex;
     flex-direction: column;
     gap: 20px;
 }
 
-/* User Card */
-.profile-edit {
-    padding: 16px;
+/* User Card Styles */
+.profile-card {
+    .profile-form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
-    .user-header {
+    .avatar-section {
         display: flex;
         align-items: center;
         gap: 16px;
-    }
 
-    .avatar-placeholder {
-        width: 50px;
-        height: 50px;
-        flex-shrink: 0;
-        /* Prevent squishing */
-        background: var(--accent-primary);
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.5rem;
-        font-weight: bold;
-    }
+        .avatar-placeholder {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--accent-primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
 
-    .user-fields {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        min-width: 0;
-        /* Allow text truncate if needed */
-    }
+        .user-meta {
+            display: flex;
+            flex-direction: column;
 
-    .username-input {
-        background: transparent;
-        border: none;
-        font-size: 1.2rem;
-        font-weight: bold;
-        color: var(--text-primary);
-        padding: 0;
-        border-bottom: 1px dashed var(--border-color);
-        width: 100%;
+            .xp-badge {
+                font-weight: bold;
+                color: var(--accent-primary);
+                font-size: 1.1rem;
+                margin: 0;
+            }
 
-        &:focus {
-            outline: none;
-            border-bottom: 1px solid var(--accent-primary);
+            .email-text {
+                color: var(--text-secondary);
+                font-size: 0.9rem;
+                margin: 0;
+            }
         }
     }
 
-    .email-display {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-        word-break: break-all;
-        /* Ensure long emails don't overflow */
-    }
-
-    .save-icon-btn {
-        background: transparent;
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        width: 40px;
-        height: 40px;
-        flex-shrink: 0;
-        /* Prevent squishing */
+    .actions {
         display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
+        gap: 12px;
+        margin-top: 8px;
 
-        &:disabled {
-            opacity: 0.5;
-        }
-
-        &:hover {
-            background: var(--bg-secondary);
+        button {
+            flex: 1;
         }
     }
 }
@@ -369,48 +345,45 @@ const clearHistory = () => {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
-}
 
-@media (max-width: 600px) {
-    .stats-grid {
+    @media (max-width: 600px) {
         grid-template-columns: 1fr;
     }
-}
 
-.stat-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 20px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    overflow: hidden;
+    .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
 
-    &.blue {
-        border-bottom: 4px solid #3b82f6;
-    }
+        &.blue {
+            border-bottom: 4px solid #3b82f6;
+        }
 
-    &.green {
-        border-bottom: 4px solid #22c55e;
-    }
+        &.green {
+            border-bottom: 4px solid #22c55e;
+        }
 
-    &.purple {
-        border-bottom: 4px solid #a855f7;
-    }
+        &.purple {
+            border-bottom: 4px solid #a855f7;
+        }
 
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: var(--text-primary);
-    }
+        .stat-value {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--text-primary);
+        }
 
-    .stat-label {
-        font-size: 0.85rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
     }
 }
 
@@ -419,81 +392,75 @@ const clearHistory = () => {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 12px;
-}
 
-@media (max-width: 600px) {
-    .insights-row {
+    @media (max-width: 600px) {
         grid-template-columns: 1fr;
     }
-}
 
-.insight-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    padding: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-
-    &.good {
-        background: rgba(34, 197, 94, 0.05);
-        border-color: rgba(34, 197, 94, 0.2);
-    }
-
-    &.bad {
-        background: rgba(239, 68, 68, 0.05);
-        border-color: rgba(239, 68, 68, 0.2);
-    }
-
-    .insight-icon {
-        font-size: 2rem;
-    }
-
-    .insight-info {
+    .insight-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 16px;
+        padding: 16px;
         display: flex;
-        flex-direction: column;
-    }
+        align-items: center;
+        gap: 12px;
 
-    .insight-label {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
-        text-transform: uppercase;
-    }
+        &.good {
+            background: rgba(34, 197, 94, 0.05);
+            border-color: rgba(34, 197, 94, 0.2);
+        }
 
-    .insight-value {
-        font-weight: 700;
-        color: var(--text-primary);
-    }
+        &.bad {
+            background: rgba(239, 68, 68, 0.05);
+            border-color: rgba(239, 68, 68, 0.2);
+        }
 
-    .insight-score {
-        font-size: 0.8rem;
-        opacity: 0.8;
+        .insight-icon {
+            font-size: 2rem;
+        }
+
+        .insight-info {
+            display: flex;
+            flex-direction: column;
+
+            .insight-label {
+                font-size: 0.75rem;
+                color: var(--text-secondary);
+                text-transform: uppercase;
+            }
+
+            .insight-value {
+                font-weight: 700;
+                color: var(--text-primary);
+            }
+
+            .insight-score {
+                font-size: 0.8rem;
+                opacity: 0.8;
+            }
+        }
     }
 }
 
 /* History Section */
-.section-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 20px;
-    overflow: hidden;
-}
-
 .history-section {
+    max-height: 500px;
     display: flex;
     flex-direction: column;
-    max-height: 500px;
-    /* limits height */
+
+    /* Ensure BaseCard content area scrolls */
+    :deep(.card-body) {
+        overflow-y: auto;
+        padding: 0;
+    }
 }
 
-.section-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid var(--border-color);
+.history-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--bg-secondary);
+    width: 100%;
 
     h2 {
         margin: 0;
@@ -501,25 +468,9 @@ const clearHistory = () => {
     }
 }
 
-.mini-btn {
-    padding: 4px 8px;
-    font-size: 0.75rem;
-    background: transparent;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    color: var(--text-secondary);
-    cursor: pointer;
-
-    &:hover {
-        background: var(--bg-card);
-        color: #ef4444;
-        border-color: #ef4444;
-    }
-}
-
 .history-list {
-    overflow-y: auto;
-    padding: 10px;
+    display: flex;
+    flex-direction: column;
 }
 
 .empty-history {
@@ -542,16 +493,16 @@ const clearHistory = () => {
     .h-left {
         display: flex;
         flex-direction: column;
-    }
 
-    .h-title {
-        font-weight: 600;
-        color: var(--text-primary);
-    }
+        .h-title {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
 
-    .h-date {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
+        .h-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
     }
 
     .h-right {
@@ -559,28 +510,28 @@ const clearHistory = () => {
         display: flex;
         flex-direction: column;
         align-items: flex-end;
-    }
 
-    .h-score {
-        font-weight: 800;
-        font-family: 'Fira Code', monospace;
+        .h-score {
+            font-weight: 800;
+            font-family: 'Fira Code', monospace;
 
-        &.good {
-            color: #22c55e;
+            &.good {
+                color: #22c55e;
+            }
+
+            &.avg {
+                color: #f59e0b;
+            }
+
+            &.bad {
+                color: #ef4444;
+            }
         }
 
-        &.avg {
-            color: #f59e0b;
+        .h-details {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
         }
-
-        &.bad {
-            color: #ef4444;
-        }
-    }
-
-    .h-details {
-        font-size: 0.75rem;
-        color: var(--text-secondary);
     }
 }
 </style>

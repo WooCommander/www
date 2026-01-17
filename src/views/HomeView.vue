@@ -5,6 +5,8 @@ import { UserService } from '../services/UserService';
 import type { PlatformStats, TrendsData, LeaderboardEntry } from '../types';
 import MainLayout from '../components/layout/MainLayout.vue';
 import { useRouter } from 'vue-router';
+import BaseButton from '../components/ui/BaseButton.vue';
+// ... rest of imports
 
 const router = useRouter();
 const loading = ref(true);
@@ -63,8 +65,9 @@ const goToQuiz = () => router.push('/quiz');
                         разработке.</p>
 
                     <div class="action-buttons">
-                        <button class="primary-btn pulse" @click="goToQuiz">🚀 Начать Тест</button>
-                        <button class="secondary-btn" @click="goToStudy">📚 Учить Вопросы</button>
+                        <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
                     </div>
                 </section>
 
@@ -170,7 +173,6 @@ const goToQuiz = () => router.push('/quiz');
 <style scoped lang="scss">
 .home-container {
     width: 100%;
-    /* max-width: 1000px; Removed to match other pages */
     margin: 0 auto;
     padding: var(--spacing-lg) 0;
 }
@@ -184,6 +186,10 @@ const goToQuiz = () => router.push('/quiz');
         font-size: 3rem;
         margin-bottom: 16px;
         line-height: 1.2;
+
+        @media (max-width: 600px) {
+            font-size: 2rem;
+        }
     }
 
     .subtitle {
@@ -194,70 +200,19 @@ const goToQuiz = () => router.push('/quiz');
         margin-left: auto;
         margin-right: auto;
     }
-}
 
-/* ... skipped intermediate styles ... */
+    .action-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 16px;
 
-.stats-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-}
-
-.trends-section {
-    grid-column: 1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-top: 0;
-}
-
-.leaderboard-section {
-    grid-column: 2;
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 24px;
-    /* height: 100%; Removed */
-}
-
-.action-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-
-    button {
-        padding: 16px 32px;
-        border-radius: 12px;
-        font-size: 1.1rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s, box-shadow 0.2s;
-
-        &:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        @media (max-width: 600px) {
+            flex-direction: column;
         }
 
-        &:active {
-            transform: translateY(0);
-        }
-    }
-
-    .primary-btn {
-        background: var(--accent-primary);
-        color: white;
-        border: none;
-
-        &.pulse {
+        .pulse {
             animation: pulse-animation 2s infinite;
         }
-    }
-
-    .secondary-btn {
-        background: var(--bg-card);
-        color: var(--text-primary);
-        border: 1px solid var(--border-color);
     }
 }
 
@@ -272,24 +227,115 @@ const goToQuiz = () => router.push('/quiz');
     }
 }
 
+/* Global Stats */
 .stats-section {
     grid-column: 1 / -1;
+
+    .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+
+        @media (max-width: 1024px) {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        @media (max-width: 600px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .stat-card {
+        background: var(--bg-secondary);
+        padding: 16px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transition: transform 0.2s;
+
+        &:hover {
+            transform: scale(1.02);
+        }
+
+        .icon {
+            font-size: 2rem;
+        }
+
+        .stat-info {
+            display: flex;
+            flex-direction: column;
+
+            .value {
+                font-size: 1.4rem;
+                font-weight: 800;
+                color: var(--text-primary);
+            }
+
+            .label {
+                font-size: 0.8rem;
+                color: var(--text-secondary);
+            }
+        }
+    }
 }
 
-.stats-cards {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 16px;
-}
-
+/* Trends Section */
 .trends-section {
+    grid-column: 1 / -1;
+    /* Full width now or change based on design? */
+    /* Previous CSS had grid-column 1 but that assumes 2 columns. */
+    /* The dashboard grid is 2fr 1fr. Trends usually matches stats? */
+    /* Looking at template, trends-section is inside dashboard-grid alongside leaderboard-section? */
+    /* Actually structure is:
+       dashboard-grid
+         stats-section (1/-1)
+         trends-section
+         leaderboard-section
+    */
+    /* So trends should probably be column 1 and leaderboard column 2 */
+
     grid-column: 1;
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 24px;
-    margin-top: 0;
+    margin-top: 10px;
+
+    @media (max-width: 1024px) {
+        grid-column: 1;
+        grid-template-columns: 1fr;
+        /* Stack cards on tablet */
+    }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+    }
+
+    .trend-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 24px;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        overflow: hidden;
+
+        .card-header {
+            h2 {
+                margin: 0 0 4px 0;
+                font-size: 1.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+                color: var(--text-secondary);
+            }
+        }
+    }
 }
 
+/* Leaderboard Section */
 .leaderboard-section {
     grid-column: 2;
     background: var(--bg-card);
@@ -297,151 +343,190 @@ const goToQuiz = () => router.push('/quiz');
     border-radius: 24px;
     padding: 24px;
     height: 100%;
-    /* Match height */
-}
 
-/* Mobile Tweaks */
-@media (max-width: 1024px) {
-    .stats-cards {
-        grid-template-columns: 1fr 1fr;
-    }
-
-    .trends-section {
-        grid-template-columns: 1fr;
-    }
-
-    .stats-section,
-    .trends-section,
-    .leaderboard-section {
+    @media (max-width: 1024px) {
         grid-column: 1;
     }
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+
+        h2 {
+            margin: 0;
+        }
+
+        .view-all {
+            font-size: 0.9rem;
+            color: var(--accent-primary);
+            text-decoration: none;
+            font-weight: 600;
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+
+    .hof-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .hof-item {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+
+            .rank {
+                font-size: 1.2rem;
+                font-weight: 800;
+                width: 40px;
+                color: var(--text-secondary);
+            }
+
+            .player-name {
+                flex: 1;
+                font-weight: 600;
+            }
+
+            .player-score {
+                font-weight: 700;
+                color: var(--accent-primary);
+
+                span {
+                    font-size: 0.8rem;
+                    font-weight: 400;
+                    opacity: 0.8;
+                }
+            }
+
+            /* Rank colors */
+            &.rank-1 .rank {
+                color: #f59e0b;
+            }
+
+            &.rank-2 .rank {
+                color: #94a3b8;
+            }
+
+            &.rank-3 .rank {
+                color: #b45309;
+            }
+        }
+    }
 }
 
-@media (max-width: 600px) {
-    .hero-section h1 {
-        font-size: 2rem;
-    }
+/* Heatmap Grid */
+.heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
 
-    .action-buttons {
-        flex-direction: column;
-    }
-
-    .heatmap-grid {
+    @media (max-width: 600px) {
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .stats-cards {
-        grid-template-columns: 1fr;
-    }
-}
-
-.stat-card {
-    background: var(--bg-secondary);
-    padding: 16px;
-    border-radius: 16px;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    transition: transform 0.2s;
-
-    &:hover {
-        transform: scale(1.02);
-    }
-
-    .icon {
-        font-size: 2rem;
-    }
-
-    .stat-info {
+    .heat-item {
+        position: relative;
+        border-radius: 16px;
+        overflow: hidden;
+        aspect-ratio: 1;
         display: flex;
-        flex-direction: column;
-    }
-
-    .value {
-        font-size: 1.4rem;
-        font-weight: 800;
-        color: var(--text-primary);
-    }
-
-    .label {
-        font-size: 0.8rem;
-        color: var(--text-secondary);
-    }
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-
-    h2 {
-        margin: 0;
-    }
-
-    .view-all {
-        font-size: 0.9rem;
-        color: var(--accent-primary);
-        text-decoration: none;
-        font-weight: 600;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: 12px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        transition: transform 0.2s;
 
         &:hover {
-            text-decoration: underline;
+            transform: scale(1.05);
+            z-index: 2;
+        }
+
+        .heat-bg {
+            position: absolute;
+            inset: 0;
+            background: var(--accent-primary);
+            opacity: calc(0.1 + (var(--intensity) * 0.4));
+            z-index: 0;
+        }
+
+        .heat-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            align-items: center;
+
+            .heat-rank {
+                font-size: 0.8rem;
+                font-weight: 800;
+                opacity: 0.7;
+                text-transform: uppercase;
+            }
+
+            .heat-title {
+                font-size: 1rem;
+                font-weight: 700;
+                line-height: 1.2;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+            }
+
+            .heat-count {
+                font-size: 0.8rem;
+                opacity: 0.8;
+            }
         }
     }
 }
 
-.hof-list {
+/* Danger Cloud */
+.danger-cloud {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 12px;
-}
+    align-content: flex-start;
 
-.hof-item {
-    display: flex;
-    align-items: center;
-    padding: 12px;
-    background: var(--bg-secondary);
-    border-radius: 12px;
-
-    .rank {
-        font-size: 1.2rem;
-        font-weight: 800;
-        width: 40px;
-        color: var(--text-secondary);
-    }
-
-    .player-name {
-        flex: 1;
+    .danger-chip {
+        /* Severity variable from 0 to 1 */
+        --red-base: 239, 68, 68;
+        background: rgba(var(--red-base), calc(0.1 + (var(--severity) * 0.3)));
+        border: 1px solid rgba(var(--red-base), calc(0.2 + (var(--severity) * 0.5)));
+        color: rgb(var(--red-base));
+        padding: 10px 16px;
+        border-radius: 50px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
         font-weight: 600;
-    }
+        transition: all 0.2s;
 
-    .player-score {
-        font-weight: 700;
-        color: var(--accent-primary);
+        &:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(var(--red-base), 0.2);
+        }
 
-        span {
-            font-size: 0.8rem;
-            font-weight: 400;
-            opacity: 0.8;
+        .danger-score {
+            font-weight: 800;
+            font-size: 1.1rem;
+        }
+
+        .danger-title {
+            font-size: 0.9rem;
+            opacity: 0.9;
         }
     }
-
-    &.rank-1 .rank {
-        color: #f59e0b;
-    }
-
-    /* Gold */
-    &.rank-2 .rank {
-        color: #94a3b8;
-    }
-
-    /* Silver */
-    &.rank-3 .rank {
-        color: #b45309;
-    }
-
-    /* Bronze */
 }
 
 @keyframes pulse-animation {
@@ -467,164 +552,6 @@ const goToQuiz = () => router.push('/quiz');
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-/* Trends Redesign: Vibrant & Creative */
-.trends-section {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    margin-top: 10px;
-}
-
-@media (max-width: 768px) {
-    .trends-section {
-        grid-template-columns: 1fr;
-    }
-}
-
-.trend-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 24px;
-    padding: 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    overflow: hidden;
-}
-
-.card-header h2 {
-    margin: 0 0 4px 0;
-    font-size: 1.5rem;
-}
-
-.card-header .subtitle {
-    font-size: 0.9rem;
-    color: var(--text-secondary);
-}
-
-/* Heatmap Grid */
-.heatmap-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 12px;
-}
-
-.heat-item {
-    position: relative;
-    border-radius: 16px;
-    overflow: hidden;
-    aspect-ratio: 1;
-    /* Square cards */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 12px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    transition: transform 0.2s;
-
-    &:hover {
-        transform: scale(1.05);
-        z-index: 2;
-    }
-}
-
-.heat-bg {
-    position: absolute;
-    inset: 0;
-    background: var(--accent-primary);
-    opacity: calc(0.1 + (var(--intensity) * 0.4));
-    z-index: 0;
-}
-
-.heat-content {
-    position: relative;
-    z-index: 1;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    align-items: center;
-}
-
-.heat-rank {
-    font-size: 0.8rem;
-    font-weight: 800;
-    opacity: 0.7;
-    text-transform: uppercase;
-}
-
-.heat-title {
-    font-size: 1rem; // Increased from 0.8rem - too small
-    font-weight: 700;
-    line-height: 1.2;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-}
-
-.heat-count {
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-/* Danger Cloud */
-.danger-cloud {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px;
-    align-content: flex-start;
-}
-
-.danger-chip {
-    /* Severity variable from 0 to 1 */
-    --red-base: 239, 68, 68;
-    background: rgba(var(--red-base), calc(0.1 + (var(--severity) * 0.3)));
-    border: 1px solid rgba(var(--red-base), calc(0.2 + (var(--severity) * 0.5)));
-    color: rgb(var(--red-base));
-    /* Always red text */
-    padding: 10px 16px;
-    border-radius: 50px;
-    /* Pill shape */
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-weight: 600;
-    transition: all 0.2s;
-
-    &:hover {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(var(--red-base), 0.2);
-    }
-}
-
-.danger-score {
-    font-weight: 800;
-    font-size: 1.1rem;
-}
-
-.danger-title {
-    font-size: 0.9rem;
-    opacity: 0.9;
-}
-
-/* Mobile Tweaks */
-@media (max-width: 600px) {
-    .hero-section h1 {
-        font-size: 2rem;
-    }
-
-    .action-buttons {
-        flex-direction: column;
-    }
-
-    .heatmap-grid {
-        grid-template-columns: repeat(2, 1fr);
     }
 }
 </style>
