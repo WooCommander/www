@@ -153,6 +153,15 @@ const hasSidebar = computed(() => !!slots.sidebar);
 
     .fixed-height .layout-content {
         padding-right: 0;
+        scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+        /* IE/Edge */
+    }
+
+    .fixed-height .layout-content::-webkit-scrollbar {
+        display: none;
+        /* Chrome/Safari */
     }
 
     .layout-sidebar {

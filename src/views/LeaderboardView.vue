@@ -128,13 +128,7 @@ const manualSync = async () => {
   await QuestionStore.sync();
 };
 
-const onHorizontalScroll = (e: WheelEvent) => {
-  const container = e.currentTarget as HTMLElement;
-  if (e.deltaY !== 0) {
-    e.preventDefault();
-    container.scrollLeft += e.deltaY;
-  }
-};
+
 </script>
 
 <template>

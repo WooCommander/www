@@ -217,8 +217,7 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 1.8rem;
   cursor: pointer;
-  z-index: 102;
-  /* Above overlay */
+  /* z-index inheritance from header is sufficient */
 }
 
 /* Mobile Overlay */
@@ -229,10 +228,10 @@ onMounted(() => {
   width: 100%;
   height: 100vh;
   background: var(--bg-primary);
-  /* Should match theme bg */
-  z-index: 101;
-  padding: 80px 24px 24px;
-  /* Space for header */
+  z-index: 98;
+  /* Below App Header (100) */
+  padding: 100px 24px 24px;
+  /* More space for header */
   display: flex;
   flex-direction: column;
 }

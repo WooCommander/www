@@ -65,10 +65,10 @@ onMounted(async () => {
                 topicStats[t].totalScore += r.score;
             });
 
-            const analyzed = Object.keys(topicStats).map(title => ({
+            const analyzed = Object.entries(topicStats).map(([title, stat]) => ({
                 title,
-                count: topicStats[title].count,
-                avgScore: Math.round(topicStats[title].totalScore / topicStats[title].count)
+                count: stat.count,
+                avgScore: Math.round(stat.totalScore / stat.count)
             }));
 
             // Most Popular
@@ -100,11 +100,14 @@ onMounted(async () => {
             // We need usernames.
             const userIds = [...new Set(leaderboardData.map(r => r.user_id))];
             const { data: profiles } = await supabase.from('profiles').select('id, username').in('id', userIds);
-            const userMap = profiles?.reduce((acc, p) => ({ ...acc, [p.id]: p.username }), {}) || {};
+
+            // Fix: Explicitly type userMap
+            const userMap: Record<string, string> = profiles?.reduce((acc, p) => ({ ...acc, [p.id]: p.username }), {}) || {};
 
             const users: Record<string, any> = {};
             leaderboardData.forEach(r => {
                 const uId = r.user_id;
+                // Fix: Access userMap with type safety (though uId covers it, the lint was complaining about index type)
                 if (!users[uId]) users[uId] = { username: userMap[uId] || 'User', bestRuns: {} };
 
                 const currentBest = users[uId].bestRuns[r.title];

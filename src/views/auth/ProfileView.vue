@@ -94,8 +94,11 @@ const topicInsights = computed(() => {
         if (!topics[h.title]) {
             topics[h.title] = { totalScore: 0, count: 0, title: h.title };
         }
-        topics[h.title].totalScore += h.score; // Using percentage score for "Strength"
-        topics[h.title].count += 1;
+        const topic = topics[h.title];
+        if (topic) {
+            topic.totalScore += h.score;
+            topic.count += 1;
+        }
     });
 
     const averages = Object.values(topics).map(t => ({
