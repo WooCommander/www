@@ -2,7 +2,7 @@ import { reactive, computed } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
-import type { Question, CustomQuiz } from '../types';
+import type { Question, CustomQuiz, HistoryItem } from '../types';
 import { UserService } from './UserService';
 
 const STORAGE_KEYS = {
@@ -19,8 +19,8 @@ interface QuestionState {
   overrides: Record<string, Question>;
   deletedIds: Set<string>;
   favorites: Set<string>;
-  examHistory: any[];
-  globalLeaderboard: any[];
+  examHistory: HistoryItem[];
+  globalLeaderboard: HistoryItem[];
   isLoaded: boolean;
   lastSyncError: string | null;
 }

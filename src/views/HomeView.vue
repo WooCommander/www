@@ -2,22 +2,23 @@
 import { ref, onMounted } from 'vue';
 import { StatsService } from '../services/StatsService';
 import { UserService } from '../services/UserService';
+import type { PlatformStats, TrendsData, LeaderboardEntry } from '../types';
 import MainLayout from '../components/layout/MainLayout.vue';
 import { useRouter } from 'vue-router';
 
 const router = useRouter();
 const loading = ref(true);
 
-const stats = ref({
+const stats = ref<PlatformStats>({
     totalUsers: 0,
     totalQuestions: 0,
     totalTime: 0,
     totalTests: 0
 });
 
-const trends = ref<{ popular: any[], hardest: any[] }>({ popular: [], hardest: [] });
+const trends = ref<TrendsData>({ popular: [], hardest: [] });
 
-const topPlayers = ref<any[]>([]);
+const topPlayers = ref<LeaderboardEntry[]>([]);
 
 onMounted(async () => {
     loading.value = true;

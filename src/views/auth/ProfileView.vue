@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
 import { UserService } from '../../services/UserService';
+import type { UserProfile } from '../../types';
 import { useRouter } from 'vue-router';
 import MainLayout from '../../components/layout/MainLayout.vue';
 import { QuestionStore } from '../../services/QuestionStore';
@@ -10,7 +11,7 @@ const loading = ref(true);
 const saving = ref(false);
 const user = ref<any>(null);
 
-const profile = ref({
+const profile = ref<Partial<UserProfile>>({
     username: '',
     avatar_url: '',
     xp: 0
@@ -44,7 +45,7 @@ const updateProfile = async () => {
             id: user.value.id,
             username: profile.value.username,
             avatar_url: profile.value.avatar_url,
-            updated_at: new Date()
+            updated_at: new Date().toISOString()
         };
 
         const { error } = await UserService.updateProfile(updates);

@@ -1,13 +1,7 @@
 import { supabase } from './supabase';
 // IMPORTANT: We need QuestionStore to get the "local view" count if we still want that hybrid logic.
 import { QuestionStore } from './QuestionStore';
-
-export interface PlatformStats {
-    totalUsers: number;
-    totalQuestions: number;
-    totalTime: number;
-    totalTests: number;
-}
+import type { PlatformStats, TrendsData, ExamResult } from '../types';
 
 export const StatsService = {
     async getPlatformStats(): Promise<PlatformStats> {
@@ -51,7 +45,7 @@ export const StatsService = {
         return stats;
     },
 
-    async getTrends() {
+    async getTrends(): Promise<TrendsData> {
         try {
             const { data: testsData } = await supabase
                 .from('exam_results')
@@ -60,13 +54,15 @@ export const StatsService = {
 
             if (!testsData) return { popular: [], hardest: [] };
 
+            const results = testsData as unknown as Partial<ExamResult>[];
+
             const topicStats: Record<string, { count: number, totalScore: number }> = {};
 
-            testsData.forEach(r => {
+            results.forEach(r => {
                 const t = r.title || 'Unknown';
                 if (!topicStats[t]) topicStats[t] = { count: 0, totalScore: 0 };
                 topicStats[t].count++;
-                topicStats[t].totalScore += r.score;
+                topicStats[t].totalScore += (r.score || 0);
             });
 
             const analyzed = Object.entries(topicStats).map(([title, stat]) => ({
