@@ -31,5 +31,21 @@ export const AuthService = {
     async signOut(): Promise<{ error: any }> {
         const { error } = await supabase.auth.signOut();
         return { error };
+    },
+
+
+
+    async resetPasswordForEmail(email: string): Promise<{ error: any }> {
+        const { error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/update-password`,
+        });
+        return { error };
+    },
+
+    async updateUserPassword(password: string): Promise<{ error: any }> {
+        const { error } = await supabase.auth.updateUser({
+            password
+        });
+        return { error };
     }
 };
