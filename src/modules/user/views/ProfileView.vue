@@ -20,7 +20,8 @@ const user = ref<any>(null);
 const profile = ref<Partial<UserProfile>>({
     username: '',
     avatar_url: '',
-    xp: 0
+    xp: 0,
+    role: undefined
 });
 
 const achievements = ref<Achievement[]>([]);
@@ -49,7 +50,8 @@ onMounted(async () => {
         profile.value = {
             username: profileData.username || '',
             avatar_url: profileData.avatar_url || '',
-            xp: profileData.xp || 0
+            xp: profileData.xp || 0,
+            role: profileData.role
         };
     }
 
@@ -214,6 +216,11 @@ const clearHistory = () => {
                                 placeholder="Ваше имя" />
 
                             <div class="actions">
+                                <BaseButton v-if="profile.role === 'admin'" type="button" variant="secondary"
+                                    @click="router.push('/admin')">
+                                    👑 Админка
+                                </BaseButton>
+
                                 <BaseButton type="submit" variant="primary" :loading="saving">
                                     Сохранить
                                 </BaseButton>

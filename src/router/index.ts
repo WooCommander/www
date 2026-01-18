@@ -71,7 +71,7 @@ const router = createRouter({
 });
 
 // Navigation Guards & Security
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const { data: { session } } = await import('../shared/api/supabase').then(m => m.supabase.auth.getSession());
 
   // 1. Auth Guard for /admin or /profile

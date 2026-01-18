@@ -1,6 +1,5 @@
 import { reactive, computed } from 'vue';
 import { Preferences } from '@capacitor/preferences';
-import { type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
 import type { Question, CustomQuiz, HistoryItem } from '../shared/types';
 import { UserService } from './UserService';
@@ -51,7 +50,7 @@ const getQuizzes = computed(() => {
   const groups: Record<string, Question[]> = {};
   allQs.forEach(q => {
     if (!groups[q.category]) groups[q.category] = [];
-    groups[q.category].push(q);
+    groups[q.category]!.push(q);
   });
 
   // Convert to QuizTopic

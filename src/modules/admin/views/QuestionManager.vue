@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import BaseButton from '../../../shared/ui/BaseButton.vue';
 import { AdminService } from '../services/AdminService';
 import { NotificationService } from '../../../shared/services/NotificationService';
@@ -32,7 +32,7 @@ const loadQuestions = async () => {
         // Load courses first to set default filter
         courses.value = await CourseService.getAllCourses();
         if (courses.value.length > 0 && !selectedCourseId.value) {
-            selectedCourseId.value = courses.value[0].id;
+            selectedCourseId.value = courses.value[0]!.id;
         }
 
         const [qs, session] = await Promise.all([
@@ -49,18 +49,6 @@ const loadQuestions = async () => {
 
     } catch (e) {
         // handled by service mostly
-    } finally {
-        loading.value = false;
-    }
-};
-
-const syncQuestions = async () => {
-    if (!confirm('Это полностью перезапишет таблицу questions из файла questions.ts. Продолжить?')) return;
-
-    loading.value = true;
-    try {
-        await AdminService.migrateQuestionsFromCode();
-        await loadQuestions();
     } finally {
         loading.value = false;
     }

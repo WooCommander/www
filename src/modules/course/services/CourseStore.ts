@@ -1,4 +1,4 @@
-import { reactive, computed } from 'vue';
+import { reactive } from 'vue';
 import { CourseService, type Course } from './CourseService';
 
 interface CourseState {

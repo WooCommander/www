@@ -2,7 +2,6 @@
 import { ref, onMounted, computed } from 'vue';
 import { supabase } from '../shared/api/supabase';
 import { CourseStore } from '../modules/course/services/CourseStore';
-import { useRouter } from 'vue-router';
 
 defineProps<{
   isDark: boolean;

@@ -6,7 +6,7 @@ import { QuestionStore } from '../services/QuestionStore';
 import { UserService } from '../services/UserService';
 import type { LeaderboardEntry } from '../shared/types';
 
-const filterMode = ref<'all' | 'exam' | 'category'>('all');
+
 const scope = ref<'global' | 'local'>('global');
 const isLoading = ref(false);
 const globalData = ref<LeaderboardEntry[]>([]);

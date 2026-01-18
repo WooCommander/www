@@ -43,6 +43,8 @@ const importLegacyData = async () => {
             else return NotificationService.error('Сначала создайте курс!');
         }
 
+        if (!targetCourse) return; // Should be handled above but TS needs certainty
+
         const user = await UserService.getUser();
         if (!user) return NotificationService.error('Пользователь не найден');
 

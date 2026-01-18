@@ -120,7 +120,7 @@ onMounted(() => {
                             :class="{ banned: user.is_banned, 'is-me': user.id === currentUserId }">
                             <td>
                                 <div class="user-info">
-                                    <div class="avatar-ph">{{ (user.username || '?')[0].toUpperCase() }}</div>
+                                    <div class="avatar-ph">{{ ((user.username || '?')[0] || '?').toUpperCase() }}</div>
                                     <div class="names">
                                         <div class="username">
                                             {{ user.username || 'Без имени' }}

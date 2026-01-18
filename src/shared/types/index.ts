@@ -34,6 +34,7 @@ export interface UserProfile {
     updated_at?: string;
     email?: string;
     full_name?: string;
+    role?: string;
 }
 
 export interface ExamResult {
