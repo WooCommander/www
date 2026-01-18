@@ -74,5 +74,10 @@ export const AdminService = {
     async toggleBan(userId: string, isBanned: boolean) {
         const { error } = await supabase.from('profiles').update({ is_banned: isBanned }).eq('id', userId);
         if (error) throw error;
+    },
+
+    async updateUserRole(userId: string, role: string) {
+        const { error } = await supabase.from('profiles').update({ role }).eq('id', userId);
+        if (error) throw error;
     }
 };

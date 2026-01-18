@@ -9,6 +9,7 @@ import type { UserProfile } from '../../../shared/types';
 interface AdminUserProfile extends UserProfile {
     created_at?: string;
     is_banned?: boolean;
+    role?: string;
 }
 
 const users = ref<AdminUserProfile[]>([]);
@@ -60,6 +61,17 @@ const toggleBan = async (user: AdminUserProfile) => {
     }
 };
 
+const updateRole = async (user: AdminUserProfile, newRole: string) => {
+    if (!confirm(`Назначить пользователя ${user.username} ролью "${newRole.toUpperCase()}"?`)) return;
+    try {
+        await AdminService.updateUserRole(user.id, newRole);
+        user.role = newRole;
+        NotificationService.success('Роль обновлена');
+    } catch (e: any) {
+        NotificationService.error('Ошибка обновления роли');
+    }
+};
+
 const filteredUsers = computed(() => {
     const q = searchQuery.value.toLowerCase();
     return users.value.filter(u =>
@@ -99,6 +111,7 @@ onMounted(() => {
                             <th>Пользователь</th>
                             <th>ID</th>
                             <th>Статус</th>
+                            <th>Роль</th>
                             <th align="right">Действия</th>
                         </tr>
                     </thead>
@@ -122,6 +135,15 @@ onMounted(() => {
                                 <span class="badge" :class="user.is_banned ? 'banned' : 'active'">
                                     {{ user.is_banned ? '⛔ BANNED' : '✅ Active' }}
                                 </span>
+                            </td>
+                            <td>
+                                <select :value="user.role || 'user'"
+                                    @change="e => updateRole(user, (e.target as HTMLSelectElement).value)"
+                                    class="role-select" :class="user.role" :disabled="user.id === currentUserId">
+                                    <option value="user">User</option>
+                                    <option value="editor">Editor</option>
+                                    <option value="admin">Admin</option>
+                                </select>
                             </td>
                             <td align="right">
                                 <button class="ban-btn" :class="{ unban: user.is_banned }"
@@ -342,6 +364,40 @@ onMounted(() => {
     padding: 40px;
     text-align: center;
     color: var(--text-secondary);
+}
+
+/* Role Select Styles */
+.role-select {
+    padding: 6px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+
+    &:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+    }
+
+    /* Style based on value (requires JS binding usually, but nice if possible) */
+    &.admin {
+        color: #a855f7;
+        border-color: rgba(168, 85, 247, 0.3);
+        background: rgba(168, 85, 247, 0.05);
+    }
+
+    &.editor {
+        color: #3b82f6;
+        border-color: rgba(59, 130, 246, 0.3);
+        background: rgba(59, 130, 246, 0.05);
+    }
+
+    &.user {
+        color: var(--text-secondary);
+    }
 }
 
 /* Banned styling for row text */

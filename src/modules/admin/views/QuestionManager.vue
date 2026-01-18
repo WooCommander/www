@@ -1,33 +1,44 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import BaseButton from '../../../shared/ui/BaseButton.vue';
-import BaseInput from '../../../shared/ui/BaseInput.vue';
 import { AdminService } from '../services/AdminService';
 import { NotificationService } from '../../../shared/services/NotificationService';
+import EditModal from '../../../features/editor/components/EditModal.vue';
+import { UserService } from '../../../services/UserService';
+import type { Question, UserProfile } from '../../../shared/types';
 
-const questions = ref<any[]>([]);
+const questions = ref<Question[]>([]);
 const loading = ref(false);
 const searchQuery = ref('');
+const currentUser = ref<UserProfile | null>(null);
 
 // Modal State
-const showModal = ref(false);
-const isEditing = ref(false);
-const editingId = ref<string | null>(null);
+const showEditModal = ref(false);
+const editingQuestion = ref<Question | null>(null);
 
-const form = ref({
-    title: '',
-    answer: '',
-    category: '',
-    difficulty: 'Medium',
-    type: 'input'
+// Get unique categories for Modal
+const categories = computed(() => {
+    const cats = new Set(questions.value.map(q => q.category));
+    return Array.from(cats).sort();
 });
 
 const loadQuestions = async () => {
     try {
         loading.value = true;
-        questions.value = await AdminService.getAllQuestions() || [];
+        const [qs, session] = await Promise.all([
+            AdminService.getAllQuestions(),
+            UserService.getSession()
+        ]);
+
+        questions.value = qs || [];
+
+        if (session?.user) {
+            const userProfile = await UserService.getUserProfile(session.user.id);
+            currentUser.value = { ...userProfile, id: session.user.id } as UserProfile;
+        }
+
     } catch (e) {
-        // handled by service
+        // handled by service mostly
     } finally {
         loading.value = false;
     }
@@ -46,40 +57,57 @@ const syncQuestions = async () => {
 };
 
 const openAddModal = () => {
-    isEditing.value = false;
-    editingId.value = null;
-    form.value = { title: '', answer: '', category: 'JavaScript', difficulty: 'Medium', type: 'input' };
-    showModal.value = true;
+    editingQuestion.value = null;
+    showEditModal.value = true;
 };
 
-const openEditModal = (q: any) => {
-    isEditing.value = true;
-    editingId.value = q.id;
-    form.value = { ...q };
-    showModal.value = true;
+const openEditModal = (q: Question) => {
+    // RBAC Check: Admin can edit ALL. Editor can edit OWN.
+    // (Ideally this is enforced by API, but good for UI feedback)
+    const isAdmin = (currentUser.value as any)?.role === 'admin';
+    const isOwner = (q as any).author_id === currentUser.value?.id;
+
+    if (!isAdmin && !isOwner) {
+        NotificationService.error('Редактировать можно только свои вопросы (или быть Админом)');
+        return;
+    }
+
+    editingQuestion.value = q;
+    showEditModal.value = true;
 };
 
-const saveQuestion = async () => {
+const handleSave = async (questionData: Question) => {
     try {
-        if (isEditing.value && editingId.value) {
-            await AdminService.updateQuestion(editingId.value, form.value);
+        if (editingQuestion.value) {
+            // Update
+            await AdminService.updateQuestion(questionData.id.toString(), questionData);
             NotificationService.success('Вопрос обновлен');
         } else {
-            await AdminService.createQuestion(form.value);
+            // Create
+            // Pass author_id implicitly via RLS or explicit insert if needed. 
+            // AdminService.createQuestion will just do insert(questionData).
+            // We should strip ID if it's temp '0' or generated.
+            const { id, ...dataToSave } = questionData;
+
+            // Add author_id if it's new
+            const payload = { ...dataToSave, author_id: currentUser.value?.id };
+
+            await AdminService.createQuestion(payload);
             NotificationService.success('Вопрос создан');
         }
-        showModal.value = false;
+        showEditModal.value = false;
         loadQuestions();
     } catch (e: any) {
         NotificationService.error('Ошибка сохранения: ' + e.message);
     }
 };
 
-const deleteQuestion = async (id: string) => {
+const handleDelete = async (id: number | string) => {
     if (!confirm('Удалить этот вопрос?')) return;
     try {
-        await AdminService.deleteQuestion(id);
+        await AdminService.deleteQuestion(id.toString());
         NotificationService.success('Вопрос удален');
+        showEditModal.value = false;
         loadQuestions();
     } catch (e) {
         NotificationService.error('Ошибка удаления');
@@ -133,7 +161,7 @@ onMounted(() => {
                     </thead>
                     <tbody>
                         <tr v-for="q in filteredQuestions" :key="q.id">
-                            <td class="id-col" :title="q.id">{{ q.id.toString().slice(0, 4) }}...</td>
+                            <td class="id-col" :title="q.id.toString()">{{ q.id.toString().slice(0, 4) }}...</td>
                             <td class="title-col">{{ q.title }}</td>
                             <td>
                                 <span class="badge category">{{ q.category }}</span>
@@ -143,8 +171,8 @@ onMounted(() => {
                                     'Medium' }}</span>
                             </td>
                             <td class="actions-col">
-                                <button class="icon-btn" @click="openEditModal(q)">✏️</button>
-                                <button class="icon-btn delete" @click="deleteQuestion(q.id)">🗑️</button>
+                                <button class="icon-btn" @click="openEditModal(q)" title="Редактировать">✏️</button>
+                                <button class="icon-btn delete" @click="handleDelete(q.id)" title="Удалить">🗑️</button>
                             </td>
                         </tr>
                     </tbody>
@@ -152,40 +180,9 @@ onMounted(() => {
             </div>
         </div>
 
-        <!-- Edit Modal -->
-        <div v-if="showModal" class="modal-overlay" @click.self="showModal = false">
-            <div class="modal-card">
-                <h2>{{ isEditing ? 'Редактировать вопрос' : 'Новый вопрос' }}</h2>
-
-                <form @submit.prevent="saveQuestion" class="modal-form">
-                    <BaseInput v-model="form.title" label="Вопрос" placeholder="Текст вопроса..." required />
-
-                    <div class="form-group">
-                        <label>Ответ / Объяснение</label>
-                        <textarea v-model="form.answer" rows="4" required></textarea>
-                    </div>
-
-                    <div class="row">
-                        <BaseInput v-model="form.category" label="Категория" placeholder="JavaScript, CSS..."
-                            required />
-
-                        <div class="form-group">
-                            <label>Сложность</label>
-                            <select v-model="form.difficulty">
-                                <option>Easy</option>
-                                <option>Medium</option>
-                                <option>Hard</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="modal-actions">
-                        <BaseButton type="button" variant="ghost" @click="showModal = false">Отмена</BaseButton>
-                        <BaseButton type="submit" variant="primary">Сохранить</BaseButton>
-                    </div>
-                </form>
-            </div>
-        </div>
+        <!-- Shared Edit Modal -->
+        <EditModal :is-open="showEditModal" :question="editingQuestion" :categories="categories"
+            @close="showEditModal = false" @save="handleSave" @delete="handleDelete" />
     </div>
 </template>
 
@@ -349,85 +346,5 @@ onMounted(() => {
         opacity: 1;
         transform: scale(1.1);
     }
-}
-
-/* Modal Styles */
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1000;
-    backdrop-filter: blur(4px);
-}
-
-.modal-card {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: 16px;
-    width: 90%;
-    max-width: 500px;
-    padding: 24px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-
-    h2 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        font-size: 1.5rem;
-    }
-}
-
-.modal-form {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.form-group {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-
-    label {
-        color: var(--text-secondary);
-        font-size: 0.9rem;
-    }
-
-    textarea,
-    select {
-        background: var(--bg-input);
-        border: 1px solid var(--border-color);
-        border-radius: 8px;
-        padding: 10px;
-        font-family: inherit;
-        color: var(--text-primary);
-
-        &:focus {
-            outline: none;
-            border-color: var(--accent-primary);
-        }
-    }
-
-    textarea {
-        resize: vertical;
-    }
-}
-
-.row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-    margin-top: 16px;
 }
 </style>
