@@ -125,7 +125,7 @@ const renderedAnswer = computed(() => {
 
 .question-title {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: var(--fs-h3);
   font-weight: 600;
   color: var(--text-primary);
   padding-right: var(--spacing-sm);

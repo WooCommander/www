@@ -343,6 +343,7 @@ const clearHistory = () => {
         .avatar-placeholder {
             width: 60px;
             height: 60px;
+            flex-shrink: 0; /* Prevent shrinking on mobile */
             border-radius: 50%;
             background: var(--accent-primary);
             color: white;
@@ -441,6 +442,17 @@ const clearHistory = () => {
 
         button {
             flex: 1;
+        }
+
+        @media (max-width: 600px) {
+            flex-direction: column;
+            gap: 8px;
+
+            button {
+                width: 100%;
+                padding: 10px; /* Ensure touch target is good but not huge */
+                font-size: var(--fs-body); /* Use standard body size */
+            }
         }
     }
 }

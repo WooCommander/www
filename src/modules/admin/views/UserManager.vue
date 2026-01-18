@@ -157,16 +157,15 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-        </div>
-            </div>
-            
+
             <!-- Mobile Card View -->
             <div v-if="users.length > 0" class="mobile-list mobile-only">
-                <div v-for="user in filteredUsers" :key="user.id" class="user-card" :class="{ banned: user.is_banned, 'is-me': user.id === currentUserId }">
+                <div v-for="user in filteredUsers" :key="user.id" class="user-card"
+                    :class="{ banned: user.is_banned, 'is-me': user.id === currentUserId }">
                     <div class="u-header">
                         <div class="u-info">
                             <div class="avatar-ph">{{ ((user.username || '?')[0] || '?').toUpperCase() }}</div>
-                             <div class="names">
+                            <div class="names">
                                 <div class="username">
                                     {{ user.username || 'Без имени' }}
                                     <span v-if="user.id === currentUserId" class="me-badge">(Вы)</span>
@@ -177,13 +176,13 @@ onMounted(() => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div class="u-body">
-                         <div class="field-row">
+                        <div class="field-row">
                             <span class="label">ID:</span>
                             <span class="value monospace">{{ user.id.slice(0, 8) }}...</span>
-                         </div>
-                         <div class="field-row">
+                        </div>
+                        <div class="field-row">
                             <span class="label">Роль:</span>
                             <select :value="user.role || 'user'"
                                 @change="e => updateRole(user, (e.target as HTMLSelectElement).value)"
@@ -192,13 +191,12 @@ onMounted(() => {
                                 <option value="editor">Editor</option>
                                 <option value="admin">Admin</option>
                             </select>
-                         </div>
+                        </div>
                     </div>
 
                     <div class="u-footer">
                         <button class="ban-btn full-width" :class="{ unban: user.is_banned }"
-                            :disabled="user.id === currentUserId"
-                            @click="toggleBan(user)">
+                            :disabled="user.id === currentUserId" @click="toggleBan(user)">
                             {{ user.is_banned ? 'Разбанить' : '⛔ Забанить' }}
                         </button>
                     </div>
@@ -462,7 +460,7 @@ tr.banned .id-col {
     .desktop-only {
         display: none;
     }
-    
+
     .mobile-only {
         display: block;
     }
@@ -496,8 +494,8 @@ tr.banned .id-col {
         gap: 8px;
         margin-bottom: 16px;
         padding: 12px 0;
-        border-top: 1px solid rgba(255,255,255,0.05);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     }
 
     .field-row {
@@ -520,3 +518,4 @@ tr.banned .id-col {
         padding: 10px;
     }
 }
+</style>

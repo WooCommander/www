@@ -380,7 +380,7 @@ onMounted(() => {
 }
 
 .mobile-link {
-  font-size: 1.1rem;
+  font-size: var(--fs-nav-mobile);
   font-weight: 600;
   color: var(--text-primary);
   padding: 10px;
@@ -402,7 +402,7 @@ onMounted(() => {
 }
 
 .m-icon {
-  font-size: 1.3rem;
+  font-size: calc(var(--fs-nav-mobile) * 1.2);
   width: 32px;
   text-align: center;
 }
