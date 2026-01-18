@@ -72,8 +72,16 @@ export const UserService = {
 
         const ranked: LeaderboardEntry[] = Object.values(users).map(u => {
             let totalScore = 0;
-            Object.values(u.bestRuns).forEach(run => totalScore += run.score);
-            return { username: u.username, totalScore };
+            let totalTime = 0;
+            let testsPassed = 0;
+
+            Object.values(u.bestRuns).forEach(run => {
+                totalScore += run.score;
+                totalTime += run.timeTaken;
+                testsPassed += 1;
+            });
+
+            return { username: u.username, totalScore, totalTime, testsPassed };
         }).sort((a, b) => b.totalScore - a.totalScore).slice(0, limit);
 
         return ranked;

@@ -1,104 +1,84 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import MainLayout from '../shared/layout/MainLayout.vue';
 import PageHeader from '../components/common/PageHeader.vue';
 import { QuestionStore } from '../services/QuestionStore';
+import { UserService } from '../services/UserService';
+import type { LeaderboardEntry } from '../shared/types';
 
-const filterMode = ref<'all' | 'exam' | 'category'>('all'); // Keeps mostly legacy functionality for filtering "types" of quizzes if needed, but for arcade total usually we want ALL.
+const filterMode = ref<'all' | 'exam' | 'category'>('all');
 const scope = ref<'global' | 'local'>('global');
+const isLoading = ref(false);
+const globalData = ref<LeaderboardEntry[]>([]);
+
+const loadGlobalLeaderboard = async () => {
+  if (scope.value !== 'global') return;
+  isLoading.value = true;
+  try {
+    // Fetch top 50
+    globalData.value = await UserService.getLeaderboard(50);
+  } finally {
+    isLoading.value = false;
+  }
+};
 
 onMounted(() => {
-  // Store handles loading and syncing
+  loadGlobalLeaderboard();
 });
 
-interface AggregatedUser {
-  username: string;
-  totalScore: number;
-  totalTime: number;
-  testsPassed: number;
-  bestRuns: Record<string, any>; // title -> best record
-}
+watch(scope, (val) => {
+  if (val === 'global') loadGlobalLeaderboard();
+});
 
 const leaderboardData = computed(() => {
-  let records = scope.value === 'global'
-    ? [...QuestionStore.state.globalLeaderboard]
-    : [...QuestionStore.state.examHistory];
+  if (scope.value === 'global') {
+    return globalData.value;
+  }
 
-  // Group by User
-  const users: Record<string, AggregatedUser> = {};
+  // Local Scope Aggregation
+  // We use QuestionStore.state.examHistory which is local only usually
+  const records = [...QuestionStore.state.examHistory];
 
-  // For local scope, we treat "Anonymous" or "You" as one user usually, 
-  // but if we have multiple local entries with different names (unlikely in current app flow but possible), we group them.
-  // Actually for Local Scope, it's usually just ONE user (the current device user). 
-  // So Local Scope might just show "Your Stats" broken down, or just "You" as rank 1. 
-  // Let's stick to the Ranking Format:
+  // Aggregate Local User Stats (Should just be one user usually, 'You')
+  // But logic supports multiple if we wanted.
+  const users: Record<string, any> = {};
 
   records.forEach(r => {
-    // If filtering by mode is desired for the *source* of points:
-    if (filterMode.value !== 'all' && r.mode !== filterMode.value) return;
-
-    const name = r.username || (scope.value === 'local' ? 'Вы' : 'Аноним');
-
+    // Local scope is usually just the current user.
+    const name = 'Вы';
     if (!users[name]) {
-      users[name] = {
-        username: name,
-        totalScore: 0,
-        totalTime: 0,
-        testsPassed: 0,
-        bestRuns: {}
-      };
+      users[name] = { username: name, totalScore: 0, bestRuns: {}, testsPassed: 0, totalTime: 0 };
     }
 
     const user = users[name];
-    const uniqueKey = r.title; // Group by Quiz Title (Topic)
+    const uniqueKey = r.title;
 
-    // Check if this run is better than existing best run for this topic
+    // Best Run Logic
     const currentBest = user.bestRuns[uniqueKey];
-
-    // Better = Higher Score, or Same Score + Lower Time
     let isBetter = false;
-    if (!currentBest) {
-      isBetter = true;
-    } else {
-      if (r.score > currentBest.score) isBetter = true;
-      else if (r.score === currentBest.score) {
-        // Lower time is better
-        const rTime = r.timeTaken || 0;
-        const bTime = currentBest.timeTaken || 0;
-        if (rTime < bTime) isBetter = true;
-      }
-    }
+    if (!currentBest || r.score > currentBest.score) isBetter = true;
 
     if (isBetter) {
       user.bestRuns[uniqueKey] = r;
     }
   });
 
-  // Calculate Totals from Best Runs
-  return Object.values(users).map(user => {
+  // Calculate totals
+  return Object.values(users).map((user: any) => {
     let score = 0;
     let time = 0;
     let passed = 0;
-
     Object.values(user.bestRuns).forEach((run: any) => {
       score += run.score;
       time += (run.timeTaken || 0);
-      passed++; // If we want to only count "passed" (>50%?), add check here. User asked for "more tests passed" implying completion.
+      passed++;
     });
-
     return {
       username: user.username,
       totalScore: score,
       totalTime: time,
-      testsPassed: passed,
-      // Keep reference to best runs if we want to expand details later
-      _bestRuns: user.bestRuns
+      testsPassed: passed
     };
-  }).sort((a, b) => {
-    // Sort: Total Score Desc -> Tests Passed Desc -> Total Time Asc
-    if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
-    if (b.testsPassed !== a.testsPassed) return b.testsPassed - a.testsPassed;
-    return a.totalTime - b.totalTime;
   });
 });
 
@@ -126,9 +106,8 @@ onMounted(async () => {
 
 const manualSync = async () => {
   await QuestionStore.sync();
+  loadGlobalLeaderboard(); // Reload after sync
 };
-
-
 </script>
 
 <template>
@@ -203,7 +182,10 @@ const manualSync = async () => {
               </tr>
             </thead>
             <tbody>
-              <tr v-for="(user, index) in leaderboardData" :key="index" :class="{ 'top-record': index < 3 }">
+              <tr v-if="isLoading">
+                <td colspan="5" style="text-align: center;">Загрузка данных...</td>
+              </tr>
+              <tr v-else v-for="(user, index) in leaderboardData" :key="index" :class="{ 'top-record': index < 3 }">
                 <td class="rank">
                   <span v-if="index === 0">🥇</span>
                   <span v-else-if="index === 1">🥈</span>
@@ -214,10 +196,10 @@ const manualSync = async () => {
                   <span class="username">{{ user.username }}</span>
                 </td>
                 <td class="score">
-                  <span class="good">{{ user.totalScore }}</span>
+                  {{ user.totalScore }} <span>pts</span>
                 </td>
-                <td class="title" style="text-align: center;">{{ user.testsPassed }}</td>
-                <td class="time">{{ formatTime(user.totalTime) }}</td>
+                <td class="title" style="text-align: center;">{{ user.testsPassed || '-' }}</td>
+                <td class="time">{{ user.totalTime ? formatTime(user.totalTime) : '-' }}</td>
               </tr>
             </tbody>
           </table>
@@ -237,15 +219,15 @@ const manualSync = async () => {
               <div class="user-info">
                 <span class="username">{{ user.username }}</span>
               </div>
-              <div class="score-badge good">
-                {{ user.totalScore }} pts
+              <div class="score-badge">
+                {{ user.totalScore }} <span>pts</span>
               </div>
             </div>
 
             <div class="card-body">
               <div class="stats-row">
-                <span>📚 Тестов: {{ user.testsPassed }}</span>
-                <span>⏱️ Время: {{ formatTime(user.totalTime) }}</span>
+                <span>📚 Тестов: {{ user.testsPassed || '-' }}</span>
+                <span>⏱️ Время: {{ user.totalTime != null ? formatTime(user.totalTime) : '-' }}</span>
               </div>
             </div>
           </div>
@@ -469,26 +451,15 @@ h2 {
 }
 
 .score {
-  font-family: 'Fira Code', monospace;
   font-weight: 700;
+  color: var(--accent-primary);
+  font-size: 1.1rem;
 
-  .good {
-    color: #22c55e;
-  }
-
-  .avg {
-    color: #f59e0b;
-  }
-
-  .bad {
-    color: #ef4444;
-  }
-
-  .details {
+  span {
     font-size: 0.8rem;
-    color: var(--text-secondary);
-    margin-left: 4px;
-    font-weight: normal;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-left: 2px;
   }
 }
 
@@ -606,20 +577,14 @@ h2 {
   }
 
   .score-badge {
-    font-family: 'Fira Code', monospace;
     font-weight: 700;
     font-size: 1.1rem;
+    color: var(--accent-primary);
 
-    &.good {
-      color: #22c55e;
-    }
-
-    &.avg {
-      color: #f59e0b;
-    }
-
-    &.bad {
-      color: #ef4444;
+    span {
+      font-size: 0.8rem;
+      font-weight: 400;
+      opacity: 0.7;
     }
   }
 }

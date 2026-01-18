@@ -63,6 +63,8 @@ export interface HistoryItem {
 export interface LeaderboardEntry {
     username: string;
     totalScore: number;
+    totalTime?: number;
+    testsPassed?: number;
     rank?: number;
 }
 

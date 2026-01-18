@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import { StatsService } from '../modules/user/services/StatsService';
 import { UserService } from '../services/UserService';
 import type { PlatformStats, TrendsData, LeaderboardEntry } from '../shared/types';
@@ -8,16 +8,24 @@ import { useRouter } from 'vue-router';
 import BaseButton from '../shared/ui/BaseButton.vue';
 // ... rest of imports
 
-import { CourseService, type Course } from '../modules/course/services/CourseService';
-
 import { CourseStore } from '../modules/course/services/CourseStore';
 
 const router = useRouter();
 const loading = ref(true);
 
 // Use Store
-const courses = computed(() => CourseStore.courses);
-const selectedCourse = computed(() => CourseStore.currentCourse);
+const courses = computed(() => {
+    if (!CourseStore) return [];
+    return CourseStore.courses || [];
+});
+
+const selectedCourse = computed(() => {
+    if (!CourseStore) return null;
+    return CourseStore.currentCourse;
+});
+
+// Debug Log
+console.log('HomeView Setup. CourseStore:', CourseStore);
 
 const stats = ref<PlatformStats>({
     totalUsers: 0,
