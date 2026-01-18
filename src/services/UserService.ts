@@ -2,6 +2,7 @@ import { supabase } from '../shared/api/supabase';
 import type { Session, User } from '@supabase/supabase-js';
 import { AuthService } from '../modules/auth/services/AuthService';
 import type { UserProfile, LeaderboardEntry, ExamResult } from '../shared/types';
+import { handleApiError } from '../shared/utils/errorHandler';
 
 export const UserService = {
     async getSession(): Promise<Session | null> {
@@ -20,7 +21,7 @@ export const UserService = {
             .single();
 
         if (error) {
-            console.error('Error fetching profile:', error);
+            handleApiError(error, 'Ошибка при получении профиля');
             return null;
         }
         return data as UserProfile;
@@ -41,7 +42,7 @@ export const UserService = {
             .select('*');
 
         if (error || !leaderboardData) {
-            console.error('Error fetching leaderboard:', error);
+            handleApiError(error, 'Не удалось загрузить таблицу лидеров');
             return [];
         }
 

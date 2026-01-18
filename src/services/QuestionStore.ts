@@ -4,6 +4,9 @@ import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
 import type { Question, CustomQuiz, HistoryItem } from '../shared/types';
 import { UserService } from './UserService';
+import { handleApiError } from '../shared/utils/errorHandler';
+import { NotificationService } from '../shared/services/NotificationService';
+import { GamificationService } from '../modules/user/services/GamificationService';
 
 const STORAGE_KEYS = {
   USER_QUESTIONS: 'user_questions',
@@ -23,6 +26,7 @@ interface QuestionState {
   globalLeaderboard: HistoryItem[];
   isLoaded: boolean;
   lastSyncError: string | null;
+  systemQuestions: Question[];
 }
 
 const state = reactive<QuestionState>({
@@ -34,7 +38,8 @@ const state = reactive<QuestionState>({
   examHistory: [],
   globalLeaderboard: [],
   isLoaded: false,
-  lastSyncError: null
+  lastSyncError: null,
+  systemQuestions: [] as Question[]
 });
 
 const getQuizzes = computed(() => {
@@ -78,10 +83,13 @@ const getQuizzes = computed(() => {
 });
 
 const getAllQuestions = computed(() => {
-  // 1. Start with static questions that aren't deleted
-  const merged = staticQuestions
+  // 1. Start with System Questions (DB) or Fallback to Static (Code)
+  const source = state.systemQuestions.length > 0 ? state.systemQuestions : staticQuestions;
+
+  const merged = source
     .filter(q => !state.deletedIds.has(q.id.toString()))
     .map(q => {
+      // Allow overriding system questions too
       return state.overrides[q.id] || q;
     });
 
@@ -173,10 +181,40 @@ export const QuestionStore = {
 
       state.isLoaded = true;
 
+      // 0. Load System Questions (Hybrid: Cache First, then Network)
+      // Try to load cached system questions if any
+      const cachedSystem = await Preferences.get({ key: 'system_questions_cache' });
+      if (cachedSystem.value) {
+        state.systemQuestions = JSON.parse(cachedSystem.value);
+      }
+
+      // Fetch fresh system questions
+      import('../shared/api/supabase').then(async (m) => {
+        const { data, error } = await m.supabase.from('questions').select('*');
+        if (!error && data) {
+          state.systemQuestions = data.map((q: any) => ({
+            id: q.id,
+            title: q.title,
+            answer: q.answer,
+            category: q.category,
+            difficulty: q.difficulty,
+            type: q.type,
+            options: typeof q.options === 'string' ? JSON.parse(q.options) : q.options,
+            code: q.code
+          }));
+
+          // Update cache
+          Preferences.set({
+            key: 'system_questions_cache',
+            value: JSON.stringify(state.systemQuestions)
+          });
+        }
+      });
+
       // Attempt background sync if online
       this.sync();
     } catch (e) {
-      console.error('Failed to load questions from storage', e);
+      handleApiError(e, 'Ошибка инициализации данных');
     }
   },
 
@@ -379,10 +417,15 @@ export const QuestionStore = {
       }));
 
       if (error) {
-        console.error('Supabase Save Error:', error);
-        alert('Error saving to cloud: ' + error.message);
+        handleApiError(error, 'Ошибка сохранения результата в облако');
       } else {
-        console.log('✅ Exam result saved to cloud');
+        NotificationService.success('Результат сохранен!');
+        // Check for achievements
+        GamificationService.checkAchievements({
+          score: result.score,
+          total: result.total,
+          timeTaken: result.timeTaken
+        });
       }
     } else {
       console.log('User not logged in, skipping cloud save');

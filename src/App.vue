@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
 import { QuestionStore } from './services/QuestionStore';
+import ToastContainer from './shared/ui/ToastContainer.vue';
 
 const isDark = ref(true);
 
@@ -36,6 +37,7 @@ const updateThemeClass = () => {
 <template>
   <div class="app-shell">
     <Header :is-dark="isDark" @toggle-theme="toggleTheme" />
+    <ToastContainer />
 
     <div class="app-main">
       <router-view v-slot="{ Component }">

@@ -2,6 +2,7 @@ import { supabase } from '../../../shared/api/supabase';
 // IMPORTANT: We need QuestionStore to get the "local view" count if we still want that hybrid logic.
 import { QuestionStore } from '../../../services/QuestionStore';
 import type { PlatformStats, TrendsData, ExamResult } from '../../../shared/types';
+import { handleApiError } from '../../../shared/utils/errorHandler';
 
 export const StatsService = {
     async getPlatformStats(): Promise<PlatformStats> {
@@ -39,7 +40,7 @@ export const StatsService = {
             }
 
         } catch (e) {
-            console.error('Error loading platform stats', e);
+            handleApiError(e, 'Не удалось загрузить статистику');
         }
 
         return stats;
@@ -82,7 +83,7 @@ export const StatsService = {
 
             return { popular, hardest };
         } catch (e) {
-            console.error('Error calculating trends', e);
+            handleApiError(e, 'Не удалось загрузить тренды');
             return { popular: [], hardest: [] };
         }
     }

@@ -33,6 +33,7 @@ export interface UserProfile {
     avatar_url?: string;
     updated_at?: string;
     email?: string;
+    full_name?: string;
 }
 
 export interface ExamResult {

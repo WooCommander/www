@@ -10,6 +10,8 @@ import BaseButton from '../../../shared/ui/BaseButton.vue';
 import BaseInput from '../../../shared/ui/BaseInput.vue';
 import BaseCard from '../../../shared/ui/BaseCard.vue';
 
+import { GamificationService, type Achievement } from '../services/GamificationService';
+
 const router = useRouter();
 const loading = ref(true);
 const saving = ref(false);
@@ -21,6 +23,13 @@ const profile = ref<Partial<UserProfile>>({
     xp: 0
 });
 
+const achievements = ref<Achievement[]>([]);
+const userUnlocks = ref<Set<string>>(new Set());
+
+const level = computed(() => Math.floor((profile.value.xp || 0) / 1000) + 1);
+const xpProgress = computed(() => ((profile.value.xp || 0) % 1000) / 1000 * 100);
+const nextLevelXp = computed(() => level.value * 1000);
+
 onMounted(async () => {
     const session = await AuthService.getSession();
     if (!session) {
@@ -29,8 +38,12 @@ onMounted(async () => {
     }
     user.value = session.user;
 
-    // Fetch profile
-    const profileData = await UserProfileService.getProfile(session.user.id);
+    // Fetch profile and gamification data parallel
+    const [profileData, allAchievements, unlocks] = await Promise.all([
+        UserProfileService.getProfile(session.user.id),
+        GamificationService.getAchievements(),
+        GamificationService.getUserUnlocks(session.user.id)
+    ]);
 
     if (profileData) {
         profile.value = {
@@ -39,6 +52,10 @@ onMounted(async () => {
             xp: profileData.xp || 0
         };
     }
+
+    achievements.value = allAchievements;
+    userUnlocks.value = unlocks;
+
     loading.value = false;
 });
 
@@ -169,8 +186,26 @@ const clearHistory = () => {
                                     {{ profile.username ? profile.username.charAt(0).toUpperCase() : 'U' }}
                                 </div>
                                 <div class="user-meta">
-                                    <p class="xp-badge">XP: {{ profile.xp || 0 }}</p>
+                                    <div class="level-badge">LEVEL {{ level }}</div>
+                                    <div class="xp-bar-container" :title="`${profile.xp}/${nextLevelXp} XP`">
+                                        <div class="xp-bar-fill" :style="{ width: xpProgress + '%' }"></div>
+                                    </div>
                                     <p class="email-text">{{ user.email }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Achievements Grid -->
+                            <div class="achievements-section">
+                                <h3>Достижения ({{ userUnlocks.size }}/{{ achievements.length }})</h3>
+                                <div class="achievements-grid">
+                                    <div v-for="ach in achievements" :key="ach.id" class="achievement-item"
+                                        :class="{ locked: !userUnlocks.has(ach.id) }"
+                                        :title="!userUnlocks.has(ach.id) ? ach.description : 'Разблокировано!'">
+                                        <div class="ach-icon">{{ ach.icon }}</div>
+                                        <div class="ach-meta" v-if="userUnlocks.has(ach.id)">
+                                            <span class="ach-title">{{ ach.title }}</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -314,18 +349,80 @@ const clearHistory = () => {
         .user-meta {
             display: flex;
             flex-direction: column;
+            width: 100%;
 
-            .xp-badge {
-                font-weight: bold;
+            .level-badge {
+                font-weight: 800;
                 color: var(--accent-primary);
-                font-size: 1.1rem;
-                margin: 0;
+                font-size: 0.9rem;
+                letter-spacing: 1px;
+            }
+
+            .xp-bar-container {
+                height: 6px;
+                background: rgba(255, 255, 255, 0.1);
+                border-radius: 3px;
+                margin: 6px 0;
+                overflow: hidden;
+                width: 100%;
+                max-width: 200px;
+            }
+
+            .xp-bar-fill {
+                height: 100%;
+                background: linear-gradient(90deg, var(--accent-primary), #a855f7);
+                border-radius: 3px;
+                transition: width 0.5s ease;
             }
 
             .email-text {
                 color: var(--text-secondary);
-                font-size: 0.9rem;
+                font-size: 0.85rem;
                 margin: 0;
+            }
+        }
+    }
+
+    .achievements-section {
+        margin-top: 10px;
+
+        h3 {
+            font-size: 1rem;
+            margin-bottom: 12px;
+            color: var(--text-secondary);
+        }
+
+        .achievements-grid {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--bg-secondary);
+            padding: 6px 10px;
+            border-radius: 8px;
+            border: 1px solid var(--accent-primary);
+            transition: all 0.2s;
+            cursor: help;
+
+            &.locked {
+                border-color: transparent;
+                opacity: 0.5;
+                filter: grayscale(100%);
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .ach-icon {
+                font-size: 1.2rem;
+            }
+
+            .ach-title {
+                font-size: 0.8rem;
+                font-weight: 600;
             }
         }
     }
