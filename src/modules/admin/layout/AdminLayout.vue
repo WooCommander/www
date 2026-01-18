@@ -35,7 +35,7 @@ const logout = async () => {
         <aside class="admin-sidebar" :class="{ open: isSidebarOpen }">
             <div class="sidebar-header">
                 <h2>👑 Admin</h2>
-                <button class="close-btn mobile-only" @click="closeSidebar">×</button>
+                <button class="close-btn mobile-only" @click="closeSidebar">✕</button>
             </div>
             <nav class="admin-nav" @click="closeSidebar"> <!-- Close on nav click for mobile -->
                 <router-link to="/admin/questions" class="nav-item" active-class="active">
@@ -198,7 +198,7 @@ const logout = async () => {
     .sidebar-header {
         display: flex;
         justify-content: space-between;
-        align-items: center;
+        align-items: baseline;
     }
 
     .mobile-only {
@@ -208,9 +208,10 @@ const logout = async () => {
     .close-btn {
         background: none;
         border: none;
-        color: var(--text-secondary);
-        font-size: 1.5rem;
+        color: var(--text-primary);
+        font-size: 1.8rem;
         cursor: pointer;
+        padding: 4px;
     }
 }
 </style>
