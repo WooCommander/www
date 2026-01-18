@@ -6,8 +6,11 @@ import { NotificationService } from '../../../shared/services/NotificationServic
 import EditModal from '../../../features/editor/components/EditModal.vue';
 import { UserService } from '../../../services/UserService';
 import type { Question, UserProfile } from '../../../shared/types';
+import { CourseService, type Course } from '../../course/services/CourseService';
 
 const questions = ref<Question[]>([]);
+const courses = ref<Course[]>([]);
+const selectedCourseId = ref<string>('');
 const loading = ref(false);
 const searchQuery = ref('');
 const currentUser = ref<UserProfile | null>(null);
@@ -25,6 +28,13 @@ const categories = computed(() => {
 const loadQuestions = async () => {
     try {
         loading.value = true;
+
+        // Load courses first to set default filter
+        courses.value = await CourseService.getAllCourses();
+        if (courses.value.length > 0 && !selectedCourseId.value) {
+            selectedCourseId.value = courses.value[0].id;
+        }
+
         const [qs, session] = await Promise.all([
             AdminService.getAllQuestions(),
             UserService.getSession()
@@ -33,7 +43,7 @@ const loadQuestions = async () => {
         questions.value = qs || [];
 
         if (session?.user) {
-            const userProfile = await UserService.getUserProfile(session.user.id);
+            const userProfile = await UserService.getProfile(session.user.id);
             currentUser.value = { ...userProfile, id: session.user.id } as UserProfile;
         }
 
@@ -84,13 +94,18 @@ const handleSave = async (questionData: Question) => {
             NotificationService.success('Вопрос обновлен');
         } else {
             // Create
-            // Pass author_id implicitly via RLS or explicit insert if needed. 
-            // AdminService.createQuestion will just do insert(questionData).
-            // We should strip ID if it's temp '0' or generated.
+            if (!selectedCourseId.value) {
+                return NotificationService.error('Выберите курс перед созданием вопроса!');
+            }
+
             const { id, ...dataToSave } = questionData;
 
-            // Add author_id if it's new
-            const payload = { ...dataToSave, author_id: currentUser.value?.id };
+            // Add author_id and COURSE_ID
+            const payload = {
+                ...dataToSave,
+                author_id: currentUser.value?.id,
+                course_id: selectedCourseId.value
+            };
 
             await AdminService.createQuestion(payload);
             NotificationService.success('Вопрос создан');
@@ -115,8 +130,16 @@ const handleDelete = async (id: number | string) => {
 };
 
 const filteredQuestions = computed(() => {
+    let list = questions.value;
+
+    // 1. Filter by Course
+    if (selectedCourseId.value) {
+        list = list.filter(q => (q as any).course_id === selectedCourseId.value);
+    }
+
+    // 2. Search
     const q = searchQuery.value.toLowerCase();
-    return questions.value.filter(item =>
+    return list.filter(item =>
         item.title.toLowerCase().includes(q) ||
         item.category.toLowerCase().includes(q)
     );
@@ -136,9 +159,12 @@ onMounted(() => {
             </div>
 
             <div class="actions">
+                <select v-model="selectedCourseId" class="course-select">
+                    <option v-for="c in courses" :key="c.id" :value="c.id">{{ c.icon }} {{ c.title }}</option>
+                </select>
                 <input v-model="searchQuery" placeholder="🔍 Поиск..." class="search-input" />
                 <BaseButton variant="primary" @click="openAddModal">➕ Создать</BaseButton>
-                <BaseButton variant="secondary" @click="syncQuestions">📥 Миграция</BaseButton>
+                <!-- <BaseButton variant="secondary" @click="syncQuestions">📥 Миграция</BaseButton> -->
             </div>
         </header>
 
@@ -228,6 +254,21 @@ onMounted(() => {
     background: var(--bg-card);
     color: var(--text-primary);
     width: 200px;
+
+    &:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+    }
+}
+
+.course-select {
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    min-width: 150px;
+    cursor: pointer;
 
     &:focus {
         outline: none;

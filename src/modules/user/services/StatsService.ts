@@ -22,7 +22,9 @@ export const StatsService = {
 
             // 2. Fetch Total Questions
             // Ensure store is initialized? It handles its own init check usually, but let's be safe.
+            // This will auto-pick up the course from local storage in initializes() if we haven't loaded yet
             await QuestionStore.initialize();
+            // QuestionStore.getAllQuestions is already filtered by course if initialize worked
             stats.totalQuestions = QuestionStore.getAllQuestions.value.length;
 
             // 3. Fetch Aggregate Exam Stats
@@ -32,6 +34,7 @@ export const StatsService = {
                 .select('time_taken', { count: 'exact' })
                 .limit(2000); // Sample limit
 
+            // Note: Exam results are global for now until we migrate exam_results table
             stats.totalTests = testsCount || 0;
 
             if (testsData) {

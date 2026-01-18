@@ -1,6 +1,6 @@
 import { reactive, computed } from 'vue';
 import { Preferences } from '@capacitor/preferences';
-import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
+import { type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
 import type { Question, CustomQuiz, HistoryItem } from '../shared/types';
 import { UserService } from './UserService';
@@ -27,6 +27,7 @@ interface QuestionState {
   isLoaded: boolean;
   lastSyncError: string | null;
   systemQuestions: Question[];
+  currentCourseId: string | null;
 }
 
 const state = reactive<QuestionState>({
@@ -39,52 +40,55 @@ const state = reactive<QuestionState>({
   globalLeaderboard: [],
   isLoaded: false,
   lastSyncError: null,
-  systemQuestions: [] as Question[]
+  systemQuestions: [] as Question[],
+  currentCourseId: null
 });
 
 const getQuizzes = computed(() => {
-  // 1. Clone static topics structure and apply overrides
-  const mergedTopics: QuizTopic[] = staticQuizzes.map(topic => ({
-    ...topic,
-    questions: topic.questions
-      .filter(q => !state.deletedIds.has(q.id))
-      .map(q => {
-        const override = state.overrides[q.id];
-        if (override) {
-          return {
-            id: override.id.toString(),
-            text: override.title,
-            type: (override.type || 'input') as any,
-            options: override.options,
-            correctAnswer: override.answer,
-            explanation: override.answer
-          };
-        }
-        return q;
-      })
-  }));
+  const allQs = getAllQuestions.value;
 
-  // 2. Add user questions to their respective categories
-  state.userQuestions.forEach(uq => {
-    const topic = mergedTopics.find(t => t.category === uq.category);
-    if (topic) {
-      topic.questions.push({
-        id: uq.id.toString(),
-        text: uq.title,
-        type: (uq.type || 'input') as any,
-        options: uq.options,
-        correctAnswer: uq.answer,
-        explanation: uq.answer
-      });
-    }
+  // Group by Category
+  const groups: Record<string, Question[]> = {};
+  allQs.forEach(q => {
+    if (!groups[q.category]) groups[q.category] = [];
+    groups[q.category].push(q);
   });
 
-  return mergedTopics;
+  // Convert to QuizTopic
+  return Object.entries(groups).map(([category, questions]) => ({
+    id: `topic-${category}`,
+    title: category,
+    category: category,
+    questions: questions.map(q => ({
+      id: q.id.toString(),
+      text: q.title,
+      type: (q.type || 'input') as any,
+      options: q.options,
+      correctAnswer: q.answer,
+      explanation: q.answer,
+      codeSnippet: q.code
+    }))
+  })).sort((a, b) => a.title.localeCompare(b.title));
 });
 
 const getAllQuestions = computed(() => {
-  // 1. Start with System Questions (DB) or Fallback to Static (Code)
-  const source = state.systemQuestions.length > 0 ? state.systemQuestions : staticQuestions;
+  // 1. Start with System Questions (DB) or Fallback to Static (Code) IF no course selected?
+  // Actually, if we are using courses, we should rely on systemQuestions. 
+  // If systemQuestions is empty, it might mean empty course OR not loaded.
+  // But strictly, we should try to avoid mixing staticQuizzes if they don't belong.
+  // Let's assume if systemQuestions is populated, we use it. 
+  // If it's empty, we ONLY fallback to staticQuestions if currentCourse is null or "Frontend" (legacy).
+  // But simplicity first: Use systemQuestions. If empty, and no course selected/default, use static.
+
+  let source = state.systemQuestions;
+
+  // Logic: If we rely on DB migration, staticQuestions are redundant data. 
+  // But for safety, if systemQuestions is empty (offline first run?), we might fallback.
+  // However, falling back to "Frontend" questions when "Math" is selected (but empty) is confusing.
+  // So: Only fallback if !currentCourseId (Legacy Mode).
+  if (source.length === 0 && !state.currentCourseId) {
+    source = staticQuestions;
+  }
 
   const merged = source
     .filter(q => !state.deletedIds.has(q.id.toString()))
@@ -93,27 +97,16 @@ const getAllQuestions = computed(() => {
       return state.overrides[q.id] || q;
     });
 
-  // 2. Map Quiz Data (New format) to Questions (Old format)
-  const quizQuestions: Question[] = staticQuizzes.flatMap(topic =>
-    topic.questions.map(q => ({
-      id: q.id,
-      title: q.text,
-      // Use explanation as answer, or join correct/incorrect options if needed
-      answer: q.explanation || (Array.isArray(q.correctAnswer) ? q.correctAnswer.join(', ') : q.correctAnswer) || 'No explanation available',
-      category: topic.category, // Use the proper category from the topic
-      difficulty: 'Medium',
-      type: q.type,
-      options: q.options?.map(o => ({
-        id: o.id,
-        text: o.text,
-        isCorrect: !!o.isCorrect // Ensure boolean
-      })),
-      code: q.codeSnippet // Map code snippet if available
-    }))
-  );
+  // 2. Map Quiz Data (Legacy Static Quizzes) - REMOVED
+  // We no longer explicitly merge staticQuizzes separately. 
+  // We expect ALL content to be in systemQuestions (which are fetched from DB).
 
   // 3. Append user-created questions
-  return [...merged, ...quizQuestions, ...state.userQuestions];
+  // Filter user questions by course too? 
+  // Currently userQuestions don't have course_id in local storage usually, or maybe they do?
+  // We should probably show all user questions or filter?
+  // For now, show all user questions as "Personal".
+  return [...merged, ...state.userQuestions];
 });
 
 // Helper for Flashcard/Study modes using flat questions
@@ -161,7 +154,23 @@ export const QuestionStore = {
   },
 
   async initialize() {
-    if (state.isLoaded) return;
+    // Always check for course change, even if loaded? 
+    // For now, let's assume reload if course changes, so strict check is fine.
+    // actually, if we switch courses, we might need to re-init.
+
+    // Get current course from LS
+    const courseJson = localStorage.getItem('interView_currentCourse');
+    const courseId = courseJson ? JSON.parse(courseJson).id : null;
+
+    if (state.isLoaded && state.currentCourseId === courseId) return;
+
+    // Reset if course changed
+    if (state.currentCourseId !== courseId) {
+      state.isLoaded = false;
+      state.systemQuestions = [];
+      state.currentCourseId = courseId;
+    }
+
     try {
       const [uQ, ov, del, fav, cq, history] = await Promise.all([
         Preferences.get({ key: STORAGE_KEYS.USER_QUESTIONS }),
@@ -169,7 +178,7 @@ export const QuestionStore = {
         Preferences.get({ key: STORAGE_KEYS.DELETED_IDS }),
         Preferences.get({ key: STORAGE_KEYS.FAVORITES }),
         Preferences.get({ key: STORAGE_KEYS.CUSTOM_QUIZZES }),
-        Preferences.get({ key: 'quiz_history' }) // Legacy key from LeaderboardView
+        Preferences.get({ key: 'quiz_history' })
       ]);
 
       if (uQ.value) state.userQuestions = JSON.parse(uQ.value);
@@ -181,16 +190,24 @@ export const QuestionStore = {
 
       state.isLoaded = true;
 
-      // 0. Load System Questions (Hybrid: Cache First, then Network)
-      // Try to load cached system questions if any
-      const cachedSystem = await Preferences.get({ key: 'system_questions_cache' });
+      // 0. Load System Questions with Course Filter
+      const cacheKey = `system_questions_cache_${courseId || 'all'}`;
+      const cachedSystem = await Preferences.get({ key: cacheKey });
+
       if (cachedSystem.value) {
         state.systemQuestions = JSON.parse(cachedSystem.value);
       }
 
       // Fetch fresh system questions
       import('../shared/api/supabase').then(async (m) => {
-        const { data, error } = await m.supabase.from('questions').select('*');
+        let query = m.supabase.from('questions').select('*');
+
+        if (courseId) {
+          query = query.eq('course_id', courseId);
+        }
+
+        const { data, error } = await query;
+
         if (!error && data) {
           state.systemQuestions = data.map((q: any) => ({
             id: q.id,
@@ -205,7 +222,7 @@ export const QuestionStore = {
 
           // Update cache
           Preferences.set({
-            key: 'system_questions_cache',
+            key: cacheKey,
             value: JSON.stringify(state.systemQuestions)
           });
         }

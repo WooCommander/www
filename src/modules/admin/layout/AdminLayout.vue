@@ -23,6 +23,9 @@ const logout = async () => {
                 <router-link to="/admin/users" class="nav-item" active-class="active">
                     👥 Пользователи
                 </router-link>
+                <router-link to="/admin/courses" class="nav-item" active-class="active">
+                    🎓 Курсы
+                </router-link>
                 <router-link to="/" class="nav-item">
                     🏠 На сайт
                 </router-link>

@@ -59,6 +59,17 @@ export const AdminService = {
         if (error) throw error;
     },
 
+    async deleteQuestionsByCourse(courseId: string) {
+        const { error } = await supabase.from('questions').delete().eq('course_id', courseId);
+        if (error) throw error;
+    },
+
+    async bulkCreateQuestions(questions: any[]) {
+        const { error, count } = await supabase.from('questions').insert(questions, { count: 'exact' });
+        if (error) throw error;
+        return count;
+    },
+
     async deleteAllQuestions() {
         // Dangerous! For testing only.
         const { error } = await supabase.from('questions').delete().neq('id', '00000000-0000-0000-0000-000000000000');

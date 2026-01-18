@@ -8,8 +8,12 @@ import { useRouter } from 'vue-router';
 import BaseButton from '../shared/ui/BaseButton.vue';
 // ... rest of imports
 
+import { CourseService, type Course } from '../modules/course/services/CourseService';
+
 const router = useRouter();
 const loading = ref(true);
+const courses = ref<Course[]>([]);
+const selectedCourse = ref<Course | null>(null);
 
 const stats = ref<PlatformStats>({
     totalUsers: 0,
@@ -19,28 +23,61 @@ const stats = ref<PlatformStats>({
 });
 
 const trends = ref<TrendsData>({ popular: [], hardest: [] });
-
 const topPlayers = ref<LeaderboardEntry[]>([]);
+
+const loadDashboard = async () => {
+    if (!selectedCourse.value) return;
+
+    loading.value = true;
+    try {
+        // TODO: Pass selectedCourse.value.id to services to filter stats
+        const [platformStats, trendData, leaderboard] = await Promise.all([
+            StatsService.getPlatformStats(),
+            StatsService.getTrends(),
+            UserService.getLeaderboard(5)
+        ]);
+
+        stats.value = platformStats;
+        trends.value = trendData;
+        topPlayers.value = leaderboard;
+    } catch (e) {
+        console.error('Error loading stats', e);
+    } finally {
+        loading.value = false;
+    }
+};
+
+const selectCourse = (course: Course) => {
+    selectedCourse.value = course;
+    localStorage.setItem('interView_currentCourse', JSON.stringify(course));
+    loadDashboard();
+};
+
+const changeCourse = () => {
+    selectedCourse.value = null;
+    localStorage.removeItem('interView_currentCourse');
+};
 
 onMounted(async () => {
     loading.value = true;
     try {
-        // 1. Fetch Global Stats
-        const platformStats = await StatsService.getPlatformStats();
-        stats.value = platformStats;
+        // 1. Load Courses
+        courses.value = await CourseService.getAllCourses();
 
-        // 2. Fetch Trends
-        const trendData = await StatsService.getTrends();
-        trends.value = trendData;
-
-        // 3. Fetch Hall of Fame
-        const leaderboard = await UserService.getLeaderboard(5);
-        topPlayers.value = leaderboard;
-
-    } catch (e) {
-        console.error('Error loading global stats', e);
+        // 2. Check LocalStorage
+        const saved = localStorage.getItem('interView_currentCourse');
+        if (saved) {
+            try {
+                selectedCourse.value = JSON.parse(saved);
+                await loadDashboard();
+            } catch {
+                localStorage.removeItem('interView_currentCourse');
+            }
+        }
     } finally {
-        loading.value = false;
+        loading.value = false; // Only stop loading if we are NOT loading dashboard (which handles its own loading)
+        // Actually, if we selected a course, loadDashboard sets loading=true again.
+        // If no course, we just show selection.
     }
 });
 
@@ -59,114 +96,138 @@ const goToPanic = () => router.push('/panic');
     <MainLayout>
         <template #content>
             <div class="home-container">
-                <!-- Hero Section -->
-                <section class="hero-section">
-                    <h1>Добро пожаловать в <span class="text-gradient">InterView</span></h1>
-                    <p class="subtitle">Ваш персональный тренажер для подготовки к собеседованиям по Frontend
-                        разработке.</p>
 
-                    <div class="action-buttons">
-                        <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
-                        </BaseButton>
-                        <BaseButton variant="secondary" size="lg" class="panic-btn" @click="goToPanic">🔥 Panic Mode
-                        </BaseButton>
-                        <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
+                <!-- 1. Course Selection View -->
+                <div v-if="!selectedCourse" class="course-selection">
+                    <section class="hero-section">
+                        <h1>Выберите <span class="text-gradient">Курс</span></h1>
+                        <p class="subtitle">Что будем изучать сегодня?</p>
+                    </section>
+
+                    <div class="courses-grid">
+                        <div v-if="loading" class="loading-state">Загрузка курсов...</div>
+                        <div v-else class="course-card-lg" v-for="course in courses" :key="course.id"
+                            @click="selectCourse(course)">
+                            <div class="course-icon">{{ course.icon }}</div>
+                            <h3>{{ course.title }}</h3>
+                            <p>{{ course.description }}</p>
+                        </div>
                     </div>
-                </section>
-
-                <div v-if="loading" class="loading-state">
-                    <div class="spinner"></div> Загрузка статистики...
                 </div>
 
-                <div v-else class="dashboard-grid">
-                    <!-- Global Stats -->
-                    <section class="stats-section">
-                        <h2>🌐 Платформа в цифрах</h2>
-                        <div class="stats-cards">
-                            <div class="stat-card">
-                                <span class="icon">👥</span>
-                                <div class="stat-info">
-                                    <span class="value">{{ stats.totalUsers }}</span>
-                                    <span class="label">Пользователей</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <span class="icon">❓</span>
-                                <div class="stat-info">
-                                    <span class="value">{{ stats.totalQuestions }}</span>
-                                    <span class="label">Вопросов</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <span class="icon">📝</span>
-                                <div class="stat-info">
-                                    <span class="value">{{ stats.totalTests }}</span>
-                                    <span class="label">Тестов пройдено</span>
-                                </div>
-                            </div>
-                            <div class="stat-card">
-                                <span class="icon">⏳</span>
-                                <div class="stat-info">
-                                    <span class="value">{{ formatTime(stats.totalTime) }}</span>
-                                    <span class="label">Время в учебе</span>
-                                </div>
-                            </div>
+                <!-- 2. Dashboard View -->
+                <div v-else class="dashboard-view">
+                    <!-- Hero Section -->
+                    <section class="hero-section compact">
+                        <div class="course-badge" @click="changeCourse">
+                            {{ selectedCourse.icon }} {{ selectedCourse.title }}
+                            <span class="change-hint">(сменить)</span>
+                        </div>
+                        <h1>Твой прогресс в <span class="text-gradient">InterView</span></h1>
+
+                        <div class="action-buttons">
+                            <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
+                            </BaseButton>
+                            <BaseButton variant="secondary" size="lg" class="panic-btn" @click="goToPanic">🔥 Panic Mode
+                            </BaseButton>
+                            <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
                         </div>
                     </section>
 
-                    <!-- Trends Section -->
-                    <section class="trends-section">
-                        <!-- Popular: Heatmap Cards -->
-                        <div class="trend-card popular-card">
-                            <div class="card-header">
-                                <h2>🔥 В тренде</h2>
-                                <span class="subtitle">Самые популярные тесты</span>
-                            </div>
-                            <div class="heatmap-grid">
-                                <div v-for="(item, idx) in trends.popular" :key="'pop-' + idx" class="heat-item"
-                                    :style="{ '--intensity': 1 - (idx * 0.15) }">
-                                    <div class="heat-bg"></div>
-                                    <div class="heat-content">
-                                        <div class="heat-rank">#{{ idx + 1 }}</div>
-                                        <div class="heat-title">{{ item.title }}</div>
-                                        <div class="heat-count">{{ item.count }} раз</div>
+                    <div v-if="loading" class="loading-state">
+                        <div class="spinner"></div> Загрузка статистики...
+                    </div>
+
+                    <div v-else class="dashboard-grid">
+                        <!-- Global Stats -->
+                        <section class="stats-section">
+                            <h2>🌐 Статистика курса</h2>
+                            <div class="stats-cards">
+                                <div class="stat-card">
+                                    <span class="icon">👥</span>
+                                    <div class="stat-info">
+                                        <span class="value">{{ stats.totalUsers }}</span>
+                                        <span class="label">Пользователей</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="icon">❓</span>
+                                    <div class="stat-info">
+                                        <span class="value">{{ stats.totalQuestions }}</span>
+                                        <span class="label">Вопросов</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="icon">📝</span>
+                                    <div class="stat-info">
+                                        <span class="value">{{ stats.totalTests }}</span>
+                                        <span class="label">Тестов пройдено</span>
+                                    </div>
+                                </div>
+                                <div class="stat-card">
+                                    <span class="icon">⏳</span>
+                                    <div class="stat-info">
+                                        <span class="value">{{ formatTime(stats.totalTime) }}</span>
+                                        <span class="label">Время в учебе</span>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </section>
 
-                        <!-- Hardest: Danger Cloud -->
-                        <div class="trend-card hardest-card">
-                            <div class="card-header">
-                                <h2>💀 Хардкор</h2>
-                                <span class="subtitle">Сложнее всего пройти</span>
-                            </div>
-                            <div class="danger-cloud">
-                                <div v-for="(item, idx) in trends.hardest" :key="'hard-' + idx" class="danger-chip"
-                                    :style="{ '--severity': (100 - item.avgScore) / 100 }">
-                                    <span class="danger-score">{{ item.avgScore }}%</span>
-                                    <span class="danger-title">{{ item.title }}</span>
+                        <!-- Trends Section -->
+                        <section class="trends-section">
+                            <!-- Popular: Heatmap Cards -->
+                            <div class="trend-card popular-card">
+                                <div class="card-header">
+                                    <h2>🔥 В тренде</h2>
+                                    <span class="subtitle">Самые популярные тесты</span>
+                                </div>
+                                <div class="heatmap-grid">
+                                    <div v-for="(item, idx) in trends.popular" :key="'pop-' + idx" class="heat-item"
+                                        :style="{ '--intensity': 1 - (idx * 0.15) }">
+                                        <div class="heat-bg"></div>
+                                        <div class="heat-content">
+                                            <div class="heat-rank">#{{ idx + 1 }}</div>
+                                            <div class="heat-title">{{ item.title }}</div>
+                                            <div class="heat-count">{{ item.count }} раз</div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </section>
 
-                    <!-- Hall of Fame -->
-                    <section class="leaderboard-section">
-                        <div class="section-header">
-                            <h2>🏆 Зал Славы (Топ-5)</h2>
-                            <router-link to="/leaderboard" class="view-all">Весь список &rarr;</router-link>
-                        </div>
-
-                        <div class="hof-list">
-                            <div v-for="(player, index) in topPlayers" :key="index" class="hof-item"
-                                :class="'rank-' + (index + 1)">
-                                <div class="rank">#{{ index + 1 }}</div>
-                                <div class="player-name">{{ player.username }}</div>
-                                <div class="player-score">{{ player.totalScore }} <span>pts</span></div>
+                            <!-- Hardest: Danger Cloud -->
+                            <div class="trend-card hardest-card">
+                                <div class="card-header">
+                                    <h2>💀 Хардкор</h2>
+                                    <span class="subtitle">Сложнее всего пройти</span>
+                                </div>
+                                <div class="danger-cloud">
+                                    <div v-for="(item, idx) in trends.hardest" :key="'hard-' + idx" class="danger-chip"
+                                        :style="{ '--severity': (100 - item.avgScore) / 100 }">
+                                        <span class="danger-score">{{ item.avgScore }}%</span>
+                                        <span class="danger-title">{{ item.title }}</span>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                        </section>
+
+                        <!-- Hall of Fame -->
+                        <section class="leaderboard-section">
+                            <div class="section-header">
+                                <h2>🏆 Зал Славы (Топ-5)</h2>
+                                <router-link to="/leaderboard" class="view-all">Весь список &rarr;</router-link>
+                            </div>
+
+                            <div class="hof-list">
+                                <div v-for="(player, index) in topPlayers" :key="index" class="hof-item"
+                                    :class="'rank-' + (index + 1)">
+                                    <div class="rank">#{{ index + 1 }}</div>
+                                    <div class="player-name">{{ player.username }}</div>
+                                    <div class="player-score">{{ player.totalScore }} <span>pts</span></div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
                 </div>
             </div>
         </template>
@@ -180,10 +241,83 @@ const goToPanic = () => router.push('/panic');
     padding: var(--spacing-lg) 0;
 }
 
+/* Course Selection */
+.courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 24px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.course-card-lg {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+
+    &:hover {
+        transform: translateY(-5px);
+        border-color: var(--accent-primary);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    }
+}
+
+.course-icon {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    background: var(--bg-secondary);
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Course Badge in Hero */
+.course-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(var(--accent-primary-rgb), 0.1);
+    color: var(--accent-primary);
+    padding: 6px 16px;
+    border-radius: 50px;
+    margin-bottom: 24px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
+    transition: all 0.2s;
+
+    &:hover {
+        background: rgba(var(--accent-primary-rgb), 0.2);
+
+        .change-hint {
+            opacity: 1;
+        }
+    }
+}
+
+.change-hint {
+    font-size: 0.8rem;
+    opacity: 0.6;
+    font-weight: 400;
+}
+
 .hero-section {
     text-align: center;
     margin-bottom: 60px;
     animation: fadeIn 0.8s ease-out;
+
+    &.compact {
+        margin-bottom: 40px;
+    }
 
     h1 {
         font-size: 3rem;

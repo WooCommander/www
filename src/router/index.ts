@@ -59,6 +59,11 @@ const router = createRouter({
           path: 'users',
           name: 'admin-users',
           component: () => import('../modules/admin/views/UserManager.vue')
+        },
+        {
+          path: 'courses',
+          name: 'admin-courses',
+          component: () => import('../modules/admin/views/CourseManager.vue')
         }
       ]
     }
