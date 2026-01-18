@@ -2,7 +2,18 @@
 import { useRouter } from 'vue-router';
 import { UserService } from '../../../services/UserService';
 
+import { ref } from 'vue';
+
 const router = useRouter();
+const isSidebarOpen = ref(false);
+
+const toggleSidebar = () => {
+    isSidebarOpen.value = !isSidebarOpen.value;
+};
+
+const closeSidebar = () => {
+    isSidebarOpen.value = false;
+};
 
 const logout = async () => {
     await UserService.signOut();
@@ -12,11 +23,21 @@ const logout = async () => {
 
 <template>
     <div class="admin-layout">
-        <aside class="admin-sidebar">
+        <!-- Mobile Header -->
+        <div class="mobile-header">
+            <button class="hamburger-btn" @click="toggleSidebar">☰</button>
+            <h2>Admin</h2>
+        </div>
+
+        <!-- Sidebar Backdrop -->
+        <div class="sidebar-backdrop" v-if="isSidebarOpen" @click="closeSidebar"></div>
+
+        <aside class="admin-sidebar" :class="{ open: isSidebarOpen }">
             <div class="sidebar-header">
                 <h2>👑 Admin</h2>
+                <button class="close-btn mobile-only" @click="closeSidebar">×</button>
             </div>
-            <nav class="admin-nav">
+            <nav class="admin-nav" @click="closeSidebar"> <!-- Close on nav click for mobile -->
                 <router-link to="/admin/questions" class="nav-item" active-class="active">
                     📝 Вопросы
                 </router-link>
@@ -109,5 +130,87 @@ const logout = async () => {
     flex: 1;
     overflow-y: auto;
     padding: 30px;
+    
+    @media (max-width: 768px) {
+        padding: 16px;
+    }
+}
+
+.mobile-header {
+    display: none;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.hamburger-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px;
+}
+
+.sidebar-backdrop {
+    display: none;
+}
+
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .admin-layout {
+        flex-direction: column;
+    }
+
+    .mobile-header {
+        display: flex;
+    }
+
+    .sidebar-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 99;
+    }
+
+    .admin-sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+        z-index: 100;
+        width: 280px;
+        box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+
+        &.open {
+            transform: translateX(0);
+        }
+    }
+
+    .sidebar-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .mobile-only {
+        display: block;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+    }
 }
 </style>

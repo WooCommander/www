@@ -104,7 +104,7 @@ onMounted(() => {
             <p v-if="loading" class="no-data">Загрузка списка...</p>
             <p v-else-if="users.length === 0" class="no-data">Пользователей нет.</p>
 
-            <div v-else class="table-container">
+            <div v-else class="table-container desktop-only">
                 <table class="data-table">
                     <thead>
                         <tr>
@@ -156,6 +156,53 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+            </div>
+            
+            <!-- Mobile Card View -->
+            <div v-if="users.length > 0" class="mobile-list mobile-only">
+                <div v-for="user in filteredUsers" :key="user.id" class="user-card" :class="{ banned: user.is_banned, 'is-me': user.id === currentUserId }">
+                    <div class="u-header">
+                        <div class="u-info">
+                            <div class="avatar-ph">{{ ((user.username || '?')[0] || '?').toUpperCase() }}</div>
+                             <div class="names">
+                                <div class="username">
+                                    {{ user.username || 'Без имени' }}
+                                    <span v-if="user.id === currentUserId" class="me-badge">(Вы)</span>
+                                </div>
+                                <span class="badge" :class="user.is_banned ? 'banned' : 'active'">
+                                    {{ user.is_banned ? '⛔ BANNED' : '✅ Active' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="u-body">
+                         <div class="field-row">
+                            <span class="label">ID:</span>
+                            <span class="value monospace">{{ user.id.slice(0, 8) }}...</span>
+                         </div>
+                         <div class="field-row">
+                            <span class="label">Роль:</span>
+                            <select :value="user.role || 'user'"
+                                @change="e => updateRole(user, (e.target as HTMLSelectElement).value)"
+                                class="role-select" :class="user.role" :disabled="user.id === currentUserId">
+                                <option value="user">User</option>
+                                <option value="editor">Editor</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                         </div>
+                    </div>
+
+                    <div class="u-footer">
+                        <button class="ban-btn full-width" :class="{ unban: user.is_banned }"
+                            :disabled="user.id === currentUserId"
+                            @click="toggleBan(user)">
+                            {{ user.is_banned ? 'Разбанить' : '⛔ Забанить' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -400,11 +447,76 @@ onMounted(() => {
     }
 }
 
-/* Banned styling for row text */
-tr.banned .username,
 tr.banned .fullname,
 tr.banned .id-col {
     text-decoration: line-through;
     opacity: 0.7;
 }
-</style>
+
+/* Mobile Styles */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none;
+    }
+    
+    .mobile-only {
+        display: block;
+    }
+
+    .user-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+
+        &.is-me {
+            border-color: var(--accent-primary);
+            background: rgba(59, 130, 246, 0.05);
+        }
+    }
+
+    .u-header {
+        margin-bottom: 12px;
+    }
+
+    .u-info {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .u-body {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-bottom: 16px;
+        padding: 12px 0;
+        border-top: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+
+    .field-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        font-size: 0.9rem;
+    }
+
+    .label {
+        color: var(--text-secondary);
+    }
+
+    .monospace {
+        font-family: monospace;
+    }
+
+    .ban-btn.full-width {
+        width: 100%;
+        padding: 10px;
+    }
+}

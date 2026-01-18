@@ -69,7 +69,7 @@ const leaderboardData = computed(() => {
     let time = 0;
     let passed = 0;
     Object.values(user.bestRuns).forEach((run: any) => {
-      score += run.score;
+      score += (run.correct || 0);
       time += (run.timeTaken || 0);
       passed++;
     });

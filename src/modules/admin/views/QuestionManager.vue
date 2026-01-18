@@ -8,12 +8,20 @@ import { UserService } from '../../../services/UserService';
 import type { Question, UserProfile } from '../../../shared/types';
 import { CourseService, type Course } from '../../course/services/CourseService';
 
-const questions = ref<Question[]>([]);
+interface AdminQuestion extends Question {
+    numeric_id?: number; // Virtual ID for display
+}
+
+const questions = ref<AdminQuestion[]>([]);
 const courses = ref<Course[]>([]);
 const selectedCourseId = ref<string>('');
 const loading = ref(false);
 const searchQuery = ref('');
 const currentUser = ref<UserProfile | null>(null);
+
+// Sorting
+const sortField = ref<keyof AdminQuestion | 'numeric_id'>('numeric_id');
+const sortOrder = ref<'asc' | 'desc'>('desc');
 
 // Modal State
 const showEditModal = ref(false);
@@ -35,21 +43,38 @@ const loadQuestions = async () => {
             selectedCourseId.value = courses.value[0]!.id;
         }
 
-        const [qs, session] = await Promise.all([
-            AdminService.getAllQuestions(),
+        const data = await AdminService.getAllQuestions();
+        
+        // Calculate Virtual IDs (Oldest = 1)
+        // 1. Sort by created_at ASC to determine numeric ID
+        const sortedByDate = [...data].sort((a, b) => 
+            new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+        );
+        
+        // 2. Create map: String(UUID) -> Index+1
+        const idMap = new Map<string, number>();
+        sortedByDate.forEach((q, index) => {
+            idMap.set(String(q.id), index + 1);
+        });
+
+        // 3. Assign numeric_id to actual data
+        questions.value = data.map((q: any) => ({
+            ...q,
+            numeric_id: idMap.get(String(q.id)) || 0
+        }));
+
+        const [session] = await Promise.all([
             UserService.getSession()
         ]);
-
-        questions.value = qs || [];
 
         if (session?.user) {
             const userProfile = await UserService.getProfile(session.user.id);
             currentUser.value = { ...userProfile, id: session.user.id } as UserProfile;
         }
-
-    } catch (e) {
-        // handled by service mostly
-    } finally {
+        loading.value = false;
+    } catch (e: any) {
+        console.error(e);
+        NotificationService.error(`Ошибка загрузки: ${e.message}`);
         loading.value = false;
     }
 };
@@ -59,9 +84,8 @@ const openAddModal = () => {
     showEditModal.value = true;
 };
 
-const openEditModal = (q: Question) => {
-    // RBAC Check: Admin can edit ALL. Editor can edit OWN.
-    // (Ideally this is enforced by API, but good for UI feedback)
+const openEditModal = (q: AdminQuestion) => {
+    // RBAC Check
     const isAdmin = (currentUser.value as any)?.role === 'admin';
     const isOwner = (q as any).author_id === currentUser.value?.id;
 
@@ -127,10 +151,28 @@ const filteredQuestions = computed(() => {
 
     // 2. Search
     const q = searchQuery.value.toLowerCase();
-    return list.filter(item =>
+    list = list.filter(item =>
         item.title.toLowerCase().includes(q) ||
-        item.category.toLowerCase().includes(q)
+        item.category.toLowerCase().includes(q) ||
+        String(item.numeric_id).includes(q)
     );
+
+    // 3. Sort
+    return list.sort((a, b) => {
+        const field = sortField.value;
+        const order = sortOrder.value === 'asc' ? 1 : -1;
+
+        if (field === 'numeric_id') {
+             return ((a.numeric_id || 0) - (b.numeric_id || 0)) * order;
+        }
+        
+        // Handle other fields if needed, simplified for now to just title fallback or keep original
+        if (field === 'title') {
+            return a.title.localeCompare(b.title) * order;
+        }
+
+        return 0;
+    });
 });
 
 onMounted(() => {
@@ -162,12 +204,16 @@ onMounted(() => {
                 В базе нет вопросов. Нажмите "Миграция", чтобы загрузить их из файла.
             </p>
 
-            <div v-else class="table-container">
+            <div v-else class="table-container desktop-only">
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th width="50">ID</th>
-                            <th>Вопрос</th>
+                            <th width="80" @click="sortField = 'numeric_id'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sortable">
+                                # <span v-if="sortField === 'numeric_id'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+                            </th>
+                            <th @click="sortField = 'title'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sortable">
+                                Вопрос <span v-if="sortField === 'title'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
+                            </th>
                             <th width="150">Категория</th>
                             <th width="100">Сложность</th>
                             <th width="100">Действия</th>
@@ -175,7 +221,7 @@ onMounted(() => {
                     </thead>
                     <tbody>
                         <tr v-for="q in filteredQuestions" :key="q.id">
-                            <td class="id-col" :title="q.id.toString()">{{ q.id.toString().slice(0, 4) }}...</td>
+                            <td class="id-col" :title="String(q.id)">#{{ q.numeric_id }}</td>
                             <td class="title-col">{{ q.title }}</td>
                             <td>
                                 <span class="badge category">{{ q.category }}</span>
@@ -191,6 +237,26 @@ onMounted(() => {
                         </tr>
                     </tbody>
                 </table>
+            </div>
+            
+            <!-- Mobile Card View -->
+            <div v-if="questions.length > 0" class="mobile-list mobile-only">
+                <div v-for="q in filteredQuestions" :key="q.id" class="q-card">
+                    <div class="q-header">
+                        <span class="q-id">#{{ q.numeric_id }}</span>
+                        <div class="q-badges">
+                            <span class="badge category">{{ q.category }}</span>
+                            <span class="badge difficulty" :class="q.difficulty?.toLowerCase()">{{ q.difficulty || 'Medium' }}</span>
+                        </div>
+                    </div>
+                    <div class="q-body">
+                        <p class="q-title">{{ q.title }}</p>
+                    </div>
+                    <div class="q-footer">
+                        <button class="action-btn edit" @click="openEditModal(q)">✎ Ред.</button>
+                        <button class="action-btn delete" @click="handleDelete(q.id)">🗑 Удалить</button>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -308,6 +374,15 @@ onMounted(() => {
     }
 }
 
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    
+    &:hover {
+        background: rgba(255,255,255,0.1) !important;
+    }
+}
+
 .id-col {
     color: var(--text-secondary);
     font-family: monospace;
@@ -374,6 +449,87 @@ onMounted(() => {
     &.delete:hover {
         opacity: 1;
         transform: scale(1.1);
+    }
+    &.delete:hover {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+/* Mobile Styles */
+.mobile-only {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .desktop-only {
+        display: none;
+    }
+    
+    .mobile-only {
+        display: block;
+    }
+
+    .q-card {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+
+    .q-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+    }
+
+    .q-id {
+        font-family: monospace;
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+
+    .q-badges {
+        display: flex;
+        gap: 8px;
+    }
+
+    .q-body {
+        margin-bottom: 16px;
+    }
+
+    .q-title {
+        font-weight: 600;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .q-footer {
+        display: flex;
+        gap: 12px;
+        border-top: 1px solid var(--border-color);
+        padding-top: 12px;
+    }
+
+    .action-btn {
+        flex: 1;
+        padding: 8px;
+        border-radius: 8px;
+        border: none;
+        font-weight: 600;
+        cursor: pointer;
+        
+        &.edit {
+            background: rgba(59, 130, 246, 0.1);
+            color: #60a5fa;
+        }
+
+        &.delete {
+            background: rgba(239, 68, 68, 0.1);
+            color: #f87171;
+        }
     }
 }
 </style>
