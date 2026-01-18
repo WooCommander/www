@@ -2,7 +2,7 @@ import { reactive, computed } from 'vue';
 import { Preferences } from '@capacitor/preferences';
 import { quizzes as staticQuizzes, type QuizTopic } from '../data/quiz_data';
 import { questions as staticQuestions } from '../data/questions';
-import type { Question, CustomQuiz, HistoryItem } from '../types';
+import type { Question, CustomQuiz, HistoryItem } from '../shared/types';
 import { UserService } from './UserService';
 
 const STORAGE_KEYS = {
@@ -187,7 +187,7 @@ export const QuestionStore = {
 
     // 1. Sync User Questions
     try {
-      const { data: remoteQuestions, error } = await import('./supabase').then(m => m.supabase
+      const { data: remoteQuestions, error } = await import('../shared/api/supabase').then(m => m.supabase
         .from('user_questions')
         .select('*')
       );
@@ -222,7 +222,7 @@ export const QuestionStore = {
 
     // 2. Sync Global Leaderboard & Backfill
     try {
-      const { data: remoteResults, error } = await import('./supabase').then(m => m.supabase
+      const { data: remoteResults, error } = await import('../shared/api/supabase').then(m => m.supabase
         .from('exam_results')
         .select('*')
         .order('score', { ascending: false })
@@ -239,7 +239,7 @@ export const QuestionStore = {
         const userMap: Record<string, string> = {};
 
         if (userIds.length > 0) {
-          const { data: profiles } = await import('./supabase').then(m => m.supabase
+          const { data: profiles } = await import('../shared/api/supabase').then(m => m.supabase
             .from('profiles')
             .select('id, username')
             .in('id', userIds)
@@ -282,7 +282,7 @@ export const QuestionStore = {
             created_at: l.date
           }));
 
-          const { error: insertError } = await import('./supabase').then(m => m.supabase
+          const { error: insertError } = await import('../shared/api/supabase').then(m => m.supabase
             .from('exam_results')
             .upsert(toInsert)
           );
@@ -341,7 +341,7 @@ export const QuestionStore = {
       // Cloud Push
       const user = await UserService.getUser();
       if (user) {
-        await import('./supabase').then(m => m.supabase.from('user_questions').upsert({
+        await import('../shared/api/supabase').then(m => m.supabase.from('user_questions').upsert({
           id: question.id,
           user_id: user.id,
           title: question.title,
@@ -366,7 +366,7 @@ export const QuestionStore = {
     const user = await UserService.getUser();
     if (user) {
       // Convert to DB format
-      const { error } = await import('./supabase').then(m => m.supabase.from('exam_results').insert({
+      const { error } = await import('../shared/api/supabase').then(m => m.supabase.from('exam_results').insert({
         id: result.id, // Ensure UUID is used or let DB gen? Using local ID if UUID
         user_id: user.id,
         score: result.score,
@@ -408,7 +408,7 @@ export const QuestionStore = {
       // Cloud Delete
       const user = await UserService.getUser();
       if (user) {
-        await import('./supabase').then(m => m.supabase.from('user_questions').delete().eq('id', id));
+        await import('../shared/api/supabase').then(m => m.supabase.from('user_questions').delete().eq('id', id));
       }
     }
   },

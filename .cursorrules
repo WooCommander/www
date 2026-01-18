@@ -1,0 +1,39 @@
+You are an expert Vue 3 developer. Follow these rules when writing code for this project:
+
+# Technology Stack
+- **Framework**: Vue 3 (Composition API) with Vite.
+- **Language**: TypeScript (Strict mode).
+- **Styling**: SCSS (Sass) with scoped styles.
+
+# Component Design
+- **Integration**: Use `<script setup lang="ts">`.
+- **Naming**: Use PascalCase for component filenames (e.g., `BaseButton.vue`).
+- **Atomic Design**:
+  - UI Design Primitives (Buttons, Inputs, Cards) go in `src/components/ui/`.
+  - Prefix base components with `Base` (e.g., `BaseInput.vue`).
+- **Structure**:
+  1. `<script setup>`
+  2. `<template>`
+  3. `<style scoped lang="scss">`
+
+# Styling (SCSS)
+- **Scoped**: Always use `scoped` styles (except for global app resets).
+- **Variables**: Use CSS variables for colors and spacing defined in `src/style.css` (e.g., `var(--accent-primary)`, `var(--bg-card)`).
+- **Nesting**: Use SCSS nesting to keep styles clean and mirror the HTML structure.
+  ```scss
+  .card {
+    background: var(--bg-card);
+    &.active { border-color: red; }
+    .title { font-weight: bold; }
+  }
+  ```
+- **Avoid**: Deep selectors (`::v-deep`) unless absolutely necessary for library overrides.
+
+# Logic & State
+- **Services**: Do NOT make API calls (Supabase) directly in components. Use Service classes in `src/services/` (e.g., `UserService.ts`).
+- **Types**: Define shared interfaces in `src/types/index.ts`. Avoid `any`.
+- **Imports**: Use explicit relative paths or configured aliases.
+
+# Mobile Mobile
+- **Responsiveness**: Ensure layouts work on small screens (max-width: 600px).
+- **Touch**: Sizing of interactive elements should be touch-friendly (min 44px height for buttons).

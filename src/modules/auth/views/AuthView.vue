@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { supabase } from '../../services/supabase';
-import BaseButton from '../../components/ui/BaseButton.vue';
-import BaseInput from '../../components/ui/BaseInput.vue';
-import BaseCard from '../../components/ui/BaseCard.vue';
+import { AuthService } from '../services/AuthService';
+import BaseButton from '../../../shared/ui/BaseButton.vue';
+import BaseInput from '../../../shared/ui/BaseInput.vue';
+import BaseCard from '../../../shared/ui/BaseCard.vue';
 
 const router = useRouter();
 const isLogin = ref(true);
@@ -19,16 +19,10 @@ const handleAuth = async () => {
 
     try {
         if (isLogin.value) {
-            const { error } = await supabase.auth.signInWithPassword({
-                email: email.value,
-                password: password.value
-            });
+            const { error } = await AuthService.signIn(email.value, password.value);
             if (error) throw error;
         } else {
-            const { error } = await supabase.auth.signUp({
-                email: email.value,
-                password: password.value
-            });
+            const { error } = await AuthService.signUp(email.value, password.value);
             if (error) throw error;
             // Optionally auto-login or show "Check email" message
         }

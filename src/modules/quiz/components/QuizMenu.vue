@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { QuizTopic } from '../../../data/quiz_data';
-import MainLayout from '../../../components/layout/MainLayout.vue';
+import MainLayout from '../../../shared/layout/MainLayout.vue';
 import PageHeader from '../../../components/common/PageHeader.vue';
 
 defineProps<{

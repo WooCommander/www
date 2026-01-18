@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { QuestionStore } from '../../../services/QuestionStore';
-import type { CustomQuiz, Question } from '../../../types';
+import type { CustomQuiz, Question } from '../../../shared/types';
 
 const props = defineProps<{
   isOpen: boolean;

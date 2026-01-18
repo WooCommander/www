@@ -1,8 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import StudyView from '../views/StudyView.vue';
-import QuizView from '../views/QuizView.vue';
+import QuizView from '../modules/quiz/views/QuizView.vue';
 import LeaderboardView from '../views/LeaderboardView.vue';
-import AuthView from '../views/auth/AuthView.vue';
+import AuthView from '../modules/auth/views/AuthView.vue';
 
 const router = createRouter({
   history: createWebHistory(),
@@ -35,7 +35,7 @@ const router = createRouter({
     {
       path: '/profile',
       name: 'profile',
-      component: () => import('../views/auth/ProfileView.vue')
+      component: () => import('../modules/user/views/ProfileView.vue')
     }
   ]
 });

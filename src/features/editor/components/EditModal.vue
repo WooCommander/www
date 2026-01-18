@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import type { Question } from '../../../types';
+import type { Question } from '../../../shared/types';
 
 const props = defineProps<{
   question: Question | null;

@@ -1,17 +1,7 @@
-import { supabase } from '../shared/api/supabase';
-import type { Session, User } from '@supabase/supabase-js';
-import { AuthService } from '../modules/auth/services/AuthService';
-import type { UserProfile, LeaderboardEntry, ExamResult } from '../shared/types';
+import { supabase } from '../../../shared/api/supabase';
+import type { UserProfile, LeaderboardEntry, ExamResult } from '../../../shared/types';
 
-export const UserService = {
-    async getSession(): Promise<Session | null> {
-        return AuthService.getSession();
-    },
-
-    async getUser(): Promise<User | null> {
-        return AuthService.getUser();
-    },
-
+export const UserProfileService = {
     async getProfile(userId: string): Promise<UserProfile | null> {
         const { data, error } = await supabase
             .from('profiles')
@@ -29,10 +19,6 @@ export const UserService = {
     async updateProfile(updates: Partial<UserProfile> & { id: string }): Promise<{ error: any }> {
         const { error } = await supabase.from('profiles').upsert(updates);
         return { error };
-    },
-
-    async signOut(): Promise<{ error: any }> {
-        return AuthService.signOut();
     },
 
     async getLeaderboard(limit: number = 5): Promise<LeaderboardEntry[]> {
@@ -64,17 +50,14 @@ export const UserService = {
 
             const currentBest = users[uId].bestRuns[r.title];
             if (!currentBest || r.score > currentBest.score || (r.score === currentBest.score && r.time_taken < currentBest.timeTaken)) {
-                // Ensure r.correct is treated safely, though ExamResult interface has it as number.
                 users[uId].bestRuns[r.title] = { score: r.correct || 0, timeTaken: r.time_taken || 0 };
             }
         });
 
-        const ranked: LeaderboardEntry[] = Object.values(users).map(u => {
+        return Object.values(users).map(u => {
             let totalScore = 0;
             Object.values(u.bestRuns).forEach(run => totalScore += run.score);
             return { username: u.username, totalScore };
         }).sort((a, b) => b.totalScore - a.totalScore).slice(0, limit);
-
-        return ranked;
     }
 };

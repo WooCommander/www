@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import { UserService } from '../../services/UserService';
-import type { UserProfile } from '../../types';
+import { AuthService } from '../../auth/services/AuthService';
+import { UserProfileService } from '../services/UserProfileService';
+import type { UserProfile } from '../../../shared/types';
 import { useRouter } from 'vue-router';
-import MainLayout from '../../components/layout/MainLayout.vue';
-import { QuestionStore } from '../../services/QuestionStore';
-import BaseButton from '../../components/ui/BaseButton.vue';
-import BaseInput from '../../components/ui/BaseInput.vue';
-import BaseCard from '../../components/ui/BaseCard.vue';
+import MainLayout from '../../../shared/layout/MainLayout.vue';
+import { QuestionStore } from '../../../services/QuestionStore';
+import BaseButton from '../../../shared/ui/BaseButton.vue';
+import BaseInput from '../../../shared/ui/BaseInput.vue';
+import BaseCard from '../../../shared/ui/BaseCard.vue';
 
 const router = useRouter();
 const loading = ref(true);
@@ -21,7 +22,7 @@ const profile = ref<Partial<UserProfile>>({
 });
 
 onMounted(async () => {
-    const session = await UserService.getSession();
+    const session = await AuthService.getSession();
     if (!session) {
         router.push('/auth');
         return;
@@ -29,7 +30,7 @@ onMounted(async () => {
     user.value = session.user;
 
     // Fetch profile
-    const profileData = await UserService.getProfile(session.user.id);
+    const profileData = await UserProfileService.getProfile(session.user.id);
 
     if (profileData) {
         profile.value = {
@@ -51,7 +52,7 @@ const updateProfile = async () => {
             updated_at: new Date().toISOString()
         };
 
-        const { error } = await UserService.updateProfile(updates);
+        const { error } = await UserProfileService.updateProfile(updates);
         if (error) throw error;
         alert('Профиль обновлен!');
     } catch (error: any) {
@@ -62,7 +63,7 @@ const updateProfile = async () => {
 };
 
 const signOut = async () => {
-    await UserService.signOut();
+    await AuthService.signOut();
     router.push('/auth');
 };
 

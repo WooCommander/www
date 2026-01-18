@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { supabase } from '../services/supabase';
+import { supabase } from '../shared/api/supabase';
 
 defineProps<{
   isDark: boolean;

@@ -1,7 +1,7 @@
-import { supabase } from './supabase';
+import { supabase } from '../../../shared/api/supabase';
 // IMPORTANT: We need QuestionStore to get the "local view" count if we still want that hybrid logic.
-import { QuestionStore } from './QuestionStore';
-import type { PlatformStats, TrendsData, ExamResult } from '../types';
+import { QuestionStore } from '../../../services/QuestionStore';
+import type { PlatformStats, TrendsData, ExamResult } from '../../../shared/types';
 
 export const StatsService = {
     async getPlatformStats(): Promise<PlatformStats> {

@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
-import { StatsService } from '../services/StatsService';
+import { StatsService } from '../modules/user/services/StatsService';
 import { UserService } from '../services/UserService';
-import type { PlatformStats, TrendsData, LeaderboardEntry } from '../types';
-import MainLayout from '../components/layout/MainLayout.vue';
+import type { PlatformStats, TrendsData, LeaderboardEntry } from '../shared/types';
+import MainLayout from '../shared/layout/MainLayout.vue';
 import { useRouter } from 'vue-router';
-import BaseButton from '../components/ui/BaseButton.vue';
+import BaseButton from '../shared/ui/BaseButton.vue';
 // ... rest of imports
 
 const router = useRouter();

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
-import MainLayout from '../components/layout/MainLayout.vue';
+import MainLayout from '../shared/layout/MainLayout.vue';
 import PageHeader from '../components/common/PageHeader.vue';
 import { QuestionStore } from '../services/QuestionStore';
 
@@ -119,7 +119,7 @@ const currentUser = ref<any>(null);
 const syncError = computed(() => QuestionStore.state.lastSyncError);
 
 onMounted(async () => {
-  const { supabase } = await import('../services/supabase');
+  const { supabase } = await import('../shared/api/supabase');
   const { data } = await supabase.auth.getUser();
   currentUser.value = data.user;
 });

@@ -1,6 +1,6 @@
-import { QuestionStore } from './QuestionStore';
-import type { QuizTopic } from '../data/quiz_data';
-import type { Question } from '../types';
+import { QuestionStore } from '../../../services/QuestionStore';
+import type { QuizTopic } from '../../../data/quiz_data';
+import type { Question } from '../../../shared/types';
 
 interface ExamConfig {
     totalQuestions: number;

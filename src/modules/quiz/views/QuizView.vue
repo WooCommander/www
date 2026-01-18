@@ -1,21 +1,21 @@
 <script setup lang="ts">
 import { ref, computed, onUnmounted, onMounted } from 'vue';
-import { type QuizTopic, type QuizQuestion } from '../data/quiz_data';
-import { QuestionStore } from '../services/QuestionStore';
+import { type QuizTopic, type QuizQuestion } from '../../../data/quiz_data';
+import { QuestionStore } from '../../../services/QuestionStore';
 import { ExamService } from '../services/ExamService';
-import type { CustomQuiz } from '../types';
+import type { CustomQuiz } from '../../../shared/types';
 
 // Components
-import QuizMenu from '../features/quiz/components/QuizMenu.vue';
-import QuizRunner from '../features/quiz/components/QuizRunner.vue';
-import QuizResults from '../features/quiz/components/QuizResults.vue';
-import QuizTopicEditor from '../features/quiz/components/QuizTopicEditor.vue';
-import QuizCreateModal from '../features/quiz/components/QuizCreateModal.vue';
-import EditModal from '../features/editor/components/EditModal.vue';
+import QuizMenu from '../components/QuizMenu.vue';
+import QuizRunner from '../components/QuizRunner.vue';
+import QuizResults from '../components/QuizResults.vue';
+import QuizTopicEditor from '../components/QuizTopicEditor.vue';
+import QuizCreateModal from '../components/QuizCreateModal.vue';
+import EditModal from '../../../features/editor/components/EditModal.vue';
 
 // Composables
-import { useQuizSession } from '../features/quiz/composables/useQuizSession';
-import MainLayout from '../components/layout/MainLayout.vue';
+import { useQuizSession } from '../composables/useQuizSession';
+import MainLayout from '../../../shared/layout/MainLayout.vue';
 
 const {
     currentQuiz,
