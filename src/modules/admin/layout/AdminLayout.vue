@@ -130,7 +130,7 @@ const logout = async () => {
     flex: 1;
     overflow-y: auto;
     padding: 30px;
-    
+
     @media (max-width: 768px) {
         padding: 16px;
     }
@@ -138,9 +138,9 @@ const logout = async () => {
 
 .mobile-header {
     display: none;
-    align-items: center;
+    align-items: baseline;
     gap: 16px;
-    padding: 16px;
+    padding-left: 16px;
     background: var(--bg-secondary);
     border-bottom: 1px solid var(--border-color);
 }
@@ -175,7 +175,7 @@ const logout = async () => {
         display: block;
         position: fixed;
         inset: 0;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.5);
         z-index: 99;
     }
 
@@ -188,7 +188,7 @@ const logout = async () => {
         transition: transform 0.3s ease;
         z-index: 100;
         width: 280px;
-        box-shadow: 4px 0 15px rgba(0,0,0,0.3);
+        box-shadow: 4px 0 15px rgba(0, 0, 0, 0.3);
 
         &.open {
             transform: translateX(0);

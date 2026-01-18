@@ -221,7 +221,7 @@ onMounted(() => {
 
     h1 {
         margin: 0;
-        font-size: 1.8rem;
+        font-size: var(--fs-h1);
     }
 }
 
@@ -465,6 +465,27 @@ tr.banned .id-col {
         display: block;
     }
 
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .actions {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .search-input {
+        width: 100%;
+        flex: 1;
+    }
+
+    .header-left {
+        width: 100%;
+        justify-content: space-between;
+    }
+
     .user-card {
         background: var(--bg-card);
         border: 1px solid var(--border-color);
@@ -502,7 +523,7 @@ tr.banned .id-col {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 0.9rem;
+        font-size: var(--fs-body);
     }
 
     .label {

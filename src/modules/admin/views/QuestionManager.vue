@@ -44,13 +44,13 @@ const loadQuestions = async () => {
         }
 
         const data = await AdminService.getAllQuestions();
-        
+
         // Calculate Virtual IDs (Oldest = 1)
         // 1. Sort by created_at ASC to determine numeric ID
-        const sortedByDate = [...data].sort((a, b) => 
+        const sortedByDate = [...data].sort((a, b) =>
             new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
         );
-        
+
         // 2. Create map: String(UUID) -> Index+1
         const idMap = new Map<string, number>();
         sortedByDate.forEach((q, index) => {
@@ -163,9 +163,9 @@ const filteredQuestions = computed(() => {
         const order = sortOrder.value === 'asc' ? 1 : -1;
 
         if (field === 'numeric_id') {
-             return ((a.numeric_id || 0) - (b.numeric_id || 0)) * order;
+            return ((a.numeric_id || 0) - (b.numeric_id || 0)) * order;
         }
-        
+
         // Handle other fields if needed, simplified for now to just title fallback or keep original
         if (field === 'title') {
             return a.title.localeCompare(b.title) * order;
@@ -208,10 +208,13 @@ onMounted(() => {
                 <table class="data-table">
                     <thead>
                         <tr>
-                            <th width="80" @click="sortField = 'numeric_id'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sortable">
+                            <th width="80"
+                                @click="sortField = 'numeric_id'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+                                class="sortable">
                                 # <span v-if="sortField === 'numeric_id'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                             </th>
-                            <th @click="sortField = 'title'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'" class="sortable">
+                            <th @click="sortField = 'title'; sortOrder = sortOrder === 'asc' ? 'desc' : 'asc'"
+                                class="sortable">
                                 Вопрос <span v-if="sortField === 'title'">{{ sortOrder === 'asc' ? '↑' : '↓' }}</span>
                             </th>
                             <th width="150">Категория</th>
@@ -238,7 +241,7 @@ onMounted(() => {
                     </tbody>
                 </table>
             </div>
-            
+
             <!-- Mobile Card View -->
             <div v-if="questions.length > 0" class="mobile-list mobile-only">
                 <div v-for="q in filteredQuestions" :key="q.id" class="q-card">
@@ -246,7 +249,8 @@ onMounted(() => {
                         <span class="q-id">#{{ q.numeric_id }}</span>
                         <div class="q-badges">
                             <span class="badge category">{{ q.category }}</span>
-                            <span class="badge difficulty" :class="q.difficulty?.toLowerCase()">{{ q.difficulty || 'Medium' }}</span>
+                            <span class="badge difficulty" :class="q.difficulty?.toLowerCase()">{{ q.difficulty ||
+                                'Medium' }}</span>
                         </div>
                     </div>
                     <div class="q-body">
@@ -283,7 +287,7 @@ onMounted(() => {
 
     h1 {
         margin: 0;
-        font-size: 1.8rem;
+        font-size: var(--fs-h1);
     }
 }
 
@@ -377,9 +381,9 @@ onMounted(() => {
 .sortable {
     cursor: pointer;
     user-select: none;
-    
+
     &:hover {
-        background: rgba(255,255,255,0.1) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
     }
 }
 
@@ -450,6 +454,7 @@ onMounted(() => {
         opacity: 1;
         transform: scale(1.1);
     }
+
     &.delete:hover {
         opacity: 1;
         transform: scale(1.1);
@@ -465,9 +470,33 @@ onMounted(() => {
     .desktop-only {
         display: none;
     }
-    
+
     .mobile-only {
         display: block;
+    }
+
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .actions {
+        width: 100%;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .search-input,
+    .course-select {
+        width: 100%;
+        max-width: none;
+        min-width: 0;
+    }
+
+    .header-left {
+        width: 100%;
+        justify-content: space-between;
     }
 
     .q-card {
@@ -504,6 +533,7 @@ onMounted(() => {
         font-weight: 600;
         margin: 0;
         line-height: 1.4;
+        font-size: var(--fs-body);
     }
 
     .q-footer {
@@ -520,7 +550,7 @@ onMounted(() => {
         border: none;
         font-weight: 600;
         cursor: pointer;
-        
+
         &.edit {
             background: rgba(59, 130, 246, 0.1);
             color: #60a5fa;
