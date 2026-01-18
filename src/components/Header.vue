@@ -12,7 +12,6 @@ defineEmits<{
   (e: 'toggleTheme'): void;
 }>();
 
-const router = useRouter();
 const user = ref<any>(null);
 const isMenuOpen = ref(false);
 
@@ -90,8 +89,8 @@ onMounted(() => {
         </div>
       </div>
 
-      <!-- Desktop Nav -->
       <nav class="nav-items desktop-nav">
+        <router-link to="/" class="nav-link" active-class="active">Дашборд</router-link>
         <!-- Main Links (Hidden if no course) -->
         <template v-if="currentCourse">
           <router-link to="/study" class="nav-link" active-class="active">Учить</router-link>

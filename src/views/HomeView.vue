@@ -13,12 +13,6 @@ import { CourseStore } from '../modules/course/services/CourseStore';
 const router = useRouter();
 const loading = ref(true);
 
-// Use Store
-const courses = computed(() => {
-    if (!CourseStore) return [];
-    return CourseStore.courses || [];
-});
-
 const selectedCourse = computed(() => {
     if (!CourseStore) return null;
     return CourseStore.currentCourse;
@@ -56,13 +50,7 @@ const loadDashboard = async () => {
     }
 };
 
-const selectCourse = (course: Course) => {
-    // Header will also reflect this
-    CourseStore.setCourse(course);
-    // Reload not strictly needed if we just want dashboard to update?
-    // But for now sticking to reload to refresh all global stores (Questions)
-    window.location.reload();
-};
+
 
 // No need for changeCourse local logic anymore, header handles it. 
 // But hero button "change" can still exist, maybe just open dropdown? 
@@ -124,19 +112,6 @@ const goToPanic = () => router.push('/panic');
                      Let's make it visible if !selectedCourse. If selected, we hide it (user clicks 'change' to reset). 
                      Actually user wanted dashboard viewable "while course is undefined".
                 -->
-                <div v-if="!selectedCourse" class="courses-section">
-                    <h2>📚 Доступные Курсы</h2>
-                    <div class="courses-grid">
-                        <div v-if="loading && courses.length === 0" class="loading-state">Загрузка курсов...</div>
-                        <div v-else class="course-card-lg" v-for="course in courses" :key="course.id"
-                            @click="selectCourse(course)">
-                            <div class="course-icon">{{ course.icon }}</div>
-                            <h3>{{ course.title }}</h3>
-                            <p>{{ course.description }}</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Dashboard Stats: Always Visible -->
                 <div class="dashboard-view">
                     <div v-if="loading && !stats.totalUsers" class="loading-state">
