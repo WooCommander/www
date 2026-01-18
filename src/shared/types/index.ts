@@ -16,6 +16,7 @@ export interface Question {
     slug?: string;
     type?: 'input' | 'single' | 'multiple';
     options?: QuestionOption[];
+    numeric_id?: number; // Virtual ID for display
 }
 
 export interface CustomQuiz {

@@ -60,7 +60,29 @@ watch([selectedCategory, searchQuery], () => {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
-const questions = computed(() => QuestionStore.getAllQuestions.value);
+const questions = computed(() => {
+  const raw = QuestionStore.getAllQuestions.value;
+
+  // Calculate Virtual IDs (Oldest = 1)
+  // 1. Sort by created_at (ASC) to determine order
+  const sortedByDate = [...raw].sort((a: any, b: any) => {
+    const tA = new Date(a.created_at || 0).getTime();
+    const tB = new Date(b.created_at || 0).getTime();
+    return tA - tB;
+  });
+
+  // 2. Map UUID -> ID
+  const idMap = new Map<string, number>();
+  sortedByDate.forEach((q, index) => {
+    idMap.set(String(q.id), index + 1);
+  });
+
+  // 3. Return enriched objects
+  return raw.map(q => ({
+    ...q,
+    numeric_id: idMap.get(String(q.id)) || 0
+  }));
+});
 
 const uniqueCategories = computed(() => {
   const cats = new Set(questions.value.map((q: Question) => q.category));
@@ -117,16 +139,16 @@ const categories = computed(() => {
 const groupedQuestions = computed(() => {
   const groups: Record<string, typeof questions.value> = {};
 
-  questions.value.forEach((q: Question) => {
+  questions.value.forEach((q: any) => {
     const query = searchQuery.value.toLowerCase().trim();
     if (query) {
-      const matchesId = q.id.toString().includes(query);
+      const matchesId = String(q.id).includes(query) || String(q.numeric_id).includes(query);
       const matchesTitle = q.title.toLowerCase().includes(query);
       if (!matchesId && !matchesTitle) return;
     }
 
     if (selectedCategory.value === 'Избранное') {
-      if (!QuestionStore.favorites.has(q.id.toString())) return;
+      if (!QuestionStore.favorites.has(String(q.id))) return;
     } else if (selectedCategory.value !== 'Все' && q.category !== selectedCategory.value) {
       return;
     }

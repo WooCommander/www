@@ -71,7 +71,7 @@ const renderedAnswer = computed(() => {
       <h3 class="question-title">{{ question.title }}</h3>
       <div class="card-meta">
         <span class="slug-id" @click.stop="copySlug" title="Copy ID">
-          #{{ question.id }}
+          #{{ question.numeric_id || question.id }}
         </span>
         <button class="fav-btn" :class="{ active: isFav }" @click="toggleFav" title="Bookmark">
           {{ isFav ? '★' : '☆' }}

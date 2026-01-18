@@ -355,6 +355,8 @@ onMounted(() => {
   color: var(--text-primary);
   font-size: 1.8rem;
   cursor: pointer;
+  position: relative;
+  z-index: 200; /* Ensure above overlay */
 }
 
 /* Mobile Overlay */
@@ -365,8 +367,8 @@ onMounted(() => {
   width: 100%;
   height: 100vh;
   background: var(--bg-primary);
-  z-index: 98;
-  padding: 100px 24px 24px;
+  z-index: 150;
+  padding: 80px 24px 24px;
   display: flex;
   flex-direction: column;
 }
@@ -378,14 +380,14 @@ onMounted(() => {
 }
 
 .mobile-link {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.1rem;
+  font-weight: 600;
   color: var(--text-primary);
-  padding: 12px;
+  padding: 10px;
   border-radius: 12px;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   transition: background 0.2s;
   text-decoration: none;
 }
@@ -400,15 +402,15 @@ onMounted(() => {
 }
 
 .m-icon {
-  font-size: 1.8rem;
-  width: 40px;
+  font-size: 1.3rem;
+  width: 32px;
   text-align: center;
 }
 
 .mobile-divider {
   height: 1px;
   background: var(--border-color);
-  margin: 16px 0;
+  margin: 12px 0;
 }
 
 .mobile-link.theme-btn {
