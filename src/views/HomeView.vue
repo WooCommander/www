@@ -51,6 +51,7 @@ const formatTime = (seconds: number) => {
 
 const goToStudy = () => router.push('/study');
 const goToQuiz = () => router.push('/quiz');
+const goToPanic = () => router.push('/panic');
 
 </script>
 
@@ -66,6 +67,8 @@ const goToQuiz = () => router.push('/quiz');
 
                     <div class="action-buttons">
                         <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="lg" class="panic-btn" @click="goToPanic">🔥 Panic Mode
                         </BaseButton>
                         <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
                     </div>

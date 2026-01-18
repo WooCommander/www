@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router';
-import StudyView from '../views/StudyView.vue';
+import StudyView from '../modules/quiz/views/StudyView.vue';
 import QuizView from '../modules/quiz/views/QuizView.vue';
 import LeaderboardView from '../views/LeaderboardView.vue';
 import AuthView from '../modules/auth/views/AuthView.vue';
@@ -21,6 +21,11 @@ const router = createRouter({
       path: '/auth',
       name: 'auth',
       component: AuthView
+    },
+    {
+      path: '/panic',
+      name: 'panic',
+      component: () => import('../modules/quiz/views/PanicView.vue')
     },
     {
       path: '/quiz',

@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted, watch } from 'vue';
 
-import EditModal from '../features/editor/components/EditModal.vue';
-import { QuestionStore } from '../services/QuestionStore';
-import type { Question } from '../shared/types';
-import QuestionCard from '../components/QuestionCard.vue';
-import MainLayout from '../shared/layout/MainLayout.vue';
-import PageHeader from '../components/common/PageHeader.vue';
+import EditModal from '../../../features/editor/components/EditModal.vue';
+import { QuestionStore } from '../../../services/QuestionStore';
+import type { Question } from '../../../shared/types';
+import QuestionCard from '../../../components/QuestionCard.vue';
+import MainLayout from '../../../shared/layout/MainLayout.vue';
+import PageHeader from '../../../components/common/PageHeader.vue';
 
 const selectedCategory = ref('Все');
 const searchQuery = ref('');
