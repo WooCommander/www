@@ -82,8 +82,6 @@ router.beforeEach(async (to, from, next) => {
 
   // 2. Ban Check (Global)
   if (session && to.path !== '/auth') {
-    // Optimization: Store this in a proper Store or Memoize? 
-    // For now, simple direct check to be safe.
     const { data: profile } = await import('../shared/api/supabase').then(m => m.supabase
       .from('profiles')
       .select('is_banned')
@@ -92,10 +90,25 @@ router.beforeEach(async (to, from, next) => {
     );
 
     if (profile?.is_banned) {
-      // Force logout if banned
       await import('../shared/api/supabase').then(m => m.supabase.auth.signOut());
       alert('Ваш аккаунт заблокирован. Свяжитесь с администрацией.');
       next('/auth');
+      return;
+    }
+  }
+
+  // 3. Course Selection Guard
+  // Require course for Study, Quiz, Panic modes
+  const courseProtectedPaths = ['/study', '/quiz', '/panic'];
+  const requiresCourse = courseProtectedPaths.some(path => to.path.startsWith(path));
+
+  if (requiresCourse) {
+    const selectedCourse = localStorage.getItem('interView_currentCourse');
+    if (!selectedCourse) {
+      // Redirect to Home with query to show selection needs attention?
+      // Or just standard home.
+      alert('Сначала выберите курс!');
+      next('/');
       return;
     }
   }

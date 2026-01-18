@@ -10,10 +10,14 @@ import BaseButton from '../shared/ui/BaseButton.vue';
 
 import { CourseService, type Course } from '../modules/course/services/CourseService';
 
+import { CourseStore } from '../modules/course/services/CourseStore';
+
 const router = useRouter();
 const loading = ref(true);
-const courses = ref<Course[]>([]);
-const selectedCourse = ref<Course | null>(null);
+
+// Use Store
+const courses = computed(() => CourseStore.courses);
+const selectedCourse = computed(() => CourseStore.currentCourse);
 
 const stats = ref<PlatformStats>({
     totalUsers: 0,
@@ -26,11 +30,8 @@ const trends = ref<TrendsData>({ popular: [], hardest: [] });
 const topPlayers = ref<LeaderboardEntry[]>([]);
 
 const loadDashboard = async () => {
-    if (!selectedCourse.value) return;
-
     loading.value = true;
     try {
-        // TODO: Pass selectedCourse.value.id to services to filter stats
         const [platformStats, trendData, leaderboard] = await Promise.all([
             StatsService.getPlatformStats(),
             StatsService.getTrends(),
@@ -48,37 +49,27 @@ const loadDashboard = async () => {
 };
 
 const selectCourse = (course: Course) => {
-    selectedCourse.value = course;
-    localStorage.setItem('interView_currentCourse', JSON.stringify(course));
-    loadDashboard();
+    // Header will also reflect this
+    CourseStore.setCourse(course);
+    // Reload not strictly needed if we just want dashboard to update?
+    // But for now sticking to reload to refresh all global stores (Questions)
+    window.location.reload();
 };
 
+// No need for changeCourse local logic anymore, header handles it. 
+// But hero button "change" can still exist, maybe just open dropdown? 
+// Or simply resetting course.
 const changeCourse = () => {
-    selectedCourse.value = null;
-    localStorage.removeItem('interView_currentCourse');
+    CourseStore.setCourse(null);
+    window.location.reload();
 };
 
 onMounted(async () => {
-    loading.value = true;
-    try {
-        // 1. Load Courses
-        courses.value = await CourseService.getAllCourses();
+    // Init store which handles loading and LS restoration
+    await CourseStore.initialize();
 
-        // 2. Check LocalStorage
-        const saved = localStorage.getItem('interView_currentCourse');
-        if (saved) {
-            try {
-                selectedCourse.value = JSON.parse(saved);
-                await loadDashboard();
-            } catch {
-                localStorage.removeItem('interView_currentCourse');
-            }
-        }
-    } finally {
-        loading.value = false; // Only stop loading if we are NOT loading dashboard (which handles its own loading)
-        // Actually, if we selected a course, loadDashboard sets loading=true again.
-        // If no course, we just show selection.
-    }
+    // Always Load Global Dashboard
+    await loadDashboard();
 });
 
 const formatTime = (seconds: number) => {
@@ -96,16 +87,39 @@ const goToPanic = () => router.push('/panic');
     <MainLayout>
         <template #content>
             <div class="home-container">
+                <!-- Hero Section: Dynamic based on selection -->
+                <section class="hero-section" :class="{ 'compact': selectedCourse }">
+                    <div v-if="selectedCourse" class="course-badge" @click="changeCourse">
+                        {{ selectedCourse.icon }} {{ selectedCourse.title }}
+                        <span class="change-hint">(сменить)</span>
+                    </div>
 
-                <!-- 1. Course Selection View -->
-                <div v-if="!selectedCourse" class="course-selection">
-                    <section class="hero-section">
-                        <h1>Выберите <span class="text-gradient">Курс</span></h1>
-                        <p class="subtitle">Что будем изучать сегодня?</p>
-                    </section>
+                    <h1>
+                        <span v-if="selectedCourse">Твой прогресс</span>
+                        <span v-else>Добро пожаловать</span>
+                        в <span class="text-gradient">InterView</span>
+                    </h1>
 
+                    <p v-if="!selectedCourse" class="subtitle">Выберите курс для начала обучения, или изучите общую
+                        статистику ниже.</p>
+
+                    <div v-if="selectedCourse" class="action-buttons">
+                        <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="lg" class="panic-btn" @click="goToPanic">🔥 Panic Mode
+                        </BaseButton>
+                        <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
+                    </div>
+                </section>
+
+                <!-- Course Selection: Prominent if none selected, otherwise hidden/modal (or just list below?) 
+                     Let's make it visible if !selectedCourse. If selected, we hide it (user clicks 'change' to reset). 
+                     Actually user wanted dashboard viewable "while course is undefined".
+                -->
+                <div v-if="!selectedCourse" class="courses-section">
+                    <h2>📚 Доступные Курсы</h2>
                     <div class="courses-grid">
-                        <div v-if="loading" class="loading-state">Загрузка курсов...</div>
+                        <div v-if="loading && courses.length === 0" class="loading-state">Загрузка курсов...</div>
                         <div v-else class="course-card-lg" v-for="course in courses" :key="course.id"
                             @click="selectCourse(course)">
                             <div class="course-icon">{{ course.icon }}</div>
@@ -115,33 +129,18 @@ const goToPanic = () => router.push('/panic');
                     </div>
                 </div>
 
-                <!-- 2. Dashboard View -->
-                <div v-else class="dashboard-view">
-                    <!-- Hero Section -->
-                    <section class="hero-section compact">
-                        <div class="course-badge" @click="changeCourse">
-                            {{ selectedCourse.icon }} {{ selectedCourse.title }}
-                            <span class="change-hint">(сменить)</span>
-                        </div>
-                        <h1>Твой прогресс в <span class="text-gradient">InterView</span></h1>
-
-                        <div class="action-buttons">
-                            <BaseButton variant="primary" size="lg" class="pulse" @click="goToQuiz">🚀 Начать Тест
-                            </BaseButton>
-                            <BaseButton variant="secondary" size="lg" class="panic-btn" @click="goToPanic">🔥 Panic Mode
-                            </BaseButton>
-                            <BaseButton variant="secondary" size="lg" @click="goToStudy">📚 Учить Вопросы</BaseButton>
-                        </div>
-                    </section>
-
-                    <div v-if="loading" class="loading-state">
+                <!-- Dashboard Stats: Always Visible -->
+                <div class="dashboard-view">
+                    <div v-if="loading && !stats.totalUsers" class="loading-state">
                         <div class="spinner"></div> Загрузка статистики...
                     </div>
 
                     <div v-else class="dashboard-grid">
-                        <!-- Global Stats -->
+                        <!-- Global/Course Stats -->
                         <section class="stats-section">
-                            <h2>🌐 Статистика курса</h2>
+                            <h2 v-if="selectedCourse">📊 Статистика курса</h2>
+                            <h2 v-else>🌐 Глобальная статистика</h2>
+
                             <div class="stats-cards">
                                 <div class="stat-card">
                                     <span class="icon">👥</span>
@@ -680,6 +679,17 @@ const goToPanic = () => router.push('/panic');
     }
 }
 
+.courses-section {
+    margin-bottom: 40px;
+    text-align: center;
+
+    h2 {
+        margin-bottom: 24px;
+        font-size: 1.8rem;
+    }
+}
+
+/* ... existing styles ... */
 @keyframes fadeIn {
     from {
         opacity: 0;
