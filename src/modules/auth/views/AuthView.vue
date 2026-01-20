@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { AuthService } from '../services/AuthService';
 import BaseButton from '../../../shared/ui/BaseButton.vue';
 import BaseInput from '../../../shared/ui/BaseInput.vue';
 import BaseCard from '../../../shared/ui/BaseCard.vue';
 
 const router = useRouter();
+const route = useRoute();
 type AuthMode = 'login' | 'signup' | 'forgot';
 const mode = ref<AuthMode>('login');
 
@@ -42,7 +43,8 @@ const handleAuth = async () => {
         if (isLogin.value) {
             const { error } = await AuthService.signIn(email.value, password.value);
             if (error) throw error;
-            router.push('/');
+            const redirectPath = (route.query.redirect as string) || '/';
+            router.push(redirectPath);
         } else if (isSignup.value) {
             if (password.value !== confirmPassword.value) {
                 throw new Error('Пароли не совпадают');

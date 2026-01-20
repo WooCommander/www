@@ -77,33 +77,44 @@ const router = createRouter({
 });
 
 // Navigation Guards & Security
+import { supabase } from '../shared/api/supabase';
+
+// Navigation Guards & Security
 router.beforeEach(async (to, _from, next) => {
-  const { data: { session } } = await import('../shared/api/supabase').then(m => m.supabase.auth.getSession());
+  const { data: { session } } = await supabase.auth.getSession();
 
   // 1. Auth Guard for /admin or /profile
   if ((to.path.startsWith('/admin') || to.path.startsWith('/profile')) && !session) {
-    next('/auth');
+    next({
+      path: '/auth',
+      query: { redirect: to.fullPath }
+    });
     return;
   }
 
-  // 2. Ban Check (Global)
+  // 2. Already Logged In Guard (Prevent accessing /auth if logged in)
+  if (to.path === '/auth' && session) {
+    next('/');
+    return;
+  }
+
+  // 3. Ban Check (Global)
   if (session && to.path !== '/auth') {
-    const { data: profile } = await import('../shared/api/supabase').then(m => m.supabase
+    const { data: profile } = await supabase
       .from('profiles')
       .select('is_banned')
       .eq('id', session.user.id)
-      .single()
-    );
+      .single();
 
     if (profile?.is_banned) {
-      await import('../shared/api/supabase').then(m => m.supabase.auth.signOut());
+      await supabase.auth.signOut();
       alert('Ваш аккаунт заблокирован. Свяжитесь с администрацией.');
       next('/auth');
       return;
     }
   }
 
-  // 3. Course Selection Guard
+  // 4. Course Selection Guard
   // Require course for Study, Quiz, Panic modes
   const courseProtectedPaths = ['/study', '/quiz', '/panic'];
   const requiresCourse = courseProtectedPaths.some(path => to.path.startsWith(path));
