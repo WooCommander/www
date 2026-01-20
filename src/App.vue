@@ -3,8 +3,13 @@ import { ref, onMounted } from 'vue';
 import Header from './components/Header.vue';
 import { QuestionStore } from './services/QuestionStore';
 import ToastContainer from './shared/ui/ToastContainer.vue';
+import { useSwipeNavigation } from './composables/useSwipeNavigation';
+import PullToRefresh from './components/PullToRefresh.vue';
 
 const isDark = ref(true);
+
+// Initialize Swipe Back Gesture
+useSwipeNavigation();
 
 onMounted(() => {
   const savedTheme = localStorage.getItem('theme');
@@ -32,6 +37,20 @@ const updateThemeClass = () => {
     document.body.classList.add('light-theme');
   }
 };
+
+const handleRefresh = async () => {
+  // Logic to refresh data
+  // Since QuestionStore is the main data source, we might want to re-initialize it
+  // or just reload the page for simplicity as requested "update screen" usually implies getting fresh data
+
+  // Option 1: Full Page Reload (Simpler, guaranteed clean state)
+  window.location.reload();
+
+  // Option 2: Data Refresh (Smoother)
+  // await QuestionStore.initialize();
+  // However, QuestionStore.initialize might not force fetch if data is loaded.
+  // Let's stick to reload for now as it covers all bases (including updates to the app itself if PWA)
+};
 </script>
 
 <template>
@@ -40,11 +59,13 @@ const updateThemeClass = () => {
     <ToastContainer />
 
     <div class="app-main">
-      <router-view v-slot="{ Component }">
-        <transition name="page-fade" mode="out-in">
-          <component :is="Component" class="view-content" />
-        </transition>
-      </router-view>
+      <PullToRefresh :on-refresh="handleRefresh">
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" class="view-content" />
+          </transition>
+        </router-view>
+      </PullToRefresh>
     </div>
   </div>
 </template>
