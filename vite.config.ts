@@ -5,8 +5,14 @@ import basicSsl from '@vitejs/plugin-basic-ssl'
 import fs from 'node:fs'
 import path from 'node:path'
 
+// Read package.json to get version
+const pkg = JSON.parse(fs.readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
+
 // https://vite.dev/config/
 export default defineConfig({
+  define: {
+    '__APP_VERSION__': JSON.stringify(pkg.version)
+  },
   plugins: [
     basicSsl(),
     vue(),

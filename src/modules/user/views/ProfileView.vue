@@ -228,6 +228,9 @@ const clearHistory = () => {
                                 <BaseButton type="button" variant="danger" @click="signOut">
                                     Выйти
                                 </BaseButton>
+                                <BaseButton type="button" variant="secondary" @click="router.push('/about')">
+                                    ℹ️ О программе
+                                </BaseButton>
                             </div>
                         </form>
                     </BaseCard>
@@ -343,7 +346,8 @@ const clearHistory = () => {
         .avatar-placeholder {
             width: 60px;
             height: 60px;
-            flex-shrink: 0; /* Prevent shrinking on mobile */
+            flex-shrink: 0;
+            /* Prevent shrinking on mobile */
             border-radius: 50%;
             background: var(--accent-primary);
             color: white;
@@ -450,8 +454,10 @@ const clearHistory = () => {
 
             button {
                 width: 100%;
-                padding: 10px; /* Ensure touch target is good but not huge */
-                font-size: var(--fs-body); /* Use standard body size */
+                padding: 10px;
+                /* Ensure touch target is good but not huge */
+                font-size: var(--fs-body);
+                /* Use standard body size */
             }
         }
     }
