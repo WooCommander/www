@@ -114,4 +114,8 @@ export const questions: Question[] = ${JSON.stringify(questions, null, 4)};
       }
     })
   ],
+  test: {
+    globals: true,
+    environment: 'jsdom',
+  }
 })
