@@ -114,6 +114,7 @@ export const questions: Question[] = ${JSON.stringify(questions, null, 4)};
       }
     })
   ],
+  // @ts-expect-error: Vitest types are not automatically detected in this config
   test: {
     globals: true,
     environment: 'jsdom',
