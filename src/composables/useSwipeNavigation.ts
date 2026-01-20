@@ -14,8 +14,11 @@ export function useSwipeNavigation() {
 
     const handleTouchStart = (e: TouchEvent) => {
         if (e.touches.length === 0) return;
-        touchStartX = e.touches[0].clientX;
-        touchStartY = e.touches[0].clientY;
+        const touch = e.touches[0];
+        if (!touch) return;
+
+        touchStartX = touch.clientX;
+        touchStartY = touch.clientY;
 
         // Only verify if strictly from the left edge
         if (touchStartX <= EDGE_THRESHOLD) {
@@ -29,8 +32,11 @@ export function useSwipeNavigation() {
         if (!isEdgeSwipe) return;
         if (e.changedTouches.length === 0) return;
 
-        const touchEndX = e.changedTouches[0].clientX;
-        const touchEndY = e.changedTouches[0].clientY;
+        const touch = e.changedTouches[0];
+        if (!touch) return;
+
+        const touchEndX = touch.clientX;
+        const touchEndY = touch.clientY;
 
         const deltaX = touchEndX - touchStartX;
         const deltaY = Math.abs(touchEndY - touchStartY);
